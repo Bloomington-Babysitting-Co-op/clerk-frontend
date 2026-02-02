@@ -3,62 +3,44 @@
 <head>
   <title>BBC Ledger</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <style>
-    [x-cloak] { display: none !important; }
-  </style>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
   <nav id="navbar"></nav>
 
-  <main class="flex-1 p-6 max-w-6xl mx-auto w-full" x-cloak>
+  <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
     <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
 
-    <div x-data="dashboardState" x-init="init" x-show="!loading">
-      <!-- Login Form -->
-      <template x-if="!session">
-        <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Log In</h2>
-          <input type="email" x-model="email" placeholder="Email"
-                 class="border p-2 w-full mb-2">
-          <input type="password" x-model="password" placeholder="Password"
-                 class="border p-2 w-full mb-2">
-          <button @click="login"
-                  class="bg-blue-600 text-white px-4 py-2 w-full rounded">
-            Log In
-          </button>
-          <p class="text-red-600 mt-2" x-text="error"></p>
-        </div>
-      </template>
-
+    <div x-data="dashboardState" x-init="init">
       <!-- Dashboard -->
-      <template x-if="session">
-        <div class="space-y-8">
-          <!-- Hours Balance -->
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
-            <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
-          </div>
-
-          <!-- Your Future Requests -->
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Your Submitted Requests</h2>
-            <div id="user-requests-list"></div>
-          </div>
-
-          <!-- Active Requests from Others -->
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Available Requests</h2>
-            <div id="other-requests-list"></div>
-          </div>
+      <div class="space-y-8">
+        <!-- Hours Balance -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
+          <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
         </div>
-      </template>
+
+        <!-- Your Future Requests -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Your Submitted Requests</h2>
+          <div id="user-requests-list"></div>
+        </div>
+
+        <!-- Active Requests from Others -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Available Requests</h2>
+          <div id="other-requests-list"></div>
+        </div>
+      </div>
     </div>
   </main>
 
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
-    setupNavbar("navbar");
+    import { requireAuth } from "/js/auth.js";
+    
+    await setupNavbar("navbar");
+    await requireAuth();
   </script>
 
   <script type="module" src="/js/auth.js"></script>
