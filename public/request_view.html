@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Request</title>
-  <script src="https://unpkg.com/alpinejs" defer></script>
-  <script type="module">
-    import { loadRequestInto } from "/js/requests.js";
-    import { requireAuth } from "/js/auth.js";
-    (async () => {
-      await requireAuth();
-      await loadRequestInto("request");
-    })();
-  </script>
+  <title>View Request – BBC Ledger</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
 </head>
+
 <body class="p-6">
-  <div id="request"></div>
+  <h1 class="text-2xl font-bold mb-4">Request Details</h1>
+
+  <div id="request-container"></div>
+
+  <script type="module">
+    import "/js/auth.js";
+    import { loadRequestInto } from "/js/requests.js";
+
+    loadRequestInto("request-container");
+  </script>
+
+  <script src="https://unpkg.com/alpinejs" defer></script>
 </body>
 </html>
