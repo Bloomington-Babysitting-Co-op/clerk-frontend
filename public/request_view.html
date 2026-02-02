@@ -14,9 +14,10 @@
 
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
-    import "/js/auth.js";
+    import { requireAuth } from "/js/auth.js";
     import { loadRequestInto } from "/js/requests.js";
 
+    await requireAuth();
     setupNavbar("navbar");
     loadRequestInto("request-container");
   </script>

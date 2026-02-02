@@ -16,9 +16,10 @@
 
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
-    import "/js/auth.js";
+    import { requireAuth } from "/js/auth.js";
     import { listLedgerInto } from "/js/ledger.js";
 
+    await requireAuth();
     setupNavbar("navbar");
     listLedgerInto("ledger-list");
   </script>
