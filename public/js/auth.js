@@ -101,16 +101,18 @@ function dashboardState() {
 
         if (userRequests) {
           const container = document.getElementById("user-requests-list");
-          container.innerHTML = userRequests.length
-            ? userRequests.map(r => `
-              <div class="border p-4 mb-2 rounded">
-                <p class="font-semibold text-gray-700">${r.status}</p>
-                <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
-                <p class="mt-1">${r.notes || ""}</p>
-                <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
-              </div>
-            `).join("")
-            : "<p class='text-gray-600'>No future requests submitted.</p>";
+          if (container) {
+            container.innerHTML = userRequests.length
+              ? userRequests.map(r => `
+                <div class="border p-4 mb-2 rounded">
+                  <p class="font-semibold text-gray-700">${r.status}</p>
+                  <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+                  <p class="mt-1">${r.notes || ""}</p>
+                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
+                </div>
+              `).join("")
+              : "<p class='text-gray-600'>No future requests submitted.</p>";
+          }
         }
 
         // Get active requests from other users
@@ -124,15 +126,17 @@ function dashboardState() {
 
         if (otherRequests) {
           const container = document.getElementById("other-requests-list");
-          container.innerHTML = otherRequests.length
-            ? otherRequests.map(r => `
-              <div class="border p-4 mb-2 rounded">
-                <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
-                <p class="mt-1">${r.notes || ""}</p>
-                <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Accept</a>
-              </div>
-            `).join("")
-            : "<p class='text-gray-600'>No available requests at the moment.</p>";
+          if (container) {
+            container.innerHTML = otherRequests.length
+              ? otherRequests.map(r => `
+                <div class="border p-4 mb-2 rounded">
+                  <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+                  <p class="mt-1">${r.notes || ""}</p>
+                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Accept</a>
+                </div>
+              `).join("")
+              : "<p class='text-gray-600'>No available requests at the moment.</p>";
+          }
         }
       } catch (err) {
         console.error("Error loading dashboard data:", err);
