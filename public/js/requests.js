@@ -52,16 +52,27 @@ async function loadRequestInto(containerId) {
     return;
   }
 
+  // Fetch claims for this request
+  const { data: claims } = await supabase
+    .from("claims")
+    .select("*")
+    .eq("request_id", id)
+    .order("created_at", { ascending: false });
+
   const userId = session.user.id;
-  const canAccept = r.status === "open" && r.owner !== userId;
-  const canComplete = r.status === "accepted" && (r.owner === userId || r.accepted_by === userId);
-  const canEdit = r.owner === userId && r.status === "open";
+  const isOwner = r.owner === userId;
+  const canClaim = r.status === "open" && !isOwner;
+  const canClaimWhenClaimed = r.status === "claimed" && !isOwner;
+  const hasAlreadyClaimed = claims?.some(c => c.user_id === userId);
+  const canSelectWinner = isOwner && r.status === "claimed";
+  const canComplete = r.status === "accepted" && (isOwner || r.accepted_by === userId);
+  const canEdit = isOwner && r.status === "open";
 
   const startDatetime = new Date(r.start_time).toISOString().slice(0, 16);
   const endDatetime = new Date(r.end_time).toISOString().slice(0, 16);
 
   el.innerHTML = `
-    <div class="bg-white p-6 rounded-lg shadow max-w-2xl">
+    <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 class="text-3xl font-bold mb-4">Request Details</h1>
       <p class="mb-2"><span class="font-semibold">Status:</span> <span class="text-lg text-blue-600 font-semibold">${r.status}</span></p>
       
@@ -70,7 +81,8 @@ async function loadRequestInto(containerId) {
         <p class="mb-4 mt-4 text-gray-700">${r.notes || ""}</p>
 
         <div class="mt-6 flex gap-2">
-          ${canAccept ? `<button id="accept-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Accept</button>` : ""}
+          ${canClaim ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Claim</button>` : ""}
+          ${canClaimWhenClaimed && !hasAlreadyClaimed ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Claim</button>` : ""}
           ${canComplete ? `<button id="complete-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Complete</button>` : ""}
           ${canEdit ? `<button id="edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Edit</button>` : ""}
         </div>
@@ -92,20 +104,72 @@ async function loadRequestInto(containerId) {
         </div>
       </div>
 
+      ${claims && claims.length > 0 ? `
+        <div class="mt-8 pt-8 border-t">
+          <h2 class="text-2xl font-bold mb-4">Claims (${claims.length})</h2>
+          <div class="space-y-3">
+            ${claims.map((claim, index) => `
+              <div class="bg-gray-50 p-4 rounded border">
+                <p class="text-sm text-gray-600 mb-1">Claimed ${formatDateTime(claim.created_at)}</p>
+                <p class="text-gray-700">${claim.comment || "<em>No comment</em>"}</p>
+                ${canSelectWinner ? `<button class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm select-winner-btn" data-claim-id="${claim.id}">Select as Winner</button>` : ""}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
+
       <p id="request-error" class="text-red-600 mt-4"></p>
+    </div>
+
+    <div id="claim-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
+        <h2 class="text-xl font-bold mb-4">Add a Comment (Optional)</h2>
+        <textarea id="claim-comment" placeholder="Why do you want to claim this request?" class="border p-2 w-full mb-4 h-24"></textarea>
+        <div class="flex gap-2">
+          <button id="claim-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Claim</button>
+          <button id="claim-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
+        </div>
+      </div>
     </div>
   `;
 
-  if (canAccept) {
-    document.getElementById("accept-btn").onclick = () => acceptRequest(id);
+  // Event listeners
+  if (document.getElementById("claim-btn")) {
+    document.getElementById("claim-btn").onclick = () => {
+      document.getElementById("claim-modal").style.display = "flex";
+    };
   }
-  if (canComplete) {
-    document.getElementById("complete-btn").onclick = () => completeRequest(id);
+
+  if (document.getElementById("claim-submit-btn")) {
+    document.getElementById("claim-submit-btn").onclick = () => submitClaim(id);
   }
-  if (canEdit) {
+
+  if (document.getElementById("claim-cancel-btn")) {
+    document.getElementById("claim-cancel-btn").onclick = () => {
+      document.getElementById("claim-modal").style.display = "none";
+    };
+  }
+
+  const selectWinnerBtns = document.querySelectorAll(".select-winner-btn");
+  selectWinnerBtns.forEach(btn => {
+    btn.onclick = () => selectWinner(id, btn.dataset.claimId);
+  });
+
+  if (document.getElementById("edit-btn")) {
     document.getElementById("edit-btn").onclick = () => toggleEditMode(true);
+  }
+
+  if (document.getElementById("cancel-btn")) {
     document.getElementById("cancel-btn").onclick = () => toggleEditMode(false);
+  }
+
+  if (document.getElementById("save-btn")) {
     document.getElementById("save-btn").onclick = () => saveRequest(id);
+  }
+
+  if (document.getElementById("complete-btn")) {
+    document.getElementById("complete-btn").onclick = () => completeRequest(id);
   }
 
   function toggleEditMode(isEditing) {
@@ -133,19 +197,57 @@ async function loadRequestInto(containerId) {
       window.location.reload();
     }
   }
-}
 
-async function acceptRequest(id) {
-  const { error } = await supabase.rpc("accept_request", { p_request_id: id });
-  if (error) {
-    document.getElementById("request-error").textContent = error.message;
-  } else {
-    window.location.reload();
+  async function submitClaim(requestId) {
+    const comment = document.getElementById("claim-comment").value;
+    
+    // First, update request status to "claimed" if it's still "open"
+    if (r.status === "open") {
+      await supabase
+        .from("requests")
+        .update({ status: "claimed" })
+        .eq("id", requestId);
+    }
+
+    // Insert the claim
+    const { error } = await supabase
+      .from("claims")
+      .insert({
+        request_id: requestId,
+        user_id: userId,
+        comment: comment
+      });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function selectWinner(requestId, claimId) {
+    const { error } = await supabase
+      .from("requests")
+      .update({
+        status: "accepted",
+        accepted_by: claimId
+      })
+      .eq("id", requestId);
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
   }
 }
 
 async function completeRequest(id) {
-  const { error } = await supabase.rpc("complete_request", { p_request_id: id });
+  const { error } = await supabase
+    .from("requests")
+    .update({ status: "completed" })
+    .eq("id", id);
+  
   if (error) {
     document.getElementById("request-error").textContent = error.message;
   } else {
