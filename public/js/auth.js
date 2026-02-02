@@ -152,3 +152,6 @@ window.authState = authState;
 window.loginForm = loginForm;
 window.dashboardState = dashboardState;
 window.requireAuth = requireAuth;
+
+// Module exports
+export { authState, loginForm, dashboardState, requireAuth };
