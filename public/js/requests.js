@@ -130,3 +130,6 @@ function newRequestForm() {
 window.listRequestsInto = listRequestsInto;
 window.loadRequestInto = loadRequestInto;
 window.newRequestForm = newRequestForm;
+
+// Module exports
+export { listRequestsInto, loadRequestInto, newRequestForm };
