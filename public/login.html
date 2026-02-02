@@ -12,9 +12,9 @@
     <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow" x-data="loginForm">
       <h1 class="text-2xl font-bold mb-4">Log In</h1>
       <input type="email" x-model="email" placeholder="Email"
-             class="border p-2 w-full mb-2">
+             class="border p-2 w-full mb-2" @keyup.enter="login">
       <input type="password" x-model="password" placeholder="Password"
-             class="border p-2 w-full mb-2">
+             class="border p-2 w-full mb-2" @keyup.enter="login">
       <button @click="login"
               class="bg-blue-600 text-white px-4 py-2 w-full rounded">
         Log In
