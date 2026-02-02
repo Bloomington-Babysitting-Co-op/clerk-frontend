@@ -141,7 +141,8 @@ function dashboardState() {
 async function requireAuth() {
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
-    window.location = "/";
+    window.location.href = "/";
+    throw new Error("Not authenticated");
   }
   return data.session;
 }
