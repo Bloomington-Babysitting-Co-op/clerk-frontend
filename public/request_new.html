@@ -36,8 +36,8 @@
     import { setupNavbar } from "/js/utils.js";
     import { requireAuth } from "/js/auth.js";
     
-    await requireAuth();
     await setupNavbar("navbar");
+    await requireAuth();
   </script>
 
   <script type="module" src="/js/requests.js"></script>

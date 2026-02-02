@@ -22,8 +22,8 @@
     import { requireAuth } from "/js/auth.js";
     import { listRequestsInto } from "/js/requests.js";
 
-    await requireAuth();
     await setupNavbar("navbar");
+    await requireAuth();
     listRequestsInto("requests-list");
   </script>
 
