@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-export function authState() {
+function authState() {
   return {
     session: null,
     async init() {
@@ -14,7 +14,7 @@ export function authState() {
   };
 }
 
-export function loginForm() {
+function loginForm() {
   return {
     email: "",
     password: "",
@@ -33,11 +33,5 @@ export function loginForm() {
   };
 }
 
-// simple guard for pages that require auth
-export async function requireAuth() {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) {
-    window.location = "/login.html";
-  }
-  return data.session;
-}
+window.authState = authState;
+window.loginForm = loginForm;
