@@ -1,4 +1,4 @@
-# Childcare Coop – Cloudflare Pages + Supabase (RPC + Triggers)
+# Bloomington Babysitting Co-op Ledger – Cloudflare Pages + Supabase (RPC + Triggers)
 
 ## Setup
 
