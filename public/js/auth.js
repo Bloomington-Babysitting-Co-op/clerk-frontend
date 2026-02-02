@@ -45,6 +45,7 @@ function dashboardState() {
     password: "",
     error: "",
     hoursBalance: 0,
+    loading: true,
 
     async init() {
       const { data } = await supabase.auth.getSession();
@@ -53,6 +54,8 @@ function dashboardState() {
       if (this.session) {
         await this.loadData();
       }
+      
+      this.loading = false;
     },
 
     async login() {
