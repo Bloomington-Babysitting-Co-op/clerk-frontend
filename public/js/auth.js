@@ -1,6 +1,3 @@
-console.log("AUTH.JS LOADED");
-window.TEST_FLAG = true;
-
 import { supabase } from "/js/supabase.js";
 
 function authState() {
