@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Requests</title>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <script type="module">
+    import { listRequestsInto } from "/js/requests.js";
+    import { requireAuth } from "/js/auth.js";
+    (async () => {
+      await requireAuth();
+      await listRequestsInto("requests");
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6">
+  <h1 class="text-xl font-bold mb-4">Requests</h1>
+
+  <a href="/request_new.html" class="text-blue-600 underline">Create New Request</a>
+
+  <div id="requests" class="mt-4"></div>
+</body>
+</html>

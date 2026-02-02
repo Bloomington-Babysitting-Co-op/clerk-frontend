@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Request</title>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <script type="module">
+    import { loadRequestInto } from "/js/requests.js";
+    import { requireAuth } from "/js/auth.js";
+    (async () => {
+      await requireAuth();
+      await loadRequestInto("request");
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6">
+  <div id="request"></div>
+</body>
+</html>

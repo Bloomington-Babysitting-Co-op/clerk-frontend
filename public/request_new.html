@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>New Request</title>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <script type="module">
+    import { newRequestForm } from "/js/requests.js";
+    import { requireAuth } from "/js/auth.js";
+    (async () => { await requireAuth(); })();
+    window.newRequestForm = newRequestForm;
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6">
+  <h1 class="text-xl font-bold mb-4">New Request</h1>
+
+  <div x-data="newRequestForm()">
+    <label class="block mb-2">Start time</label>
+    <input x-model="start_time" type="datetime-local" class="border p-2 block mb-2">
+
+    <label class="block mb-2">End time</label>
+    <input x-model="end_time" type="datetime-local" class="border p-2 block mb-2">
+
+    <label class="block mb-2">Notes</label>
+    <textarea x-model="notes" class="border p-2 block mb-2"></textarea>
+
+    <button @click="create" class="bg-blue-600 text-white px-4 py-2">Create</button>
+    <p class="text-red-600 mt-2" x-text="error"></p>
+  </div>
+</body>
+</html>
