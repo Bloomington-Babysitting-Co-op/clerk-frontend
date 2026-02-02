@@ -5,23 +5,58 @@
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body class="p-6">
-  <h1 class="text-2xl font-bold mb-4">Bloomington Babysitting Co-op Ledger</h1>
+<body class="flex flex-col min-h-screen bg-gray-50">
+  <nav id="navbar"></nav>
 
-  <div x-data="authState" x-init="init">
-    <template x-if="!session">
-      <a href="/login.html" class="text-blue-600 underline">Log in</a>
-    </template>
+  <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
+    <h1 class="text-3xl font-bold mb-8">Bloomington Babysitting Co-op Ledger</h1>
 
-    <template x-if="session">
-      <div>
-        <p class="mb-4">Welcome!</p>
-        <a href="/requests.html" class="text-blue-600 underline">View Requests</a><br>
-        <a href="/ledger.html" class="text-blue-600 underline">View Ledger</a><br>
-        <button @click="logout" class="mt-4 text-red-600 underline">Log out</button>
-      </div>
-    </template>
-  </div>
+    <div x-data="dashboardState" x-init="init">
+      <!-- Login Form -->
+      <template x-if="!session">
+        <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Log In</h2>
+          <input type="email" x-model="email" placeholder="Email"
+                 class="border p-2 w-full mb-2">
+          <input type="password" x-model="password" placeholder="Password"
+                 class="border p-2 w-full mb-2">
+          <button @click="login"
+                  class="bg-blue-600 text-white px-4 py-2 w-full rounded">
+            Log In
+          </button>
+          <p class="text-red-600 mt-2" x-text="error"></p>
+        </div>
+      </template>
+
+      <!-- Dashboard -->
+      <template x-if="session">
+        <div class="space-y-8">
+          <!-- Hours Balance -->
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
+            <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
+          </div>
+
+          <!-- Your Future Requests -->
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Your Submitted Requests</h2>
+            <div id="user-requests-list"></div>
+          </div>
+
+          <!-- Active Requests from Others -->
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Available Requests</h2>
+            <div id="other-requests-list"></div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </main>
+
+  <script type="module">
+    import { setupNavbar } from "/js/utils.js";
+    setupNavbar("navbar");
+  </script>
 
   <script type="module" src="/js/auth.js"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>

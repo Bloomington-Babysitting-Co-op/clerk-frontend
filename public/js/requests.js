@@ -19,14 +19,14 @@ async function listRequestsInto(containerId) {
 
   el.innerHTML = data.length
     ? data.map(r => `
-      <div class="border p-4 mb-2">
-        <p class="font-semibold">${r.status}</p>
-        <p>${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
-        <p>${r.notes || ""}</p>
-        <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline">View</a>
+      <div class="bg-white border p-4 rounded-lg shadow hover:shadow-lg transition">
+        <p class="font-semibold text-lg text-gray-800">${r.status}</p>
+        <p class="text-sm text-gray-600 mt-1">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+        <p class="text-gray-700 mt-2">${r.notes || ""}</p>
+        <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm mt-3 inline-block">View Details</a>
       </div>
     `).join("")
-    : "<p>No requests yet.</p>";
+    : "<p class='text-gray-600'>No requests yet.</p>";
 }
 
 async function loadRequestInto(containerId) {
@@ -57,17 +57,19 @@ async function loadRequestInto(containerId) {
   const canComplete = r.status === "accepted" && (r.owner === userId || r.accepted_by === userId);
 
   el.innerHTML = `
-    <h1 class="text-xl font-bold mb-4">Request</h1>
-    <p>Status: <span class="font-semibold">${r.status}</span></p>
-    <p>${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
-    <p class="mt-2">${r.notes || ""}</p>
+    <div class="bg-white p-6 rounded-lg shadow max-w-2xl">
+      <h1 class="text-3xl font-bold mb-4">Request Details</h1>
+      <p class="mb-2"><span class="font-semibold">Status:</span> <span class="text-lg text-blue-600 font-semibold">${r.status}</span></p>
+      <p class="mb-2"><span class="font-semibold">Time:</span> ${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+      <p class="mb-4 mt-4 text-gray-700">${r.notes || ""}</p>
 
-    <div class="mt-4 space-x-2">
-      ${canAccept ? `<button id="accept-btn" class="bg-blue-600 text-white px-4 py-2">Accept</button>` : ""}
-      ${canComplete ? `<button id="complete-btn" class="bg-green-600 text-white px-4 py-2">Complete</button>` : ""}
+      <div class="mt-6 flex gap-2">
+        ${canAccept ? `<button id="accept-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Accept</button>` : ""}
+        ${canComplete ? `<button id="complete-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Complete</button>` : ""}
+      </div>
+
+      <p id="request-error" class="text-red-600 mt-4"></p>
     </div>
-
-    <p id="request-error" class="text-red-600 mt-2"></p>
   `;
 
   if (canAccept) {
@@ -118,7 +120,7 @@ function newRequestForm() {
       if (error) {
         this.error = error.message;
       } else {
-        window.location = "/requests.html";
+        window.location = "/";
       }
     }
   };
