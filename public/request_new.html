@@ -3,15 +3,6 @@
 <head>
   <title>New Request – BBC Ledger</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script>
-    // Early auth check before body renders
-    (async () => {
-      const { data } = await fetch('https://jljuisgrqpwsuuyrkgdd.supabase.co/auth/v1/user', {
-        headers: { 'Authorization': 'Bearer ' + (JSON.parse(localStorage.getItem('supabase.auth.token') || '{}').access_token || '') }
-      }).then(r => r.json()).catch(() => ({}));
-      if (!data?.id) window.location.href = '/';
-    })();
-  </script>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
@@ -46,7 +37,7 @@
     import { requireAuth } from "/js/auth.js";
     
     await requireAuth();
-    setupNavbar("navbar");
+    await setupNavbar("navbar");
   </script>
 
   <script type="module" src="/js/requests.js"></script>
