@@ -34,10 +34,12 @@
 
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
+    import { requireAuth } from "/js/auth.js";
+    
+    await requireAuth();
     setupNavbar("navbar");
   </script>
 
-  <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/requests.js"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>
 </body>
