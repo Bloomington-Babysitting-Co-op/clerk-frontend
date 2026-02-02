@@ -19,13 +19,13 @@ async function listLedgerInto(containerId) {
 
   el.innerHTML = data.length
     ? data.map(e => `
-      <div class="border p-4 mb-2">
-        <p>${formatDateTime(e.timestamp)}</p>
-        <p>${e.hours} hours</p>
-        <p>${e.from_user} → ${e.to_user}</p>
+      <div class="bg-white border p-4 rounded-lg shadow">
+        <p class="font-semibold text-gray-800">${formatDateTime(e.timestamp)}</p>
+        <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
+        <p class="text-sm text-gray-600 mt-1">${e.from_user} → ${e.to_user}</p>
       </div>
     `).join("")
-    : "<p>No ledger entries yet.</p>";
+    : "<p class='text-gray-600'>No ledger entries yet.</p>";
 }
 
 window.listLedgerInto = listLedgerInto;
