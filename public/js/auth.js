@@ -1,6 +1,3 @@
-console.log("AUTH.JS LOADED");
-window.TEST_FLAG = true;
-
 import { supabase } from "./supabase.js";
 
 function authState() {
@@ -40,15 +37,15 @@ function loginForm() {
   };
 }
 
-// Alpine needs these on window
-window.authState = authState;
-window.loginForm = loginForm;
-
-// Guard for pages that require auth
-export async function requireAuth() {
+async function requireAuth() {
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
     window.location = "/login.html";
   }
   return data.session;
 }
+
+// Alpine needs these on window
+window.authState = authState;
+window.loginForm = loginForm;
+window.requireAuth = requireAuth;
