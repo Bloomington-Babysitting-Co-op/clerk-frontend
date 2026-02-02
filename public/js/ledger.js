@@ -29,3 +29,6 @@ async function listLedgerInto(containerId) {
 }
 
 window.listLedgerInto = listLedgerInto;
+
+// Module exports
+export { listLedgerInto };
