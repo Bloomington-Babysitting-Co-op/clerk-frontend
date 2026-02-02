@@ -17,8 +17,8 @@
     import { requireAuth } from "/js/auth.js";
     import { loadRequestInto } from "/js/requests.js";
 
-    await requireAuth();
     await setupNavbar("navbar");
+    await requireAuth();
     loadRequestInto("request-container");
   </script>
 

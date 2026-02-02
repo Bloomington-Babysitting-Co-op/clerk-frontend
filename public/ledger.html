@@ -19,8 +19,8 @@
     import { requireAuth } from "/js/auth.js";
     import { listLedgerInto } from "/js/ledger.js";
 
-    await requireAuth();
     await setupNavbar("navbar");
+    await requireAuth();
     listLedgerInto("ledger-list");
   </script>
 
