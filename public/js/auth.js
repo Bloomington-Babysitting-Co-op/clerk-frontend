@@ -63,7 +63,7 @@ function dashboardState() {
     password: "",
     error: "",
     hoursBalance: 0,
-    completedSitThisMonth: false,
+    activeThisMonth: false,
 
     async init() {
       const { data } = await supabase.auth.getSession();
@@ -98,9 +98,9 @@ function dashboardState() {
         const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_user_future_requests");
         if (userRequestsError) throw userRequestsError;
 
-        const { data: completedSitThisMonth, error: completedSitError } = await supabase.rpc("rpc_has_completed_sit_this_month");
-        if (completedSitError) throw completedSitError;
-        this.completedSitThisMonth = !!completedSitThisMonth;
+        const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_has_completed_sit_this_month");
+        if (activeError) throw activeError;
+        this.activeThisMonth = !!activeThisMonth;
 
         if (userRequests) {
           const container = document.getElementById("user-requests-list");
