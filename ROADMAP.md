@@ -4,14 +4,14 @@
    * [ ] User's current hour balance
    * [ ] An indication of whether the user has completed a sit request yet this calendar month
    * [ ] User's submitted future sit requests
-   * [ ] All user's unclaimed future sit requests
+   * [ ] All user's future sit requests without offers
    * [ ] Links to other sites like google drive, google map, google group
 * [ ] Ledger
    * [ ] All completed sits from all users
    * [ ] All user's current hours balance
    * [ ] Export to csv option with date ranges selectable
 * [ ] New Entry
-   * [ ] Show past completed claims that can be selected to prefill the form
+   * [ ] Show past completed offers that can be selected to prefill the form
    * [ ] If prefill is not selected, allow free form entry
 * [ ] Edit Entry
    * [ ] Only available to admin
@@ -22,8 +22,8 @@
       * [ ] The date and time of the request
       * [ ] A description of the request
       * [ ] The request type (babysit, drive, favor, other)
-   * [ ] If not the request owner, be able to click to submit a claim
-   * [ ] If the request owner, be able to click to accept a claim
+   * [ ] If not the request owner, be able to click to submit an offer
+   * [ ] If the request owner, be able to click to assign an offer
    * [ ] If the request owner, be able to cancel or edit the request (but not change it's type)
 * [ ] New Request
    * [ ] Create a new sit request
@@ -42,10 +42,10 @@
    * [ ] Change email
    * [ ] Change password
    * [ ] Change notification preferences
-      * [ ] Get emailed if a new request available for claiming
-      * [ ] Get emailed if a request is 48 hours out and still unclaimed
-      * [ ] Get emailed if a request they submitted has had a claim
-      * [ ] Get emailed if a request they claimed was cancelled or edited by the requestor
+      * [ ] Get emailed if a new request is available for offering help
+      * [ ] Get emailed if a request is 48 hours out and still without offers
+      * [ ] Get emailed if a request they submitted has had an offer
+      * [ ] Get emailed if a request they offered on was cancelled or edited by the requestor
       * [ ] Get emailed if a entry was submitted with them as the debtor
       * [ ] Get emailed mid-month if they have not used yet
    * [ ] Update profile
