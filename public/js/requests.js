@@ -39,6 +39,8 @@ function getRequestFormValuesFromRequest(request) {
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
     sitters_kids_welcome: !!request.sitters_kids_welcome,
     allergies_or_pet_concerns: request.allergies_or_pet_concerns || "",
+    origin: request.origin || "",
+    destination: request.destination || "",
     flexible_date: !!request.flexible_date,
     flexible_start_time: !!request.flexible_start_time,
     flexible_end_time: !!request.flexible_end_time,
@@ -58,6 +60,8 @@ function getDefaultRequestFormValues() {
     meal_prepared_by_sitter: false,
     sitters_kids_welcome: false,
     allergies_or_pet_concerns: "",
+    origin: "",
+    destination: "",
     flexible_date: false,
     flexible_start_time: false,
     flexible_end_time: false,
@@ -110,6 +114,14 @@ function getRequestFormHtml(prefix, values, options = {}) {
         <textarea id="${prefix}-allergies-or-pet-concerns" class="border p-2 w-full mb-4">${values.allergies_or_pet_concerns}</textarea>
       </div>
 
+      <div id="${prefix}-drive-fields">
+        <label class="block mb-2 font-semibold">Origin</label>
+        <input type="text" id="${prefix}-origin" value="${values.origin}" class="border p-2 w-full mb-4">
+
+        <label class="block mb-2 font-semibold">Destination</label>
+        <input type="text" id="${prefix}-destination" value="${values.destination}" class="border p-2 w-full mb-4">
+      </div>
+
       <label class="block mb-2 font-semibold">Description</label>
       <textarea id="${prefix}-notes" class="border p-2 w-full mb-4" required>${values.notes}</textarea>
 
@@ -131,14 +143,16 @@ function getRequestFormHtml(prefix, values, options = {}) {
       </div>
       <input type="time" id="${prefix}-start-time" value="${values.start_time}" class="border p-2 w-full mb-4">
 
-      <div class="flex items-center justify-between mb-2">
-        <label class="font-semibold">End Time (Optional)</label>
-        <label class="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" id="${prefix}-flexible-end-time" ${values.flexible_end_time ? "checked" : ""}>
-          <span>Flexible</span>
-        </label>
+      <div id="${prefix}-end-time-section">
+        <div class="flex items-center justify-between mb-2">
+          <label class="font-semibold">End Time (Optional)</label>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" id="${prefix}-flexible-end-time" ${values.flexible_end_time ? "checked" : ""}>
+            <span>Flexible</span>
+          </label>
+        </div>
+        <input type="time" id="${prefix}-end-time" value="${values.end_time}" class="border p-2 w-full mb-4">
       </div>
-      <input type="time" id="${prefix}-end-time" value="${values.end_time}" class="border p-2 w-full mb-4">
 
       <p id="${prefix}-babysit-hours-note" class="text-sm text-gray-600 mb-4">
         Hours offered will be auto-calculated from start and end time when both are provided.
@@ -161,16 +175,27 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
 function initRequestFormInteractions(prefix) {
   const requestType = document.getElementById(`${prefix}-request-type`);
-  const mealRequired = document.getElementById(`${prefix}-meal-required`);
   const babysitFields = document.getElementById(`${prefix}-babysit-fields`);
+  const mealRequired = document.getElementById(`${prefix}-meal-required`);
+  const driveFields = document.getElementById(`${prefix}-drive-fields`);
   const mealPreparedWrapper = document.getElementById(`${prefix}-meal-prepared-wrapper`);
   const hoursWrapper = document.getElementById(`${prefix}-hours-wrapper`);
   const babysitHoursNote = document.getElementById(`${prefix}-babysit-hours-note`);
+  const endTimeSection = document.getElementById(`${prefix}-end-time-section`);
+  const endTimeInput = document.getElementById(`${prefix}-end-time`);
+  const flexibleEndTimeInput = document.getElementById(`${prefix}-flexible-end-time`);
 
   function refreshFormVisibility() {
     const isBabysit = requestType.value === "babysit";
+    const isDrive = requestType.value === "drive";
     babysitFields.style.display = isBabysit ? "block" : "none";
     mealPreparedWrapper.style.display = isBabysit && mealRequired.checked ? "inline-flex" : "none";
+    driveFields.style.display = isDrive ? "block" : "none";
+    endTimeSection.style.display = isDrive ? "none" : "block";
+    if (isDrive) {
+      endTimeInput.value = "";
+      flexibleEndTimeInput.checked = false;
+    }
     hoursWrapper.style.display = isBabysit ? "none" : "block";
     babysitHoursNote.style.display = isBabysit ? "block" : "none";
   }
@@ -188,6 +213,8 @@ function readRequestFormValues(prefix) {
     meal_prepared_by_sitter: document.getElementById(`${prefix}-meal-prepared-by-sitter`).checked,
     sitters_kids_welcome: document.getElementById(`${prefix}-sitters-kids-welcome`).checked,
     allergies_or_pet_concerns: document.getElementById(`${prefix}-allergies-or-pet-concerns`).value,
+    origin: document.getElementById(`${prefix}-origin`).value,
+    destination: document.getElementById(`${prefix}-destination`).value,
     flexible_date: document.getElementById(`${prefix}-flexible-date`).checked,
     flexible_start_time: document.getElementById(`${prefix}-flexible-start-time`).checked,
     flexible_end_time: document.getElementById(`${prefix}-flexible-end-time`).checked,
@@ -239,6 +266,7 @@ function normalizeFormPayload(values, options = {}) {
   }
 
   const isBabysit = requestType === "babysit";
+  const isDrive = requestType === "drive";
 
   return {
     payload: {
@@ -255,7 +283,9 @@ function normalizeFormPayload(values, options = {}) {
       p_meal_required: isBabysit ? !!values.meal_required : false,
       p_meal_prepared_by_sitter: isBabysit ? !!values.meal_prepared_by_sitter : false,
       p_sitters_kids_welcome: isBabysit ? !!values.sitters_kids_welcome : false,
-      p_allergies_or_pet_concerns: isBabysit ? (values.allergies_or_pet_concerns || null) : null
+      p_allergies_or_pet_concerns: isBabysit ? (values.allergies_or_pet_concerns || null) : null,
+      p_origin: isDrive ? (values.origin || null) : null,
+      p_destination: isDrive ? (values.destination || null) : null
     }
   };
 }
@@ -374,6 +404,8 @@ async function loadRequestInto(containerId) {
       ${r.request_type === "babysit" && r.meal_required ? `<p class="mb-2"><span class="font-semibold">Meal prepared by sitter:</span> ${r.meal_prepared_by_sitter ? "Yes" : "No"}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sitter's kids welcome:</span> ${r.sitters_kids_welcome ? "Yes" : "No"}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Allergies/Pet concerns:</span> ${r.allergies_or_pet_concerns || "None listed"}</p>` : ""}
+      ${r.request_type === "drive" ? `<p class="mb-2"><span class="font-semibold">Origin:</span> ${r.origin || "Not specified"}</p>` : ""}
+      ${r.request_type === "drive" ? `<p class="mb-2"><span class="font-semibold">Destination:</span> ${r.destination || "Not specified"}</p>` : ""}
       
       <div id="view-mode">
         <p class="mb-2"><span class="font-semibold">Time:</span> ${formatRequestSchedule(r)}</p>
@@ -496,7 +528,9 @@ async function loadRequestInto(containerId) {
       p_meal_required: payload.p_meal_required,
       p_meal_prepared_by_sitter: payload.p_meal_prepared_by_sitter,
       p_sitters_kids_welcome: payload.p_sitters_kids_welcome,
-      p_allergies_or_pet_concerns: payload.p_allergies_or_pet_concerns
+      p_allergies_or_pet_concerns: payload.p_allergies_or_pet_concerns,
+      p_origin: payload.p_origin,
+      p_destination: payload.p_destination
     });
 
     if (error) {
