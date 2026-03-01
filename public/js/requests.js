@@ -5,10 +5,7 @@ import { formatDateTime } from "./utils.js";
 async function listRequestsInto(containerId) {
   await requireAuth();
 
-  const { data, error } = await supabase
-    .from("requests")
-    .select("id, start_time, end_time, status, notes")
-    .order("start_time", { ascending: true });
+  const { data, error } = await supabase.rpc("rpc_list_requests");
 
   const el = document.getElementById(containerId);
 
@@ -41,23 +38,28 @@ async function loadRequestInto(containerId) {
     return;
   }
 
-  const { data: r, error } = await supabase
-    .from("requests")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: requestData, error } = await supabase.rpc("rpc_get_request", {
+    p_request_id: id
+  });
 
-  if (error) {
-    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
+  const r = Array.isArray(requestData) ? requestData[0] : requestData;
+
+  if (error || !r) {
+    el.innerHTML = `<p class='text-red-600'>${error?.message || "Request not found."}</p>`;
     return;
   }
 
   // Fetch claims for this request
-  const { data: claims } = await supabase
-    .from("claims")
-    .select("*")
-    .eq("request_id", id)
-    .order("created_at", { ascending: false });
+  const { data: claimsData, error: claimsError } = await supabase.rpc("rpc_list_claims", {
+    p_request_id: id
+  });
+
+  if (claimsError) {
+    el.innerHTML = `<p class='text-red-600'>${claimsError.message}</p>`;
+    return;
+  }
+
+  const claims = claimsData || [];
 
   const userId = session.user.id;
   const isOwner = r.owner === userId;
@@ -182,14 +184,12 @@ async function loadRequestInto(containerId) {
     const endTime = document.getElementById("edit-end-time").value;
     const notes = document.getElementById("edit-notes").value;
 
-    const { error } = await supabase
-      .from("requests")
-      .update({
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
-        notes: notes
-      })
-      .eq("id", requestId);
+    const { error } = await supabase.rpc("rpc_update_request", {
+      p_request_id: requestId,
+      p_start_time: new Date(startTime).toISOString(),
+      p_end_time: new Date(endTime).toISOString(),
+      p_notes: notes
+    });
 
     if (error) {
       document.getElementById("request-error").textContent = error.message;
@@ -200,23 +200,11 @@ async function loadRequestInto(containerId) {
 
   async function submitClaim(requestId) {
     const comment = document.getElementById("claim-comment").value;
-    
-    // First, update request status to "claimed" if it's still "open"
-    if (r.status === "open") {
-      await supabase
-        .from("requests")
-        .update({ status: "claimed" })
-        .eq("id", requestId);
-    }
 
-    // Insert the claim
-    const { error } = await supabase
-      .from("claims")
-      .insert({
-        request_id: requestId,
-        user_id: userId,
-        comment: comment
-      });
+    const { error } = await supabase.rpc("rpc_claim_request", {
+      p_request_id: requestId,
+      p_comment: comment
+    });
 
     if (error) {
       document.getElementById("request-error").textContent = error.message;
@@ -226,13 +214,10 @@ async function loadRequestInto(containerId) {
   }
 
   async function selectWinner(requestId, claimId) {
-    const { error } = await supabase
-      .from("requests")
-      .update({
-        status: "accepted",
-        accepted_by: claimId
-      })
-      .eq("id", requestId);
+    const { error } = await supabase.rpc("rpc_select_request_winner", {
+      p_request_id: requestId,
+      p_claim_id: claimId
+    });
 
     if (error) {
       document.getElementById("request-error").textContent = error.message;
@@ -243,10 +228,9 @@ async function loadRequestInto(containerId) {
 }
 
 async function completeRequest(id) {
-  const { error } = await supabase
-    .from("requests")
-    .update({ status: "completed" })
-    .eq("id", id);
+  const { error } = await supabase.rpc("rpc_complete_request", {
+    p_request_id: id
+  });
   
   if (error) {
     document.getElementById("request-error").textContent = error.message;
@@ -263,15 +247,12 @@ function newRequestForm() {
     error: "",
 
     async create() {
-      const session = await requireAuth();
-      const userId = session.user.id;
+      await requireAuth();
 
-      const { error } = await supabase.from("requests").insert({
-        owner: userId,
-        start_time: this.start_time,
-        end_time: this.end_time,
-        notes: this.notes,
-        status: "open"
+      const { error } = await supabase.rpc("rpc_create_request", {
+        p_start_time: this.start_time,
+        p_end_time: this.end_time,
+        p_notes: this.notes
       });
 
       if (error) {
