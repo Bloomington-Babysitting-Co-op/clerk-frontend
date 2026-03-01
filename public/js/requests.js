@@ -317,27 +317,27 @@ async function loadRequestInto(containerId) {
     return;
   }
 
-  // Fetch claims for this request
-  const { data: claimsData, error: claimsError } = await supabase.rpc("rpc_list_claims", {
+  // Fetch offers for this request
+  const { data: offersData, error: offersError } = await supabase.rpc("rpc_list_offers", {
     p_request_id: id
   });
 
-  if (claimsError) {
-    el.innerHTML = `<p class='text-red-600'>${claimsError.message}</p>`;
+  if (offersError) {
+    el.innerHTML = `<p class='text-red-600'>${offersError.message}</p>`;
     return;
   }
 
-  const claims = claimsData || [];
+  const offers = offersData || [];
 
   const userId = session.user.id;
   const isOwner = r.owner === userId;
-  const canClaim = r.status === "open" && !isOwner;
-  const canClaimWhenClaimed = r.status === "claimed" && !isOwner;
-  const hasAlreadyClaimed = claims?.some(c => c.user_id === userId);
-  const canSelectWinner = isOwner && r.status === "claimed";
-  const canComplete = r.status === "accepted" && (isOwner || r.accepted_by === userId);
+  const canOffer = r.status === "open" && !isOwner;
+  const canOfferWhenOffered = r.status === "offered" && !isOwner;
+  const hasAlreadyOffered = offers?.some(c => c.user_id === userId);
+  const canSelectWinner = isOwner && r.status === "offered";
+  const canComplete = r.status === "assigned" && (isOwner || r.accepted_by === userId);
   const canEdit = isOwner && r.status === "open";
-  const canCancel = isOwner && ["open", "claimed", "accepted"].includes(r.status);
+  const canCancel = isOwner && ["open", "offered", "assigned"].includes(r.status);
   const editFormValues = getRequestFormValuesFromRequest(r);
 
   el.innerHTML = `
@@ -360,8 +360,8 @@ async function loadRequestInto(containerId) {
         <p class="mb-4 mt-4 text-gray-700"><span class="font-semibold">Description:</span> ${r.notes || ""}</p>
 
         <div class="mt-6 flex gap-2">
-          ${canClaim ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Claim</button>` : ""}
-          ${canClaimWhenClaimed && !hasAlreadyClaimed ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Claim</button>` : ""}
+          ${canOffer ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>` : ""}
+          ${canOfferWhenOffered && !hasAlreadyOffered ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Offer</button>` : ""}
           ${canComplete ? `<button id="complete-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Complete</button>` : ""}
           ${canEdit ? `<button id="edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Edit</button>` : ""}
           ${canCancel ? `<button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancel Request</button>` : ""}
@@ -372,15 +372,15 @@ async function loadRequestInto(containerId) {
         ${getRequestFormHtml("edit-request", editFormValues, { submitLabel: "Save", showCancel: true, disableType: true })}
       </div>
 
-      ${claims && claims.length > 0 ? `
+      ${offers && offers.length > 0 ? `
         <div class="mt-8 pt-8 border-t">
-          <h2 class="text-2xl font-bold mb-4">Claims (${claims.length})</h2>
+          <h2 class="text-2xl font-bold mb-4">Offers (${offers.length})</h2>
           <div class="space-y-3">
-            ${claims.map((claim, index) => `
+            ${offers.map((offer, index) => `
               <div class="bg-gray-50 p-4 rounded border">
-                <p class="text-sm text-gray-600 mb-1">Claimed ${formatDateTime(claim.created_at)}</p>
-                <p class="text-gray-700">${claim.comment || "<em>No comment</em>"}</p>
-                ${canSelectWinner ? `<button class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm select-winner-btn" data-claim-id="${claim.id}">Select as Winner</button>` : ""}
+                <p class="text-sm text-gray-600 mb-1">Offered ${formatDateTime(offer.created_at)}</p>
+                <p class="text-gray-700">${offer.comment || "<em>No comment</em>"}</p>
+                ${canSelectWinner ? `<button class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm select-winner-btn" data-offer-id="${offer.id}">Select as Winner</button>` : ""}
               </div>
             `).join("")}
           </div>
@@ -390,38 +390,38 @@ async function loadRequestInto(containerId) {
       <p id="request-error" class="text-red-600 mt-4"></p>
     </div>
 
-    <div id="claim-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+    <div id="offer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
         <h2 class="text-xl font-bold mb-4">Add a Comment (Optional)</h2>
-        <textarea id="claim-comment" placeholder="Why do you want to claim this request?" class="border p-2 w-full mb-4 h-24"></textarea>
+        <textarea id="offer-comment" placeholder="Why do you want to offer help for this request?" class="border p-2 w-full mb-4 h-24"></textarea>
         <div class="flex gap-2">
-          <button id="claim-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Claim</button>
-          <button id="claim-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
+          <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Submit Offer</button>
+          <button id="offer-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
         </div>
       </div>
     </div>
   `;
 
   // Event listeners
-  if (document.getElementById("claim-btn")) {
-    document.getElementById("claim-btn").onclick = () => {
-      document.getElementById("claim-modal").style.display = "flex";
+  if (document.getElementById("offer-btn")) {
+    document.getElementById("offer-btn").onclick = () => {
+      document.getElementById("offer-modal").style.display = "flex";
     };
   }
 
-  if (document.getElementById("claim-submit-btn")) {
-    document.getElementById("claim-submit-btn").onclick = () => submitClaim(id);
+  if (document.getElementById("offer-submit-btn")) {
+    document.getElementById("offer-submit-btn").onclick = () => submitOffer(id);
   }
 
-  if (document.getElementById("claim-cancel-btn")) {
-    document.getElementById("claim-cancel-btn").onclick = () => {
-      document.getElementById("claim-modal").style.display = "none";
+  if (document.getElementById("offer-cancel-btn")) {
+    document.getElementById("offer-cancel-btn").onclick = () => {
+      document.getElementById("offer-modal").style.display = "none";
     };
   }
 
   const selectWinnerBtns = document.querySelectorAll(".select-winner-btn");
   selectWinnerBtns.forEach(btn => {
-    btn.onclick = () => selectWinner(id, btn.dataset.claimId);
+    btn.onclick = () => selectWinner(id, btn.dataset.offerId);
   });
 
   if (document.getElementById("edit-btn")) {
@@ -485,10 +485,10 @@ async function loadRequestInto(containerId) {
     }
   }
 
-  async function submitClaim(requestId) {
-    const comment = document.getElementById("claim-comment").value;
+  async function submitOffer(requestId) {
+    const comment = document.getElementById("offer-comment").value;
 
-    const { error } = await supabase.rpc("rpc_claim_request", {
+    const { error } = await supabase.rpc("rpc_offer_request", {
       p_request_id: requestId,
       p_comment: comment
     });
@@ -500,10 +500,10 @@ async function loadRequestInto(containerId) {
     }
   }
 
-  async function selectWinner(requestId, claimId) {
+  async function selectWinner(requestId, offerId) {
     const { error } = await supabase.rpc("rpc_select_request_winner", {
       p_request_id: requestId,
-      p_claim_id: claimId
+      p_offer_id: offerId
     });
 
     if (error) {

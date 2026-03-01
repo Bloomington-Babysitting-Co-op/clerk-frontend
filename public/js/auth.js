@@ -124,7 +124,7 @@ function dashboardState() {
                   <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
                   <p class="text-sm text-gray-600">Type: ${r.request_type || "other"}</p>
                   <p class="mt-1">${r.notes || ""}</p>
-                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Accept</a>
+                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Offer</a>
                 </div>
               `).join("")
               : "<p class='text-gray-600'>No available requests at the moment.</p>";
