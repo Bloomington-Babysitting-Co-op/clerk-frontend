@@ -25,7 +25,7 @@ export async function setupNavbar(containerId) {
             <a href="/requests.html" class="hover:text-blue-100">Requests</a>
             <a href="/ledger.html" class="hover:text-blue-100">Ledger</a>
             ${session 
-              ? `<button id="logout-btn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Log Out</button>` 
+              ? `<a href="/profile.html" class="bg-white text-blue-700 hover:bg-blue-100 px-4 py-2 rounded">Profile</a>` 
               : `<a href="/login.html" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Log In</a>`
             }
           </div>
@@ -36,15 +36,6 @@ export async function setupNavbar(containerId) {
     container.innerHTML = navbarHTML;
     console.log("Navbar rendered successfully");
 
-    if (session) {
-      const logoutBtn = document.getElementById("logout-btn");
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-          await supabase.auth.signOut();
-          window.location = "/";
-        });
-      }
-    }
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }
