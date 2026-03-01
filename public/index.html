@@ -9,11 +9,21 @@
   <nav id="navbar"></nav>
 
   <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
-    <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
-
     <div x-data="dashboardState" x-init="init">
       <!-- Dashboard -->
       <div class="space-y-8">
+        <!-- External Links -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">External Links</h2>
+          <div class="flex items-center justify-between gap-2">
+            <a href="https://groups.google.com/u/1/g/bloomingtonbabysittingco-op" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Groups</a>
+            <a href="https://drive.google.com/drive/folders/144Uxgk9NSpGEji93FCJM6C3hj0-ZztWl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Drive</a>
+            <a href="https://docs.google.com/spreadsheets/d/1j1sRLqTYlOJJsdrh0UVyHjOMN4Wrs-GHlUU77FVWSSk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Roster</a>
+            <a href="https://docs.google.com/presentation/d/11q4GuguHfrANRxbB5el9SDp7hzUzYK1rZUcZrumCKl8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Pictures</a>
+            <a href="https://goo.gl/maps/31PHeVPHckCe1Rwv8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Map</a>
+          </div>
+        </div>
+
         <!-- Hours Balance -->
         <div class="bg-white p-6 rounded-lg shadow">
           <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
@@ -35,15 +45,6 @@
         <div class="bg-white p-6 rounded-lg shadow">
           <h2 class="text-xl font-bold mb-4">Available Requests</h2>
           <div id="other-requests-list"></div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Useful Links</h2>
-          <div class="space-y-2">
-            <a href="https://drive.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Drive</a>
-            <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Maps</a>
-            <a href="https://groups.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Groups</a>
-          </div>
         </div>
       </div>
     </div>
