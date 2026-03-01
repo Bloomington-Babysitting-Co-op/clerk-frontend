@@ -5,10 +5,7 @@ import { formatDateTime } from "./utils.js";
 async function listLedgerInto(containerId) {
   await requireAuth();
 
-  const { data, error } = await supabase
-    .from("ledger_entries")
-    .select("timestamp, hours, from_user, to_user")
-    .order("timestamp", { ascending: false });
+  const { data, error } = await supabase.rpc("rpc_list_ledger_entries");
 
   const el = document.getElementById(containerId);
 

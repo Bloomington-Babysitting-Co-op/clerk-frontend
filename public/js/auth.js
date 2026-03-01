@@ -71,30 +71,13 @@ function dashboardState() {
     async loadData() {
       try {
         // Get hours balance
-        const { data: ledger, error: ledgerError } = await supabase
-          .from("ledger_entries")
-          .select("hours, from_user, to_user");
-
-        if (ledgerError) throw ledgerError;
-
-        const userId = this.session.user.id;
-        let balance = 0;
-        if (ledger) {
-          ledger.forEach(e => {
-            if (e.to_user === userId) balance += parseFloat(e.hours);
-            if (e.from_user === userId) balance -= parseFloat(e.hours);
-          });
-        }
-        this.hoursBalance = balance.toFixed(2);
+        const { data: balance, error: balanceError } = await supabase.rpc("rpc_get_hours_balance");
+        if (balanceError) throw balanceError;
+        this.hoursBalance = Number(balance ?? 0).toFixed(2);
 
         // Get user's future requests
-        const now = new Date().toISOString();
-        const { data: userRequests } = await supabase
-          .from("requests")
-          .select("id, start_time, end_time, status, notes")
-          .eq("owner", userId)
-          .gte("end_time", now)
-          .order("start_time", { ascending: true });
+        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_user_future_requests");
+        if (userRequestsError) throw userRequestsError;
 
         if (userRequests) {
           const container = document.getElementById("user-requests-list");
@@ -113,13 +96,8 @@ function dashboardState() {
         }
 
         // Get active requests from other users
-        const { data: otherRequests } = await supabase
-          .from("requests")
-          .select("id, owner, start_time, end_time, status, notes")
-          .eq("status", "open")
-          .neq("owner", userId)
-          .gte("end_time", now)
-          .order("start_time", { ascending: true });
+        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_open_other_requests");
+        if (otherRequestsError) throw otherRequestsError;
 
         if (otherRequests) {
           const container = document.getElementById("other-requests-list");
