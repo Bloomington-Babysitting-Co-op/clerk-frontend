@@ -4,9 +4,9 @@ Created for Cloudflare Pages + Supabase + Resend.
 ## Setup
 ### Backend Configuration
 1. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/ledger-backend)
-2. Update `public/js/supabase.js` with:
-   * SUPABASE_URL
-   * PUBLIC_ANON_KEY
+2. Update `public/js/config.js` with:
+   * supabaseUrl
+   * supabaseKey
 
 ### Local Development
 To set up a local development environment that replicates Cloudflare Pages:
