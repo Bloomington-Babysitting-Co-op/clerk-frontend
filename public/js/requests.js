@@ -34,7 +34,7 @@ function calculateHours(startIso, endIso) {
 function getRequestFormValuesFromRequest(request) {
   return {
     request_type: request.request_type || "babysit",
-    sit_location: request.sit_location || "",
+    sit_location: request.sit_location || "requester_house",
     meal_required: !!request.meal_required,
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
     sitters_kids_welcome: !!request.sitters_kids_welcome,
@@ -53,7 +53,7 @@ function getRequestFormValuesFromRequest(request) {
 function getDefaultRequestFormValues() {
   return {
     request_type: "babysit",
-    sit_location: "",
+    sit_location: "requester_house",
     meal_required: false,
     meal_prepared_by_sitter: false,
     sitters_kids_welcome: false,
@@ -81,21 +81,19 @@ function getRequestFormHtml(prefix, values, options = {}) {
         <option value="babysit" ${values.request_type === "babysit" ? "selected" : ""}>Babysit</option>
         <option value="drive" ${values.request_type === "drive" ? "selected" : ""}>Drive</option>
         <option value="favor" ${values.request_type === "favor" ? "selected" : ""}>Favor</option>
-        <option value="other" ${values.request_type === "other" ? "selected" : ""}>Other</option>
       </select>
 
       <div id="${prefix}-babysit-fields">
         <label class="block mb-2 font-semibold">Sit Location</label>
         <select id="${prefix}-sit-location" class="border p-2 w-full mb-4">
-          <option value="" ${values.sit_location === "" ? "selected" : ""}>Select location</option>
-          <option value="sitter_house" ${values.sit_location === "sitter_house" ? "selected" : ""}>At Sitter's House</option>
-          <option value="requester_house" ${values.sit_location === "requester_house" ? "selected" : ""}>At Requestor's House</option>
+          <option value="requester_house" ${values.sit_location === "requester_house" ? "selected" : ""}>Requestor's House</option>
+          <option value="sitter_house" ${values.sit_location === "sitter_house" ? "selected" : ""}>Sitter's House</option>
           <option value="either" ${values.sit_location === "either" ? "selected" : ""}>Either</option>
         </select>
 
         <label class="inline-flex items-center gap-2 mb-2">
           <input type="checkbox" id="${prefix}-meal-required" ${values.meal_required ? "checked" : ""}>
-          <span>Meal will need to be served</span>
+          <span>Meal required</span>
         </label>
 
         <label id="${prefix}-meal-prepared-wrapper" class="inline-flex items-center gap-2 mb-2 ml-2">
@@ -205,6 +203,10 @@ function normalizeFormPayload(values, options = {}) {
   const requestType = options.requestTypeOverride || values.request_type;
   const description = (values.notes || "").trim();
 
+  if (!requestType || !["babysit", "drive", "favor"].includes(requestType)) {
+    return { error: "Request type is required." };
+  }
+
   if (!description) {
     return { error: "Description is required." };
   }
@@ -301,7 +303,7 @@ async function listRequestsInto(containerId) {
       <div class="bg-white border p-4 rounded-lg shadow hover:shadow-lg transition">
         <p class="font-semibold text-lg text-gray-800">${r.status}</p>
         <p class="text-sm text-gray-600 mt-1">${formatRequestSchedule(r)}</p>
-        <p class="text-sm text-gray-600 mt-1">Type: ${r.request_type || "other"}</p>
+        <p class="text-sm text-gray-600 mt-1">Type: ${r.request_type}</p>
         <p class="text-sm text-gray-600 mt-1">${formatRequestFlexibility(r)}</p>
         <p class="text-gray-700 mt-2">${r.notes || ""}</p>
         ${r.hours_offered ? `<p class="text-sm text-gray-600 mt-1">Hours: ${r.hours_offered}</p>` : ""}
@@ -361,7 +363,7 @@ async function loadRequestInto(containerId) {
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 class="text-3xl font-bold mb-4">Request Details</h1>
       <p class="mb-2"><span class="font-semibold">Status:</span> <span class="text-lg text-blue-600 font-semibold">${r.status}</span></p>
-      <p class="mb-2"><span class="font-semibold">Type:</span> ${r.request_type || "other"}</p>
+      <p class="mb-2"><span class="font-semibold">Type:</span> ${r.request_type}</p>
       ${r.request_date ? `<p class="mb-2"><span class="font-semibold">Date:</span> ${new Date(`${r.request_date}T00:00:00`).toLocaleDateString()}</p>` : ""}
       <p class="mb-2"><span class="font-semibold">Date flexible:</span> ${r.flexible_date ? "Yes" : "No"}</p>
       <p class="mb-2"><span class="font-semibold">Start time flexible:</span> ${r.flexible_start_time ? "Yes" : "No"}</p>
