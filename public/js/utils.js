@@ -23,7 +23,7 @@ export async function setupNavbar(containerId) {
           <a href="/" class="text-xl font-bold">BBC Ledger</a>
           <div class="flex gap-6 items-center">
             <a href="/request_new.html" class="hover:text-blue-100">New Request</a>
-            <a href="/request_view.html" class="hover:text-blue-100">View Requests</a>
+            <a href="/requests.html" class="hover:text-blue-100">View Requests</a>
             <a href="/ledger.html" class="hover:text-blue-100">Ledger</a>
             ${session 
               ? `<button id="logout-btn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Log Out</button>` 

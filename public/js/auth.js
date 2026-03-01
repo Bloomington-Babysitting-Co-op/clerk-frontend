@@ -1,6 +1,16 @@
 import { supabase } from "/js/supabase.js";
 import { formatDateTime } from "/js/utils.js";
 
+function formatDashboardSchedule(request) {
+  if (request.start_time && request.end_time) {
+    return `${formatDateTime(request.start_time)} → ${formatDateTime(request.end_time)}`;
+  }
+  if (request.request_date) {
+    return new Date(`${request.request_date}T00:00:00`).toLocaleDateString();
+  }
+  return "Date/time flexible";
+}
+
 function authState() {
   return {
     session: null,
@@ -45,6 +55,7 @@ function dashboardState() {
     password: "",
     error: "",
     hoursBalance: 0,
+    completedSitThisMonth: false,
 
     async init() {
       const { data } = await supabase.auth.getSession();
@@ -79,6 +90,10 @@ function dashboardState() {
         const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_user_future_requests");
         if (userRequestsError) throw userRequestsError;
 
+        const { data: completedSitThisMonth, error: completedSitError } = await supabase.rpc("rpc_has_completed_sit_this_month");
+        if (completedSitError) throw completedSitError;
+        this.completedSitThisMonth = !!completedSitThisMonth;
+
         if (userRequests) {
           const container = document.getElementById("user-requests-list");
           if (container) {
@@ -86,7 +101,8 @@ function dashboardState() {
               ? userRequests.map(r => `
                 <div class="border p-4 mb-2 rounded">
                   <p class="font-semibold text-gray-700">${r.status}</p>
-                  <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
+                  <p class="text-sm text-gray-600">Type: ${r.request_type || "other"}</p>
                   <p class="mt-1">${r.notes || ""}</p>
                   <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
                 </div>
@@ -105,7 +121,8 @@ function dashboardState() {
             container.innerHTML = otherRequests.length
               ? otherRequests.map(r => `
                 <div class="border p-4 mb-2 rounded">
-                  <p class="text-sm text-gray-600">${formatDateTime(r.start_time)} → ${formatDateTime(r.end_time)}</p>
+                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
+                  <p class="text-sm text-gray-600">Type: ${r.request_type || "other"}</p>
                   <p class="mt-1">${r.notes || ""}</p>
                   <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Accept</a>
                 </div>
