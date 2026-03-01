@@ -110,7 +110,7 @@ function dashboardState() {
                 <div class="border p-4 mb-2 rounded">
                   <p class="font-semibold text-gray-700">${r.status}</p>
                   <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
-                  <p class="text-sm text-gray-600">Type: ${r.request_type || "other"}</p>
+                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
                   <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
                   <p class="mt-1">${r.notes || ""}</p>
                   <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
@@ -131,7 +131,7 @@ function dashboardState() {
               ? otherRequests.map(r => `
                 <div class="border p-4 mb-2 rounded">
                   <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
-                  <p class="text-sm text-gray-600">Type: ${r.request_type || "other"}</p>
+                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
                   <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
                   <p class="mt-1">${r.notes || ""}</p>
                   <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Offer</a>
