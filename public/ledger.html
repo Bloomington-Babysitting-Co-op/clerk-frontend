@@ -9,7 +9,32 @@
   <nav id="navbar"></nav>
 
   <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
-    <h1 class="text-3xl font-bold mb-8">Ledger</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-bold">Ledger</h1>
+      <a id="new-entry-link" href="/entry_new.html" class="bg-blue-600 text-white px-4 py-2 rounded" style="display:none;">New Entry</a>
+    </div>
+
+    <div class="bg-white border p-4 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-3">Filter + Export</h2>
+      <div class="grid md:grid-cols-4 gap-3 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-1">Start Date</label>
+          <input id="ledger-start-date" type="date" class="border p-2 w-full rounded">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">End Date</label>
+          <input id="ledger-end-date" type="date" class="border p-2 w-full rounded">
+        </div>
+        <button id="ledger-apply-filter-btn" class="bg-gray-700 text-white px-4 py-2 rounded">Apply Date Range</button>
+        <button id="ledger-export-csv-btn" class="bg-green-600 text-white px-4 py-2 rounded">Export CSV</button>
+      </div>
+      <p id="ledger-error" class="text-red-600 mt-2"></p>
+    </div>
+
+    <div class="bg-white border p-4 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-3">All Users' Current Hour Balance</h2>
+      <div id="ledger-balances"></div>
+    </div>
 
     <div id="ledger-list" class="grid gap-4"></div>
   </main>
@@ -17,11 +42,11 @@
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
     import { requireAuth } from "/js/auth.js";
-    import { listLedgerInto } from "/js/ledger.js";
+    import { mountLedgerPage } from "/js/ledger.js";
 
     await setupNavbar("navbar");
     await requireAuth();
-    listLedgerInto("ledger-list");
+    mountLedgerPage();
   </script>
 
   <script src="https://unpkg.com/alpinejs" defer></script>

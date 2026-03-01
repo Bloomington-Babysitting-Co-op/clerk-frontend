@@ -20,6 +20,11 @@
           <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
         </div>
 
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-2">Sit Activity This Month</h2>
+          <p class="text-lg" x-text="completedSitThisMonth ? 'You have completed a babysit request this month.' : 'You have not completed a babysit request yet this month.'"></p>
+        </div>
+
         <!-- Your Future Requests -->
         <div class="bg-white p-6 rounded-lg shadow">
           <h2 class="text-xl font-bold mb-4">Your Submitted Requests</h2>
@@ -30,6 +35,15 @@
         <div class="bg-white p-6 rounded-lg shadow">
           <h2 class="text-xl font-bold mb-4">Available Requests</h2>
           <div id="other-requests-list"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Useful Links</h2>
+          <div class="space-y-2">
+            <a href="https://drive.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Drive</a>
+            <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Maps</a>
+            <a href="https://groups.google.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline block">Google Groups</a>
+          </div>
         </div>
       </div>
     </div>
