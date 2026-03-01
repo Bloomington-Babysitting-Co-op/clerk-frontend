@@ -261,6 +261,13 @@ function formatRequestSchedule(request) {
   return "Date/time flexible";
 }
 
+function formatSitLocation(value) {
+  if (value === "sitter_house") return "At sitter's house";
+  if (value === "requester_house") return "At requestor's house";
+  if (value === "either") return "Either";
+  return "Not specified";
+}
+
 async function listRequestsInto(containerId) {
   await requireAuth();
 
@@ -330,6 +337,7 @@ async function loadRequestInto(containerId) {
   const canSelectWinner = isOwner && r.status === "claimed";
   const canComplete = r.status === "accepted" && (isOwner || r.accepted_by === userId);
   const canEdit = isOwner && r.status === "open";
+  const canCancel = isOwner && ["open", "claimed", "accepted"].includes(r.status);
   const editFormValues = getRequestFormValuesFromRequest(r);
 
   el.innerHTML = `
@@ -338,17 +346,25 @@ async function loadRequestInto(containerId) {
       <p class="mb-2"><span class="font-semibold">Status:</span> <span class="text-lg text-blue-600 font-semibold">${r.status}</span></p>
       <p class="mb-2"><span class="font-semibold">Type:</span> ${r.request_type || "other"}</p>
       ${r.request_date ? `<p class="mb-2"><span class="font-semibold">Date:</span> ${new Date(`${r.request_date}T00:00:00`).toLocaleDateString()}</p>` : ""}
+      <p class="mb-2"><span class="font-semibold">Open for any date:</span> ${r.open_for_any_date ? "Yes" : "No"}</p>
+      <p class="mb-2"><span class="font-semibold">Open for alternatives:</span> ${r.open_for_alternatives ? "Yes" : "No"}</p>
       ${r.hours_offered ? `<p class="mb-2"><span class="font-semibold">Hours Offered:</span> ${r.hours_offered}</p>` : ""}
+      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sit location:</span> ${formatSitLocation(r.sit_location)}</p>` : ""}
+      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Meal required:</span> ${r.meal_required ? "Yes" : "No"}</p>` : ""}
+      ${r.request_type === "babysit" && r.meal_required ? `<p class="mb-2"><span class="font-semibold">Meal prepared by sitter:</span> ${r.meal_prepared_by_sitter ? "Yes" : "No"}</p>` : ""}
+      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sitter's kids welcome:</span> ${r.sitters_kids_welcome ? "Yes" : "No"}</p>` : ""}
+      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Allergies/Pet concerns:</span> ${r.allergies_or_pet_concerns || "None listed"}</p>` : ""}
       
       <div id="view-mode">
         <p class="mb-2"><span class="font-semibold">Time:</span> ${formatRequestSchedule(r)}</p>
-        <p class="mb-4 mt-4 text-gray-700">${r.notes || ""}</p>
+        <p class="mb-4 mt-4 text-gray-700"><span class="font-semibold">Description:</span> ${r.notes || ""}</p>
 
         <div class="mt-6 flex gap-2">
           ${canClaim ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Claim</button>` : ""}
           ${canClaimWhenClaimed && !hasAlreadyClaimed ? `<button id="claim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Claim</button>` : ""}
           ${canComplete ? `<button id="complete-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Complete</button>` : ""}
           ${canEdit ? `<button id="edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Edit</button>` : ""}
+          ${canCancel ? `<button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancel Request</button>` : ""}
         </div>
       </div>
 
@@ -426,6 +442,10 @@ async function loadRequestInto(containerId) {
     document.getElementById("complete-btn").onclick = () => completeRequest(id);
   }
 
+  if (document.getElementById("cancel-request-btn")) {
+    document.getElementById("cancel-request-btn").onclick = () => cancelRequest(id);
+  }
+
   function toggleEditMode(isEditing) {
     document.getElementById("view-mode").style.display = isEditing ? "none" : "block";
     document.getElementById("edit-mode").style.display = isEditing ? "block" : "none";
@@ -499,6 +519,18 @@ async function completeRequest(id) {
     p_request_id: id
   });
   
+  if (error) {
+    document.getElementById("request-error").textContent = error.message;
+  } else {
+    window.location.reload();
+  }
+}
+
+async function cancelRequest(id) {
+  const { error } = await supabase.rpc("rpc_cancel_request", {
+    p_request_id: id
+  });
+
   if (error) {
     document.getElementById("request-error").textContent = error.message;
   } else {
