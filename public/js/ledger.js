@@ -82,13 +82,9 @@ async function mountLedgerPage() {
   const endInput = document.getElementById("ledger-end-date");
   const applyBtn = document.getElementById("ledger-apply-filter-btn");
   const exportBtn = document.getElementById("ledger-export-csv-btn");
-  const newEntryLink = document.getElementById("new-entry-link");
   const ledgerError = document.getElementById("ledger-error");
 
   const { data: isAdmin } = await supabase.rpc("rpc_is_admin");
-  if (newEntryLink) {
-    newEntryLink.style.display = "inline-block";
-  }
 
   let currentRows = await listLedgerInto("ledger-list", { showEditLinks: !!isAdmin });
   await loadLedgerBalancesInto("ledger-balances");
