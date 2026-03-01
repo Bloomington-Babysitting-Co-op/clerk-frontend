@@ -39,8 +39,9 @@ function getRequestFormValuesFromRequest(request) {
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
     sitters_kids_welcome: !!request.sitters_kids_welcome,
     allergies_or_pet_concerns: request.allergies_or_pet_concerns || "",
-    open_for_any_date: !!request.open_for_any_date,
-    open_for_alternatives: !!request.open_for_alternatives,
+    flexible_date: !!request.flexible_date,
+    flexible_start_time: !!request.flexible_start_time,
+    flexible_end_time: !!request.flexible_end_time,
     request_date: request.request_date || toDateInputFromIso(request.start_time),
     start_time: toTimeInputFromIso(request.start_time),
     end_time: toTimeInputFromIso(request.end_time),
@@ -57,8 +58,9 @@ function getDefaultRequestFormValues() {
     meal_prepared_by_sitter: false,
     sitters_kids_welcome: false,
     allergies_or_pet_concerns: "",
-    open_for_any_date: false,
-    open_for_alternatives: false,
+    flexible_date: false,
+    flexible_start_time: false,
+    flexible_end_time: false,
     request_date: "",
     start_time: "",
     end_time: "",
@@ -113,23 +115,31 @@ function getRequestFormHtml(prefix, values, options = {}) {
       <label class="block mb-2 font-semibold">Description</label>
       <textarea id="${prefix}-notes" class="border p-2 w-full mb-4" required>${values.notes}</textarea>
 
-      <label class="inline-flex items-center gap-2 mb-2">
-        <input type="checkbox" id="${prefix}-open-for-any-date" ${values.open_for_any_date ? "checked" : ""}>
-        <span>Open for any date</span>
-      </label>
-
-      <label class="inline-flex items-center gap-2 mb-4 ml-2">
-        <input type="checkbox" id="${prefix}-open-for-alternatives" ${values.open_for_alternatives ? "checked" : ""}>
-        <span>Open for alternatives</span>
-      </label>
-
-      <label class="block mb-2 font-semibold">Request Date</label>
+      <div class="flex items-center justify-between mb-2">
+        <label class="font-semibold">Request Date</label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" id="${prefix}-flexible-date" ${values.flexible_date ? "checked" : ""}>
+          <span>Flexible</span>
+        </label>
+      </div>
       <input type="date" id="${prefix}-request-date" value="${values.request_date}" class="border p-2 w-full mb-4">
 
-      <label class="block mb-2 font-semibold">Start Time (Optional)</label>
+      <div class="flex items-center justify-between mb-2">
+        <label class="font-semibold">Start Time (Optional)</label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" id="${prefix}-flexible-start-time" ${values.flexible_start_time ? "checked" : ""}>
+          <span>Flexible</span>
+        </label>
+      </div>
       <input type="time" id="${prefix}-start-time" value="${values.start_time}" class="border p-2 w-full mb-4">
 
-      <label class="block mb-2 font-semibold">End Time (Optional)</label>
+      <div class="flex items-center justify-between mb-2">
+        <label class="font-semibold">End Time (Optional)</label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" id="${prefix}-flexible-end-time" ${values.flexible_end_time ? "checked" : ""}>
+          <span>Flexible</span>
+        </label>
+      </div>
       <input type="time" id="${prefix}-end-time" value="${values.end_time}" class="border p-2 w-full mb-4">
 
       <p id="${prefix}-babysit-hours-note" class="text-sm text-gray-600 mb-4">
@@ -180,8 +190,9 @@ function readRequestFormValues(prefix) {
     meal_prepared_by_sitter: document.getElementById(`${prefix}-meal-prepared-by-sitter`).checked,
     sitters_kids_welcome: document.getElementById(`${prefix}-sitters-kids-welcome`).checked,
     allergies_or_pet_concerns: document.getElementById(`${prefix}-allergies-or-pet-concerns`).value,
-    open_for_any_date: document.getElementById(`${prefix}-open-for-any-date`).checked,
-    open_for_alternatives: document.getElementById(`${prefix}-open-for-alternatives`).checked,
+    flexible_date: document.getElementById(`${prefix}-flexible-date`).checked,
+    flexible_start_time: document.getElementById(`${prefix}-flexible-start-time`).checked,
+    flexible_end_time: document.getElementById(`${prefix}-flexible-end-time`).checked,
     request_date: document.getElementById(`${prefix}-request-date`).value,
     start_time: document.getElementById(`${prefix}-start-time`).value,
     end_time: document.getElementById(`${prefix}-end-time`).value,
@@ -198,16 +209,12 @@ function normalizeFormPayload(values, options = {}) {
     return { error: "Description is required." };
   }
 
-  if ((requestType === "babysit" || requestType === "drive") && !values.request_date) {
+  if ((requestType === "babysit" || requestType === "drive") && !values.request_date && !values.flexible_date) {
     return { error: "Date is required for babysit and drive requests." };
   }
 
-  if ((values.start_time || values.end_time) && !values.request_date) {
-    return { error: "Date is required when start or end time is provided." };
-  }
-
-  if ((values.start_time && !values.end_time) || (!values.start_time && values.end_time)) {
-    return { error: "Start and end time must both be provided, or both be empty." };
+  if ((values.start_time || values.end_time) && !values.request_date && !values.flexible_date) {
+    return { error: "Date is required when start or end time is provided, unless date is marked flexible." };
   }
 
   const startIso = combineDateAndTime(values.request_date, values.start_time);
@@ -235,8 +242,9 @@ function normalizeFormPayload(values, options = {}) {
     payload: {
       p_request_type: requestType,
       p_notes: description,
-      p_open_for_any_date: !!values.open_for_any_date,
-      p_open_for_alternatives: !!values.open_for_alternatives,
+      p_flexible_date: !!values.flexible_date,
+      p_flexible_start_time: !!values.flexible_start_time,
+      p_flexible_end_time: !!values.flexible_end_time,
       p_request_date: values.request_date || null,
       p_start_time: startIso,
       p_end_time: endIso,
@@ -268,6 +276,14 @@ function formatSitLocation(value) {
   return "Not specified";
 }
 
+function formatRequestFlexibility(request) {
+  const labels = [];
+  if (request.flexible_date) labels.push("Date");
+  if (request.flexible_start_time) labels.push("Start");
+  if (request.flexible_end_time) labels.push("End");
+  return labels.length ? `Flexible: ${labels.join(", ")}` : "Flexible: None";
+}
+
 async function listRequestsInto(containerId) {
   await requireAuth();
 
@@ -286,6 +302,7 @@ async function listRequestsInto(containerId) {
         <p class="font-semibold text-lg text-gray-800">${r.status}</p>
         <p class="text-sm text-gray-600 mt-1">${formatRequestSchedule(r)}</p>
         <p class="text-sm text-gray-600 mt-1">Type: ${r.request_type || "other"}</p>
+        <p class="text-sm text-gray-600 mt-1">${formatRequestFlexibility(r)}</p>
         <p class="text-gray-700 mt-2">${r.notes || ""}</p>
         ${r.hours_offered ? `<p class="text-sm text-gray-600 mt-1">Hours: ${r.hours_offered}</p>` : ""}
         <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm mt-3 inline-block">View Details</a>
@@ -346,8 +363,9 @@ async function loadRequestInto(containerId) {
       <p class="mb-2"><span class="font-semibold">Status:</span> <span class="text-lg text-blue-600 font-semibold">${r.status}</span></p>
       <p class="mb-2"><span class="font-semibold">Type:</span> ${r.request_type || "other"}</p>
       ${r.request_date ? `<p class="mb-2"><span class="font-semibold">Date:</span> ${new Date(`${r.request_date}T00:00:00`).toLocaleDateString()}</p>` : ""}
-      <p class="mb-2"><span class="font-semibold">Open for any date:</span> ${r.open_for_any_date ? "Yes" : "No"}</p>
-      <p class="mb-2"><span class="font-semibold">Open for alternatives:</span> ${r.open_for_alternatives ? "Yes" : "No"}</p>
+      <p class="mb-2"><span class="font-semibold">Date flexible:</span> ${r.flexible_date ? "Yes" : "No"}</p>
+      <p class="mb-2"><span class="font-semibold">Start time flexible:</span> ${r.flexible_start_time ? "Yes" : "No"}</p>
+      <p class="mb-2"><span class="font-semibold">End time flexible:</span> ${r.flexible_end_time ? "Yes" : "No"}</p>
       ${r.hours_offered ? `<p class="mb-2"><span class="font-semibold">Hours Offered:</span> ${r.hours_offered}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sit location:</span> ${formatSitLocation(r.sit_location)}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Meal required:</span> ${r.meal_required ? "Yes" : "No"}</p>` : ""}
@@ -465,11 +483,12 @@ async function loadRequestInto(containerId) {
     const { error } = await supabase.rpc("rpc_update_request", {
       p_request_id: requestId,
       p_request_date: payload.p_request_date,
+      p_flexible_date: payload.p_flexible_date,
+      p_flexible_start_time: payload.p_flexible_start_time,
+      p_flexible_end_time: payload.p_flexible_end_time,
       p_start_time: payload.p_start_time,
       p_end_time: payload.p_end_time,
       p_notes: payload.p_notes,
-      p_open_for_any_date: payload.p_open_for_any_date,
-      p_open_for_alternatives: payload.p_open_for_alternatives,
       p_hours_offered: payload.p_hours_offered,
       p_sit_location: payload.p_sit_location,
       p_meal_required: payload.p_meal_required,
