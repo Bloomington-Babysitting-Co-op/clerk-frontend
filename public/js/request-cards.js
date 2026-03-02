@@ -42,13 +42,17 @@ function formatRequestStatusLabel(status) {
 function renderRequestListCard(request, options = {}) {
   const href = options.href || `/request_view.html?id=${request.id}`;
   const statusClass = options.statusClass || getRequestStatusTextClass(request.status);
+  const requestTypeLabel = formatRequestTypeLabel(request.request_type);
+  const requestDateLine = formatRequestDateLine(request);
+  const requestTimeLine = formatRequestTimeRangeLine(request);
 
   return `
     <a href="${href}" class="block border p-4 mb-2 rounded hover:shadow transition">
-      <p class="font-semibold ${statusClass}">${formatRequestStatusLabel(request.status)}</p>
-      <p class="text-sm text-gray-600">${formatRequestTypeLabel(request.request_type)}</p>
-      <p class="text-sm text-gray-600">${formatRequestDateLine(request)}</p>
-      <p class="text-sm text-gray-600">${formatRequestTimeRangeLine(request)}</p>
+      <p class="font-semibold flex items-center justify-between gap-2">
+        <span class="${statusClass}">${formatRequestStatusLabel(request.status)}</span>
+        <span class="text-gray-600">${requestTypeLabel}</span>
+      </p>
+      <p class="text-sm text-gray-600">${requestDateLine} • ${requestTimeLine}</p>
     </a>
   `;
 }

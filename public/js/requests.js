@@ -446,9 +446,13 @@ async function loadRequestInto(containerId) {
   const isRequester = requesterId === currentFamilyId;
   const canOffer = r.status === "open" && !isRequester;
   const canOfferWhenOffered = r.status === "offered" && !isRequester;
-  const hasAlreadyOffered = offers?.some(c => c.family_id === currentFamilyId);
+  const myOffer = offers?.find((offer) => offer.family_id === currentFamilyId) || null;
+  const hasAlreadyOffered = !!myOffer;
+  const canEditMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
+  const canCancelMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canAssignOffer = isRequester && r.status === "offered";
-  const canEdit = isRequester && r.status === "open";
+  const canEdit = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
+  const canCancelRequest = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const viewFormValues = getRequestFormValuesFromRequest(r);
   const editFormValues = getRequestFormValuesFromRequest(r);
   const selectedChildIds = requestChildren.map((child) => child.id);
@@ -474,12 +478,20 @@ async function loadRequestInto(containerId) {
         ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
         <div class="mt-6 flex gap-2">
           ${isRequester
-            ? `<button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>`
-            : ((canOffer || (canOfferWhenOffered && !hasAlreadyOffered))
-              ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>`
-              : "")}
+            ? `
+              <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
+              <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
+            `
+            : ((canEditMyOffer || canCancelMyOffer)
+              ? `
+                ${canEditMyOffer ? `<button id="edit-offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit Offer</button>` : ""}
+                ${canCancelMyOffer ? `<button id="cancel-offer-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancel Offer</button>` : ""}
+              `
+              : ((canOffer || (canOfferWhenOffered && !hasAlreadyOffered))
+                ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>`
+                : ""))}
         </div>
-        ${isRequester && !canEdit ? `<p class="text-sm text-gray-600 mt-2">Only open requests can be edited.</p>` : ""}
+        ${isRequester && !canEdit ? `<p class="text-sm text-gray-600 mt-2">Only open, offered, or assigned requests can be edited or cancelled.</p>` : ""}
       </div>
 
       <div id="edit-mode" style="display: none;">
@@ -515,8 +527,7 @@ async function loadRequestInto(containerId) {
 
     <div id="offer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 50;">
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
-        <h2 class="text-xl font-bold mb-4">Add a Comment (Optional)</h2>
-        <textarea id="offer-comment" placeholder="Why do you want to offer help for this request?" class="border p-2 w-full mb-4 h-24"></textarea>
+        <textarea id="offer-comment" placeholder="Add a Comment (Optional)" class="border p-2 w-full mb-4 h-24"></textarea>
         <div class="flex gap-2">
           <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Submit Offer</button>
           <button id="offer-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
@@ -525,15 +536,45 @@ async function loadRequestInto(containerId) {
     </div>
   `;
 
+  let offerEditMode = false;
+  let editingOfferId = null;
+
   // Event listeners
   if (document.getElementById("offer-btn")) {
     document.getElementById("offer-btn").onclick = () => {
+      offerEditMode = false;
+      editingOfferId = null;
+      const commentInput = document.getElementById("offer-comment");
+      if (commentInput) commentInput.value = "";
+      const submitBtn = document.getElementById("offer-submit-btn");
+      if (submitBtn) submitBtn.textContent = "Submit Offer";
       document.getElementById("offer-modal").style.display = "flex";
     };
   }
 
+  if (document.getElementById("edit-offer-btn")) {
+    document.getElementById("edit-offer-btn").onclick = () => {
+      offerEditMode = true;
+      editingOfferId = myOffer?.id || null;
+      const commentInput = document.getElementById("offer-comment");
+      if (commentInput) commentInput.value = myOffer?.comment || "";
+      const submitBtn = document.getElementById("offer-submit-btn");
+      if (submitBtn) submitBtn.textContent = "Save Offer";
+      document.getElementById("offer-modal").style.display = "flex";
+    };
+  }
+
+  if (document.getElementById("cancel-offer-btn")) {
+    document.getElementById("cancel-offer-btn").onclick = () => cancelOffer(myOffer?.id || null);
+  }
+
   if (document.getElementById("offer-submit-btn")) {
-    document.getElementById("offer-submit-btn").onclick = () => submitOffer(id);
+    document.getElementById("offer-submit-btn").onclick = () => {
+      if (offerEditMode && editingOfferId) {
+        return updateOffer(editingOfferId);
+      }
+      return submitOffer(id);
+    };
   }
 
   if (document.getElementById("offer-cancel-btn")) {
@@ -554,6 +595,10 @@ async function loadRequestInto(containerId) {
 
   if (document.getElementById("edit-btn")) {
     document.getElementById("edit-btn").onclick = () => toggleEditMode(true);
+  }
+
+  if (document.getElementById("cancel-request-btn")) {
+    document.getElementById("cancel-request-btn").onclick = () => cancelRequest(id);
   }
 
   if (document.getElementById("edit-request-cancel-btn")) {
@@ -631,6 +676,52 @@ async function loadRequestInto(containerId) {
     const { error } = await supabase.rpc("rpc_select_request_winner", {
       p_request_id: requestId,
       p_offer_id: offerId
+    });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function updateOffer(offerId) {
+    const comment = document.getElementById("offer-comment").value;
+
+    const { error } = await supabase.rpc("rpc_update_offer", {
+      p_offer_id: offerId,
+      p_comment: comment
+    });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function cancelOffer(offerId) {
+    if (!offerId) return;
+    const confirmed = window.confirm("Are you sure you want to cancel this offer?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc("rpc_cancel_offer", {
+      p_offer_id: offerId
+    });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function cancelRequest(requestId) {
+    const confirmed = window.confirm("Are you sure you want to cancel this request?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc("rpc_cancel_request", {
+      p_request_id: requestId
     });
 
     if (error) {
