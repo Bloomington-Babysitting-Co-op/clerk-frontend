@@ -45,7 +45,7 @@ async function mountAdminPage() {
   let profile = null;
 
   const refreshLinkedFamilyEmails = async () => {
-    const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
+      const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
     if (error) {
       setText("admin-family-message", error.message, true);
       return;
@@ -58,7 +58,7 @@ async function mountAdminPage() {
   };
 
   const refreshProfile = async () => {
-    const { data, error } = await supabase.rpc("rpc_get_my_profile_details");
+    const { data, error } = await supabase.rpc("rpc_get_my_family_details");
     if (error) {
       setText("admin-save-message", error.message, true);
       return;
@@ -84,7 +84,7 @@ async function mountAdminPage() {
         return;
       }
 
-      const { error } = await supabase.rpc("rpc_add_family_member_by_email", {
+        const { error } = await supabase.rpc("rpc_add_family_member_by_email", {
         p_email: emailToLink
       });
 
@@ -103,36 +103,24 @@ async function mountAdminPage() {
   if (saveBtn) {
     saveBtn.onclick = async () => {
       if (!profile) {
-        setText("admin-save-message", "Profile not loaded yet.", true);
+        setText("admin-save-message", "Family details not loaded yet.", true);
         return;
       }
 
       const payload = {
-        p_family_name: profile.family_name,
-        p_phone: null,
-        p_parent_member_names: null,
-        p_member_emails: null,
-        p_member_phones: null,
+        p_name: profile.name,
         p_address: profile.address,
-        p_emergency_contact_names: profile.emergency_contact_names,
-        p_emergency_contact_phones: profile.emergency_contact_phones,
-        p_children_details: profile.children_details,
+        p_emergency_contacts: profile.emergency_contacts,
         p_pets: profile.pets,
         p_family_photo_url: profile.family_photo_url,
         p_business_information: profile.business_information,
-        p_notify_new_request: !!profile.notify_new_request,
-        p_notify_unoffered_48h: !!profile.notify_unoffered_48h,
-        p_notify_request_offered: !!profile.notify_request_offered,
-        p_notify_offer_cancelled_or_edited: !!profile.notify_offer_cancelled_or_edited,
-        p_notify_ledger_debtor: !!profile.notify_ledger_debtor,
-        p_notify_midmonth_inactive: !!profile.notify_midmonth_inactive,
         p_admin_date_joined: val("admin-date-joined") || null,
         p_admin_last_background_check: val("admin-last-background-check") || null,
         p_admin_last_dues_payment: val("admin-last-dues-payment") || null,
         p_admin_general_notes: val("admin-general-notes")
       };
 
-      const { error } = await supabase.rpc("rpc_upsert_my_profile_details", payload);
+      const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);
       if (error) {
         setText("admin-save-message", error.message, true);
         return;
