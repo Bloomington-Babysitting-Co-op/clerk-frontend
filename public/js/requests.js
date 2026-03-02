@@ -61,9 +61,9 @@ function getChildAgeLabel(dateOfBirthValue) {
 
 function getRequestFormValuesFromRequest(request) {
   return {
-    request_type: request.request_type || "babysit",
+    request_type: request.type || "babysit",
     notes: request.notes || "",
-    request_date: request.request_date || toDateInputFromIso(request.start_time),
+    request_date: request.date || toDateInputFromIso(request.start_time),
     start_time: toTimeInputFromIso(request.start_time),
     end_time: toTimeInputFromIso(request.end_time),
     flexible_date: !!request.flexible_date,
@@ -347,9 +347,9 @@ function normalizeFormPayload(values, options = {}) {
 
   return {
     payload: {
-      p_request_type: requestType,
+      p_type: requestType,
       p_notes: description,
-      p_request_date: values.request_date || null,
+      p_date: values.request_date || null,
       p_start_time: startIso,
       p_end_time: endIso,
       p_flexible_date: !!values.flexible_date,
@@ -433,10 +433,10 @@ async function loadRequestInto(containerId) {
     return;
   }
 
-  const offers = offersData || [];
+  const offers = Array.isArray(offersData) ? offersData : [];
   const requestChildren = Array.isArray(requestChildrenData) ? requestChildrenData : [];
 
-  const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_current_family_id");
+  const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_get_family_id");
   if (currentFamilyError || !currentFamilyId) {
     el.innerHTML = `<p class='text-red-600'>${currentFamilyError?.message || "Unable to resolve current family."}</p>`;
     return;
@@ -507,10 +507,10 @@ async function loadRequestInto(containerId) {
               return `
               <div class="${isAssignedOffer ? "bg-green-100 border-green-300" : "bg-gray-50"} p-4 rounded border">
                 <p class="font-semibold text-gray-800 mb-1">${offer.family_name || "Unknown family"}</p>
-                <p class="text-sm text-gray-600 mb-1">Offered ${formatDateTime(offer.created_at)}</p>
-                <p class="text-sm text-gray-600 mb-1">Current Hours Balance: ${offer.hours_balance ?? 0}</p>
+                <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.has_used_this_month ? "Yes" : "No"}</p>
-                <p class="text-gray-700">${offer.comment || "<em>No comment</em>"}</p>
+                <p class="text-sm text-gray-600 mb-1">Offered ${formatDateTime(offer.created_at)}</p>
+                <p class="text-gray-700"><em>${offer.notes || "No notes"}</em></p>
                 ${isAssignedOffer ? `<p class="text-sm text-green-700 mt-3 font-semibold">Accepted Offer</p>` : ""}
                 ${canAssignOffer && !isAssignedOffer
                   ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700" data-offer-id="${offer.id}">Accept Offer</button>`
@@ -527,7 +527,7 @@ async function loadRequestInto(containerId) {
 
     <div id="offer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 50;">
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
-        <textarea id="offer-comment" placeholder="Add a Comment (Optional)" class="border p-2 w-full mb-4 h-24"></textarea>
+        <textarea id="offer-notes" placeholder="Add Notes (Optional)" class="border p-2 w-full mb-4 h-24"></textarea>
         <div class="flex gap-2">
           <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Submit Offer</button>
           <button id="offer-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
@@ -544,8 +544,8 @@ async function loadRequestInto(containerId) {
     document.getElementById("offer-btn").onclick = () => {
       offerEditMode = false;
       editingOfferId = null;
-      const commentInput = document.getElementById("offer-comment");
-      if (commentInput) commentInput.value = "";
+      const notesInput = document.getElementById("offer-notes");
+      if (notesInput) notesInput.value = "";
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Submit Offer";
       document.getElementById("offer-modal").style.display = "flex";
@@ -556,8 +556,8 @@ async function loadRequestInto(containerId) {
     document.getElementById("edit-offer-btn").onclick = () => {
       offerEditMode = true;
       editingOfferId = myOffer?.id || null;
-      const commentInput = document.getElementById("offer-comment");
-      if (commentInput) commentInput.value = myOffer?.comment || "";
+      const notesInput = document.getElementById("offer-notes");
+      if (notesInput) notesInput.value = myOffer?.notes || "";
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Save Offer";
       document.getElementById("offer-modal").style.display = "flex";
@@ -623,7 +623,7 @@ async function loadRequestInto(containerId) {
   async function saveRequest(requestId) {
     const values = readRequestFormValues("edit-request");
     const { payload, error: validationError } = normalizeFormPayload(values, {
-      requestTypeOverride: r.request_type
+      requestTypeOverride: r.type
     });
 
     if (validationError) {
@@ -633,7 +633,7 @@ async function loadRequestInto(containerId) {
 
     const { error } = await supabase.rpc("rpc_update_request", {
       p_request_id: requestId,
-      p_request_date: payload.p_request_date,
+      p_date: payload.p_date,
       p_flexible_date: payload.p_flexible_date,
       p_flexible_start_time: payload.p_flexible_start_time,
       p_flexible_end_time: payload.p_flexible_end_time,
@@ -658,11 +658,11 @@ async function loadRequestInto(containerId) {
   }
 
   async function submitOffer(requestId) {
-    const comment = document.getElementById("offer-comment").value;
+    const notes = document.getElementById("offer-notes").value;
 
     const { error } = await supabase.rpc("rpc_offer_request", {
       p_request_id: requestId,
-      p_comment: comment
+      p_notes: notes
     });
 
     if (error) {
@@ -673,7 +673,7 @@ async function loadRequestInto(containerId) {
   }
 
   async function assignOffer(requestId, offerId) {
-    const { error } = await supabase.rpc("rpc_select_request_winner", {
+    const { error } = await supabase.rpc("rpc_request_set_assignee", {
       p_request_id: requestId,
       p_offer_id: offerId
     });
@@ -686,11 +686,11 @@ async function loadRequestInto(containerId) {
   }
 
   async function updateOffer(offerId) {
-    const comment = document.getElementById("offer-comment").value;
+    const notes = document.getElementById("offer-notes").value;
 
     const { error } = await supabase.rpc("rpc_update_offer", {
       p_offer_id: offerId,
-      p_comment: comment
+      p_notes: notes
     });
 
     if (error) {

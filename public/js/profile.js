@@ -298,7 +298,7 @@ async function mountProfilePage() {
   };
 
   try {
-    const { data: isAdminData, error: isAdminError } = await supabase.rpc("rpc_is_admin");
+    const { data: isAdminData, error: isAdminError } = await supabase.rpc("rpc_get_admin_status");
     if (!isAdminError && isAdminData) {
       const adminLink = document.getElementById("profile-admin-link");
       if (adminLink) adminLink.style.display = "inline-block";

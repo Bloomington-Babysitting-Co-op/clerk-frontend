@@ -5,8 +5,9 @@ function formatRequestTypeLabel(requestType) {
 }
 
 function formatRequestDateLine(request) {
-  const dateLabel = request.request_date
-    ? new Date(`${request.request_date}T00:00:00`).toLocaleDateString()
+  const requestDate = request.date;
+  const dateLabel = requestDate
+    ? new Date(`${requestDate}T00:00:00`).toLocaleDateString()
     : "No date";
   return request.flexible_date ? `${dateLabel} (Flexible)` : dateLabel;
 }
@@ -42,13 +43,13 @@ function formatRequestStatusLabel(status) {
 function renderRequestListCard(request, options = {}) {
   const href = options.href || `/request_view.html?id=${request.id}`;
   const statusClass = options.statusClass || getRequestStatusTextClass(request.status);
-  const requestTypeLabel = formatRequestTypeLabel(request.request_type);
+  const requestTypeLabel = formatRequestTypeLabel(request.type);
   const requestDateLine = formatRequestDateLine(request);
   const requestTimeLine = formatRequestTimeRangeLine(request);
 
   return `
     <a href="${href}" class="block border p-4 mb-2 rounded hover:shadow transition">
-      <p class="font-semibold flex items-center justify-between gap-2">
+      <p class="font-semibold flex items-center gap-2">
         <span class="${statusClass}">${formatRequestStatusLabel(request.status)}</span>
         <span class="text-gray-600">${requestTypeLabel}</span>
       </p>

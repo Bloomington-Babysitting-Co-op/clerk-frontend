@@ -12,8 +12,8 @@
     <div x-data="dashboardState" x-init="init">
       <!-- Dashboard -->
       <div class="space-y-8">
+        <!-- Summary Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Hours Balance -->
           <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
             <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
@@ -43,21 +43,22 @@
           </div>
         </div>
 
-        <!-- Your Future Requests -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Your Submitted Requests</h2>
-          <div id="user-requests-list"></div>
-        </div>
+        <!-- Requests Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Open Requests</h2>
+            <div id="other-requests-list"></div>
+          </div>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Your Submitted Offers</h2>
-          <div id="submitted-offers-list"></div>
-        </div>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Your Requests</h2>
+            <div id="family-requests-list"></div>
+          </div>
 
-        <!-- Active Requests from Others -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Open Requests</h2>
-          <div id="other-requests-list"></div>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Your Offers</h2>
+            <div id="family-offers-list"></div>
+          </div>
         </div>
       </div>
     </div>
