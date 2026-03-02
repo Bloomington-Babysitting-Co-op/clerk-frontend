@@ -1,23 +1,5 @@
 import { supabase } from "/js/supabase.js";
-import { formatDateTime } from "/js/utils.js";
-
-function formatDashboardSchedule(request) {
-  if (request.start_time && request.end_time) {
-    return `${formatDateTime(request.start_time)} → ${formatDateTime(request.end_time)}`;
-  }
-  if (request.request_date) {
-    return new Date(`${request.request_date}T00:00:00`).toLocaleDateString();
-  }
-  return "Date/time flexible";
-}
-
-function formatDashboardFlexibility(request) {
-  const labels = [];
-  if (request.flexible_date) labels.push("Date");
-  if (request.flexible_start_time) labels.push("Start");
-  if (request.flexible_end_time) labels.push("End");
-  return labels.length ? `Flexible: ${labels.join(", ")}` : "Flexible: None";
-}
+import { renderRequestListCard } from "/js/request-cards.js";
 
 function authState() {
   return {
@@ -106,61 +88,30 @@ function dashboardState() {
           const container = document.getElementById("user-requests-list");
           if (container) {
             container.innerHTML = userRequests.length
-              ? userRequests.map(r => `
-                <div class="border p-4 mb-2 rounded">
-                  <p class="font-semibold text-gray-700">${r.status}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
-                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
-                  <p class="mt-1">${r.notes || ""}</p>
-                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
-                </div>
-              `).join("")
+              ? userRequests.map((r) => renderRequestListCard(r)).join("")
               : "<p class='text-gray-600'>No future requests submitted.</p>";
           }
         }
 
+        const submittedOffersContainer = document.getElementById("submitted-offers-list");
         const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_my_submitted_offers");
-        if (submittedOffersError) throw submittedOffersError;
+        const submittedOffersList = Array.isArray(submittedOffers) ? submittedOffers : [];
 
-        if (submittedOffers) {
-          const container = document.getElementById("submitted-offers-list");
-          if (container) {
-            container.innerHTML = submittedOffers.length
-              ? submittedOffers.map(r => `
-                <div class="border p-4 mb-2 rounded">
-                  <p class="font-semibold text-gray-700">${r.status}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
-                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
-                  <p class="mt-1">${r.notes || ""}</p>
-                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
-                </div>
-              `).join("")
-              : "<p class='text-gray-600'>No submitted offers at the moment.</p>";
-          }
+        if (submittedOffersContainer) {
+          submittedOffersContainer.innerHTML = (!submittedOffersError && submittedOffersList.length)
+            ? submittedOffersList.map((r) => renderRequestListCard(r)).join("")
+            : "<p class='text-gray-600'>No submitted offers at the moment.</p>";
         }
 
-        // Get all non-terminal requests
+        // Get all open requests
+        const otherRequestsContainer = document.getElementById("other-requests-list");
         const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_open_other_requests");
-        if (otherRequestsError) throw otherRequestsError;
+        const otherRequestsList = Array.isArray(otherRequests) ? otherRequests : [];
 
-        if (otherRequests) {
-          const container = document.getElementById("other-requests-list");
-          if (container) {
-            container.innerHTML = otherRequests.length
-              ? otherRequests.map(r => `
-                <div class="border p-4 mb-2 rounded">
-                  <p class="font-semibold text-gray-700">${r.status}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
-                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
-                  <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
-                  <p class="mt-1">${r.notes || ""}</p>
-                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Offer</a>
-                </div>
-              `).join("")
-              : "<p class='text-gray-600'>No active requests at the moment.</p>";
-          }
+        if (otherRequestsContainer) {
+          otherRequestsContainer.innerHTML = (!otherRequestsError && otherRequestsList.length)
+            ? otherRequestsList.map((r) => renderRequestListCard(r)).join("")
+            : "<p class='text-gray-600'>No open requests at the moment.</p>";
         }
       } catch (err) {
         console.error("Error loading dashboard data:", err);

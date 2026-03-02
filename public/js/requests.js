@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import { formatDateTime } from "./utils.js";
+import { formatRequestStatusLabel, getRequestStatusTextClass, renderRequestListCard } from "./request-cards.js";
 
 function toDateInputFromIso(isoValue) {
   if (!isoValue) return "";
@@ -124,13 +125,13 @@ function getRequestFormHtml(prefix, values, options = {}) {
       <textarea id="${prefix}-notes" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>${values.notes}</textarea>
 
       <div class="flex items-center justify-between mb-2">
-        <label class="font-semibold">Request Date</label>
+        <label class="font-semibold">Request Date <span class="text-red-600">*</span></label>
         <label class="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" id="${prefix}-flexible-date" ${values.flexible_date ? "checked" : ""} ${disabledAttr}>
           <span>Flexible</span>
         </label>
       </div>
-      <input type="date" id="${prefix}-request-date" value="${values.request_date}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+      <input type="date" id="${prefix}-request-date" value="${values.request_date}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>
 
       <div class="flex items-center justify-between mb-2">
           <label class="font-semibold">Start Time</label>
@@ -309,12 +310,17 @@ function normalizeFormPayload(values, options = {}) {
     return { error: "Description is required." };
   }
 
-  if ((requestType === "babysit" || requestType === "drive") && !values.request_date && !values.flexible_date) {
-    return { error: "Date is required for babysit and drive requests." };
+  if (values.request_date) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const requestedDate = new Date(`${values.request_date}T00:00:00`);
+    if (requestedDate < today) {
+      return { error: "Request date cannot be in the past." };
+    }
   }
 
-  if ((values.start_time || values.end_time) && !values.request_date && !values.flexible_date) {
-    return { error: "Date is required when start or end time is provided, unless date is marked flexible." };
+  if (!values.request_date) {
+    return { error: "Request date is required." };
   }
 
   const startIso = combineDateAndTime(values.request_date, values.start_time);
@@ -361,40 +367,11 @@ function normalizeFormPayload(values, options = {}) {
   };
 }
 
-function formatRequestSchedule(request) {
-  const hasStartAndEnd = request.start_time && request.end_time;
-  if (hasStartAndEnd) {
-    return `${formatDateTime(request.start_time)} → ${formatDateTime(request.end_time)}`;
-  }
-  if (request.request_date) {
-    return new Date(`${request.request_date}T00:00:00`).toLocaleDateString();
-  }
-  return "Date/time flexible";
-}
-
 function formatSitLocation(value) {
   if (value === "sitter_house") return "At sitter's house";
   if (value === "requester_house") return "At requester's house";
   if (value === "either") return "Either";
   return "Not specified";
-}
-
-function formatRequestFlexibility(request) {
-  const labels = [];
-  if (request.flexible_date) labels.push("Date");
-  if (request.flexible_start_time) labels.push("Start");
-  if (request.flexible_end_time) labels.push("End");
-  return labels.length ? `Flexible: ${labels.join(", ")}` : "Flexible: None";
-}
-
-function getRequestStatusTextClass(status) {
-  const normalized = (status || "").toLowerCase();
-  if (normalized === "open") return "text-blue-600";
-  if (normalized === "offered") return "text-yellow-600";
-  if (normalized === "assigned") return "text-green-600";
-  if (normalized === "completed") return "text-black";
-  if (normalized === "cancelled" || normalized === "expired") return "text-red-600";
-  return "text-gray-700";
 }
 
 async function listRequestsInto(containerId) {
@@ -410,17 +387,7 @@ async function listRequestsInto(containerId) {
   }
 
   el.innerHTML = data.length
-    ? data.map(r => `
-      <div class="bg-white border p-4 rounded-lg shadow hover:shadow-lg transition">
-        <p class="font-semibold text-lg text-gray-800">${r.status}</p>
-        <p class="text-sm text-gray-600 mt-1">${formatRequestSchedule(r)}</p>
-        <p class="text-sm text-gray-600 mt-1">Type: ${r.request_type}</p>
-        <p class="text-sm text-gray-600 mt-1">${formatRequestFlexibility(r)}</p>
-        <p class="text-gray-700 mt-2">${r.notes || ""}</p>
-        ${r.hours ? `<p class="text-sm text-gray-600 mt-1">Hours: ${r.hours}</p>` : ""}
-        <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm mt-3 inline-block">View Details</a>
-      </div>
-    `).join("")
+    ? data.map((r) => renderRequestListCard(r)).join("")
     : "<p class='text-gray-600'>No requests yet.</p>";
 }
 
@@ -501,13 +468,13 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
-      <p class="font-semibold mb-4">Status: <span class="${getRequestStatusTextClass(r.status)}">${r.status || "Unknown"}</span></p>
+      <p class="font-semibold mb-4">Status: <span class="${getRequestStatusTextClass(r.status)}">${formatRequestStatusLabel(r.status)}</span></p>
 
       <div id="view-mode">
         ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
         <div class="mt-6 flex gap-2">
           ${isRequester
-            ? `<button id="edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>`
+            ? `<button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>`
             : ((canOffer || (canOfferWhenOffered && !hasAlreadyOffered))
               ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>`
               : "")}
