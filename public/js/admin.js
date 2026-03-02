@@ -31,7 +31,7 @@ function setLinkedFamilyEmails(emails) {
 async function mountAdminPage() {
   await requireAuth();
 
-  const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_is_admin");
+  const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_get_admin_status");
   if (adminError) {
     setText("admin-save-message", adminError.message, true);
     return;

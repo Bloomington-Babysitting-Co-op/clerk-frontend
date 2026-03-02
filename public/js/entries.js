@@ -14,7 +14,7 @@ function setError(id, message) {
 
 async function ensureAdmin() {
   await requireAuth();
-  const { data, error } = await supabase.rpc("rpc_is_admin");
+  const { data, error } = await supabase.rpc("rpc_get_admin_status");
   if (error) throw error;
   if (!data) {
     throw new Error("Admin access required.");
@@ -24,7 +24,7 @@ async function ensureAdmin() {
 async function loadFormData() {
   const [{ data: families, error: familiesError }, { data: completed, error: completedError }] = await Promise.all([
     supabase.rpc("rpc_list_families_for_entry"),
-    supabase.rpc("rpc_list_completed_sits_for_prefill")
+    supabase.rpc("rpc_list_requests_completed_for_prefill")
   ]);
 
   if (familiesError) throw familiesError;
@@ -74,10 +74,10 @@ function validateEntry(fromFamilyId, toFamilyId, hoursValue, entryDateValue) {
 async function mountNewEntryPage() {
   try {
     await requireAuth();
-    const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_current_family_id");
+    const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_get_family_id");
     if (currentFamilyError) throw currentFamilyError;
     if (!currentFamilyId) throw new Error("Unable to resolve current family.");
-    const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_is_admin");
+    const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_get_admin_status");
     if (adminError) throw adminError;
 
     const { families, completed } = await loadFormData();

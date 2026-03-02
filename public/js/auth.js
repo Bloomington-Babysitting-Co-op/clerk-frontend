@@ -77,7 +77,7 @@ function dashboardState() {
         this.hoursBalance = Number(balance ?? 0).toFixed(2);
 
         // Get user's future requests
-        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_user_future_requests");
+        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_requests_my_family_future");
         if (userRequestsError) throw userRequestsError;
 
         const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_has_completed_sit_this_month");
@@ -85,7 +85,7 @@ function dashboardState() {
         this.activeThisMonth = !!activeThisMonth;
 
         if (userRequests) {
-          const container = document.getElementById("user-requests-list");
+          const container = document.getElementById("family-requests-list");
           if (container) {
             container.innerHTML = userRequests.length
               ? userRequests.map((r) => renderRequestListCard(r)).join("")
@@ -93,8 +93,8 @@ function dashboardState() {
           }
         }
 
-        const submittedOffersContainer = document.getElementById("submitted-offers-list");
-        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_my_submitted_offers");
+        const submittedOffersContainer = document.getElementById("family-offers-list");
+        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_offers_my_submitted");
         const submittedOffersList = Array.isArray(submittedOffers) ? submittedOffers : [];
 
         if (submittedOffersContainer) {
@@ -105,7 +105,7 @@ function dashboardState() {
 
         // Get all open requests
         const otherRequestsContainer = document.getElementById("other-requests-list");
-        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_open_other_requests");
+        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_requests_other_open");
         const otherRequestsList = Array.isArray(otherRequests) ? otherRequests : [];
 
         if (otherRequestsContainer) {

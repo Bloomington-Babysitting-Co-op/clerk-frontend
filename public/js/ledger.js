@@ -84,7 +84,7 @@ async function mountLedgerPage() {
   const exportBtn = document.getElementById("ledger-export-csv-btn");
   const ledgerError = document.getElementById("ledger-error");
 
-  const { data: isAdmin } = await supabase.rpc("rpc_is_admin");
+  const { data: isAdmin } = await supabase.rpc("rpc_get_admin_status");
 
   let currentRows = await listLedgerInto("ledger-list", { showEditLinks: !!isAdmin });
   await loadLedgerBalancesInto("ledger-balances");
