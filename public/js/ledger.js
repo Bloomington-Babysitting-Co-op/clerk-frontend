@@ -43,9 +43,9 @@ async function listLedgerInto(containerId, options = {}) {
   el.innerHTML = data.length
     ? data.map(e => `
       <div class="bg-white border p-4 rounded-lg shadow">
-        <p class="font-semibold text-gray-800">${formatDateTime(e.timestamp)}</p>
+        <p class="font-semibold text-gray-800">${formatDateTime(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
-        <p class="text-sm text-gray-600 mt-1">${e.from_user} → ${e.to_user}</p>
+        <p class="text-sm text-gray-600 mt-1">${e.from_family_id} → ${e.to_family_id}</p>
         ${showEditLinks ? `<div class="mt-2"><a href="/entry_edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
       </div>
     `).join("")
@@ -68,7 +68,7 @@ async function loadLedgerBalancesInto(containerId) {
   el.innerHTML = data.length
     ? data.map(row => `
       <div class="flex justify-between border-b py-2 text-sm">
-        <span class="font-medium">${row.family_name || row.user_id}</span>
+        <span class="font-medium">${row.name || row.family_id}</span>
         <span class="font-semibold ${Number(row.hours_balance) < 0 ? "text-red-600" : "text-green-700"}">${Number(row.hours_balance).toFixed(2)} hrs</span>
       </div>
     `).join("")
@@ -110,8 +110,8 @@ async function mountLedgerPage() {
       }
       ledgerError.textContent = "";
       const rows = [
-        ["id", "request", "timestamp", "hours", "from_user", "to_user"],
-        ...currentRows.map(row => [row.id, row.request || "", row.timestamp, row.hours, row.from_user, row.to_user])
+        ["id", "request_id", "entry_date", "hours", "from_family_id", "to_family_id"],
+        ...currentRows.map(row => [row.id, row.request_id || "", row.entry_date, row.hours, row.from_family_id, row.to_family_id])
       ];
       downloadCsv("ledger_export.csv", rows);
     };

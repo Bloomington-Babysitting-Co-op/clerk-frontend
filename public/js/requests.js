@@ -38,7 +38,8 @@ function getRequestFormValuesFromRequest(request) {
     meal_required: !!request.meal_required,
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
     sitters_kids_welcome: !!request.sitters_kids_welcome,
-    allergies_or_pet_concerns: request.allergies_or_pet_concerns || "",
+    selected_child_ids: [],
+    available_children: [],
     origin: request.origin || "",
     destination: request.destination || "",
     flexible_date: !!request.flexible_date,
@@ -47,7 +48,7 @@ function getRequestFormValuesFromRequest(request) {
     request_date: request.request_date || toDateInputFromIso(request.start_time),
     start_time: toTimeInputFromIso(request.start_time),
     end_time: toTimeInputFromIso(request.end_time),
-    hours_offered: request.hours_offered ?? "",
+    hours: request.hours ?? "",
     notes: request.notes || ""
   };
 }
@@ -59,7 +60,8 @@ function getDefaultRequestFormValues() {
     meal_required: false,
     meal_prepared_by_sitter: false,
     sitters_kids_welcome: false,
-    allergies_or_pet_concerns: "",
+    selected_child_ids: [],
+    available_children: [],
     origin: "",
     destination: "",
     flexible_date: false,
@@ -68,7 +70,7 @@ function getDefaultRequestFormValues() {
     request_date: "",
     start_time: "",
     end_time: "",
-    hours_offered: "",
+    hours: "",
     notes: ""
   };
 }
@@ -90,7 +92,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
       <div id="${prefix}-babysit-fields">
         <label class="block mb-2 font-semibold">Sit Location</label>
         <select id="${prefix}-sit-location" class="border p-2 w-full mb-4">
-          <option value="requester_house" ${values.sit_location === "requester_house" ? "selected" : ""}>Requestor's House</option>
+          <option value="requester_house" ${values.sit_location === "requester_house" ? "selected" : ""}>Requester's House</option>
           <option value="sitter_house" ${values.sit_location === "sitter_house" ? "selected" : ""}>Sitter's House</option>
           <option value="either" ${values.sit_location === "either" ? "selected" : ""}>Either</option>
         </select>
@@ -110,8 +112,20 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <span>Sitter's kids welcome</span>
         </label>
 
-        <label class="block mb-2 font-semibold">Allergies or Pet Concerns</label>
-        <textarea id="${prefix}-allergies-or-pet-concerns" class="border p-2 w-full mb-4">${values.allergies_or_pet_concerns}</textarea>
+        <label class="block mb-2 font-semibold">Children</label>
+        <div id="${prefix}-children-select" class="border rounded p-3 mb-4 space-y-2">
+          ${Array.isArray(values.available_children) && values.available_children.length
+            ? values.available_children.map((child) => {
+                const selected = Array.isArray(values.selected_child_ids) && values.selected_child_ids.includes(child.id);
+                return `
+                  <label class="flex items-start gap-2">
+                    <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""}>
+                    <span>${child.name || "Unnamed child"}${child.date_of_birth ? ` (${String(child.date_of_birth).slice(0, 7)})` : ""}</span>
+                  </label>
+                `;
+              }).join("")
+            : '<p class="text-sm text-gray-600">No children available for selection.</p>'}
+        </div>
       </div>
 
       <div id="${prefix}-drive-fields">
@@ -155,12 +169,12 @@ function getRequestFormHtml(prefix, values, options = {}) {
       </div>
 
       <p id="${prefix}-babysit-hours-note" class="text-sm text-gray-600 mb-4">
-        Hours offered will be auto-calculated from start and end time when both are provided.
+        Hours will be auto-calculated from start and end time when both are provided.
       </p>
 
       <div id="${prefix}-hours-wrapper">
-        <label class="block mb-2 font-semibold">Hours Offered (Optional)</label>
-        <input type="number" step="0.25" min="0" id="${prefix}-hours-offered" value="${values.hours_offered}" class="border p-2 w-full mb-4">
+        <label class="block mb-2 font-semibold">Hours (Optional)</label>
+        <input type="number" step="0.25" min="0" id="${prefix}-hours" value="${values.hours}" class="border p-2 w-full mb-4">
       </div>
 
       <div class="mt-6 flex gap-2">
@@ -206,13 +220,17 @@ function initRequestFormInteractions(prefix) {
 }
 
 function readRequestFormValues(prefix) {
+  const childIds = Array.from(document.querySelectorAll(`#${prefix}-children-select [data-child-id]:checked`))
+    .map((input) => input.getAttribute("data-child-id"))
+    .filter(Boolean);
+
   return {
     request_type: document.getElementById(`${prefix}-request-type`).value,
     sit_location: document.getElementById(`${prefix}-sit-location`).value,
     meal_required: document.getElementById(`${prefix}-meal-required`).checked,
     meal_prepared_by_sitter: document.getElementById(`${prefix}-meal-prepared-by-sitter`).checked,
     sitters_kids_welcome: document.getElementById(`${prefix}-sitters-kids-welcome`).checked,
-    allergies_or_pet_concerns: document.getElementById(`${prefix}-allergies-or-pet-concerns`).value,
+    selected_child_ids: childIds,
     origin: document.getElementById(`${prefix}-origin`).value,
     destination: document.getElementById(`${prefix}-destination`).value,
     flexible_date: document.getElementById(`${prefix}-flexible-date`).checked,
@@ -221,7 +239,7 @@ function readRequestFormValues(prefix) {
     request_date: document.getElementById(`${prefix}-request-date`).value,
     start_time: document.getElementById(`${prefix}-start-time`).value,
     end_time: document.getElementById(`${prefix}-end-time`).value,
-    hours_offered: document.getElementById(`${prefix}-hours-offered`).value,
+    hours: document.getElementById(`${prefix}-hours`).value,
     notes: document.getElementById(`${prefix}-notes`).value
   };
 }
@@ -258,11 +276,11 @@ function normalizeFormPayload(values, options = {}) {
   }
 
   const autoHours = requestType === "babysit" ? calculateHours(startIso, endIso) : null;
-  const manualHours = requestType !== "babysit" && values.hours_offered !== "" ? Number(values.hours_offered) : null;
+  const manualHours = requestType !== "babysit" && values.hours !== "" ? Number(values.hours) : null;
   const payloadHours = autoHours ?? manualHours;
 
   if (payloadHours !== null && (!Number.isFinite(payloadHours) || payloadHours <= 0)) {
-    return { error: "Hours offered must be greater than zero." };
+    return { error: "Hours must be greater than zero." };
   }
 
   const isBabysit = requestType === "babysit";
@@ -278,12 +296,12 @@ function normalizeFormPayload(values, options = {}) {
       p_request_date: values.request_date || null,
       p_start_time: startIso,
       p_end_time: endIso,
-      p_hours_offered: payloadHours,
+      p_hours: payloadHours,
       p_sit_location: isBabysit ? (values.sit_location || null) : null,
       p_meal_required: isBabysit ? !!values.meal_required : false,
       p_meal_prepared_by_sitter: isBabysit ? !!values.meal_prepared_by_sitter : false,
       p_sitters_kids_welcome: isBabysit ? !!values.sitters_kids_welcome : false,
-      p_allergies_or_pet_concerns: isBabysit ? (values.allergies_or_pet_concerns || null) : null,
+      p_child_ids: isBabysit ? (values.selected_child_ids || []) : null,
       p_origin: isDrive ? (values.origin || null) : null,
       p_destination: isDrive ? (values.destination || null) : null
     }
@@ -303,7 +321,7 @@ function formatRequestSchedule(request) {
 
 function formatSitLocation(value) {
   if (value === "sitter_house") return "At sitter's house";
-  if (value === "requester_house") return "At requestor's house";
+  if (value === "requester_house") return "At requester's house";
   if (value === "either") return "Either";
   return "Not specified";
 }
@@ -336,7 +354,7 @@ async function listRequestsInto(containerId) {
         <p class="text-sm text-gray-600 mt-1">Type: ${r.request_type}</p>
         <p class="text-sm text-gray-600 mt-1">${formatRequestFlexibility(r)}</p>
         <p class="text-gray-700 mt-2">${r.notes || ""}</p>
-        ${r.hours_offered ? `<p class="text-sm text-gray-600 mt-1">Hours: ${r.hours_offered}</p>` : ""}
+        ${r.hours ? `<p class="text-sm text-gray-600 mt-1">Hours: ${r.hours}</p>` : ""}
         <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm mt-3 inline-block">View Details</a>
       </div>
     `).join("")
@@ -371,23 +389,45 @@ async function loadRequestInto(containerId) {
     p_request_id: id
   });
 
+  const { data: requestChildrenData, error: requestChildrenError } = await supabase.rpc("rpc_list_request_children", {
+    p_request_id: id
+  });
+
   if (offersError) {
     el.innerHTML = `<p class='text-red-600'>${offersError.message}</p>`;
     return;
   }
 
+  if (requestChildrenError) {
+    el.innerHTML = `<p class='text-red-600'>${requestChildrenError.message}</p>`;
+    return;
+  }
+
   const offers = offersData || [];
+  const requestChildren = Array.isArray(requestChildrenData) ? requestChildrenData : [];
 
   const userId = session.user.id;
-  const isOwner = r.owner === userId;
-  const canOffer = r.status === "open" && !isOwner;
-  const canOfferWhenOffered = r.status === "offered" && !isOwner;
-  const hasAlreadyOffered = offers?.some(c => c.user_id === userId);
-  const canSelectWinner = isOwner && r.status === "offered";
-  const canComplete = r.status === "assigned" && (isOwner || r.accepted_by === userId);
-  const canEdit = isOwner && r.status === "open";
-  const canCancel = isOwner && ["open", "offered", "assigned"].includes(r.status);
+  const requesterId = r.requester_family_id;
+  const isRequester = requesterId === userId;
+  const canOffer = r.status === "open" && !isRequester;
+  const canOfferWhenOffered = r.status === "offered" && !isRequester;
+  const hasAlreadyOffered = offers?.some(c => c.family_id === userId);
+  const canSelectWinner = isRequester && r.status === "offered";
+  const canComplete = r.status === "assigned" && (isRequester || r.assignee_family_id === userId);
+  const canEdit = isRequester && r.status === "open";
+  const canCancel = isRequester && ["open", "offered", "assigned"].includes(r.status);
   const editFormValues = getRequestFormValuesFromRequest(r);
+  const selectedChildIds = requestChildren.map((child) => child.id);
+  editFormValues.selected_child_ids = selectedChildIds;
+
+  if (canEdit) {
+    const { data: familyChildrenData, error: familyChildrenError } = await supabase.rpc("rpc_list_my_family_children");
+    if (familyChildrenError) {
+      el.innerHTML = `<p class='text-red-600'>${familyChildrenError.message}</p>`;
+      return;
+    }
+    editFormValues.available_children = Array.isArray(familyChildrenData) ? familyChildrenData : [];
+  }
 
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
@@ -398,12 +438,12 @@ async function loadRequestInto(containerId) {
       <p class="mb-2"><span class="font-semibold">Date flexible:</span> ${r.flexible_date ? "Yes" : "No"}</p>
       <p class="mb-2"><span class="font-semibold">Start time flexible:</span> ${r.flexible_start_time ? "Yes" : "No"}</p>
       <p class="mb-2"><span class="font-semibold">End time flexible:</span> ${r.flexible_end_time ? "Yes" : "No"}</p>
-      ${r.hours_offered ? `<p class="mb-2"><span class="font-semibold">Hours Offered:</span> ${r.hours_offered}</p>` : ""}
+      ${r.hours ? `<p class="mb-2"><span class="font-semibold">Hours:</span> ${r.hours}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sit location:</span> ${formatSitLocation(r.sit_location)}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Meal required:</span> ${r.meal_required ? "Yes" : "No"}</p>` : ""}
       ${r.request_type === "babysit" && r.meal_required ? `<p class="mb-2"><span class="font-semibold">Meal prepared by sitter:</span> ${r.meal_prepared_by_sitter ? "Yes" : "No"}</p>` : ""}
       ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Sitter's kids welcome:</span> ${r.sitters_kids_welcome ? "Yes" : "No"}</p>` : ""}
-      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Allergies/Pet concerns:</span> ${r.allergies_or_pet_concerns || "None listed"}</p>` : ""}
+      ${r.request_type === "babysit" ? `<p class="mb-2"><span class="font-semibold">Children:</span> ${requestChildren.length ? requestChildren.map((child) => child.name || "Unnamed child").join(", ") : "None selected"}</p>` : ""}
       ${r.request_type === "drive" ? `<p class="mb-2"><span class="font-semibold">Origin:</span> ${r.origin || "Not specified"}</p>` : ""}
       ${r.request_type === "drive" ? `<p class="mb-2"><span class="font-semibold">Destination:</span> ${r.destination || "Not specified"}</p>` : ""}
       
@@ -523,12 +563,12 @@ async function loadRequestInto(containerId) {
       p_start_time: payload.p_start_time,
       p_end_time: payload.p_end_time,
       p_notes: payload.p_notes,
-      p_hours_offered: payload.p_hours_offered,
+      p_hours: payload.p_hours,
       p_sit_location: payload.p_sit_location,
       p_meal_required: payload.p_meal_required,
       p_meal_prepared_by_sitter: payload.p_meal_prepared_by_sitter,
       p_sitters_kids_welcome: payload.p_sitters_kids_welcome,
-      p_allergies_or_pet_concerns: payload.p_allergies_or_pet_concerns,
+      p_child_ids: payload.p_child_ids,
       p_origin: payload.p_origin,
       p_destination: payload.p_destination
     });
@@ -599,6 +639,12 @@ async function mountNewRequestForm(containerId) {
   if (!container) return;
 
   const values = getDefaultRequestFormValues();
+  const { data: familyChildrenData, error: familyChildrenError } = await supabase.rpc("rpc_list_my_family_children");
+  if (familyChildrenError) {
+    container.innerHTML = `<p class='text-red-600'>${familyChildrenError.message}</p>`;
+    return;
+  }
+  values.available_children = Array.isArray(familyChildrenData) ? familyChildrenData : [];
   container.innerHTML = getRequestFormHtml("new-request", values, {
     submitLabel: "Create Request",
     showCancel: false,
