@@ -18,8 +18,8 @@ function setVal(id, value) {
   if (el) el.value = value ?? "";
 }
 
-function setLinkedEmails(emails) {
-  const el = document.getElementById("admin-linked-emails");
+function setLinkedFamilyEmails(emails) {
+  const el = document.getElementById("admin-linked-family-emails");
   if (!el) return;
   if (!emails.length) {
     el.textContent = "No linked login emails yet.";
@@ -44,17 +44,17 @@ async function mountAdminPage() {
 
   let profile = null;
 
-  const refreshLinkedEmails = async () => {
-    const { data, error } = await supabase.rpc("rpc_list_my_household_emails");
+  const refreshLinkedFamilyEmails = async () => {
+    const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
     if (error) {
-      setText("admin-household-message", error.message, true);
+      setText("admin-family-message", error.message, true);
       return;
     }
 
     const emails = (Array.isArray(data) ? data : [])
       .map((row) => row?.email)
       .filter(Boolean);
-    setLinkedEmails(emails);
+    setLinkedFamilyEmails(emails);
   };
 
   const refreshProfile = async () => {
@@ -73,29 +73,29 @@ async function mountAdminPage() {
     setVal("admin-general-notes", profile.admin_general_notes);
   };
 
-  await Promise.all([refreshLinkedEmails(), refreshProfile()]);
+  await Promise.all([refreshLinkedFamilyEmails(), refreshProfile()]);
 
-  const linkEmailBtn = document.getElementById("admin-link-email-btn");
+  const linkEmailBtn = document.getElementById("admin-link-family-email-btn");
   if (linkEmailBtn) {
     linkEmailBtn.onclick = async () => {
-      const emailToLink = val("admin-link-email").trim();
+      const emailToLink = val("admin-link-family-email").trim();
       if (!emailToLink) {
-        setText("admin-household-message", "Enter an email to link first.", true);
+        setText("admin-family-message", "Enter an email to link first.", true);
         return;
       }
 
-      const { error } = await supabase.rpc("rpc_add_household_member_by_email", {
+      const { error } = await supabase.rpc("rpc_add_family_member_by_email", {
         p_email: emailToLink
       });
 
       if (error) {
-        setText("admin-household-message", error.message, true);
+        setText("admin-family-message", error.message, true);
         return;
       }
 
-      setVal("admin-link-email", "");
-      await refreshLinkedEmails();
-      setText("admin-household-message", "Linked login email added to this household.");
+      setVal("admin-link-family-email", "");
+      await refreshLinkedFamilyEmails();
+      setText("admin-family-message", "Linked login email added to this family.");
     };
   }
 
@@ -109,10 +109,10 @@ async function mountAdminPage() {
 
       const payload = {
         p_family_name: profile.family_name,
-        p_phone: profile.phone,
-        p_parent_member_names: profile.parent_member_names,
-        p_member_emails: profile.member_emails,
-        p_member_phones: profile.member_phones,
+        p_phone: null,
+        p_parent_member_names: null,
+        p_member_emails: null,
+        p_member_phones: null,
         p_address: profile.address,
         p_emergency_contact_names: profile.emergency_contact_names,
         p_emergency_contact_phones: profile.emergency_contact_phones,
