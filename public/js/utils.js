@@ -21,7 +21,7 @@ export async function setupNavbar(containerId) {
           <div class="flex gap-2 items-center">
             <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
             <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
-            <a href="/profile.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Profile</a>
+            <a href="/families.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Families</a>
           </div>
         </div>
       </nav>
