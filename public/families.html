@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Families – BBC Ledger</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="flex flex-col min-h-screen bg-gray-50">
+  <nav id="navbar"></nav>
+
+  <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-2">
+        <h1 class="text-3xl font-bold">Families</h1>
+        <a id="families-admin-link" href="/admin.html" class="bg-red-600 text-white px-4 py-2 rounded" style="display:none;">Admin</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="/profile.html" class="bg-blue-600 text-white px-4 py-2 rounded">Edit Profile</a>
+      </div>
+    </div>
+
+    <div id="families-list" class="grid gap-4"></div>
+  </main>
+
+  <script type="module">
+    import { setupNavbar } from "/js/utils.js";
+    import { requireAuth } from "/js/auth.js";
+    import { mountFamiliesPage } from "/js/families.js";
+
+    await setupNavbar("navbar");
+    await requireAuth();
+    await mountFamiliesPage("families-list");
+  </script>
+</body>
+</html>

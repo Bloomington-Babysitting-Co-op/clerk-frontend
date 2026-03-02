@@ -327,12 +327,6 @@ async function mountProfilePage() {
   };
 
   try {
-    const { data: isAdminData, error: isAdminError } = await supabase.rpc("rpc_get_admin_status");
-    if (!isAdminError && isAdminData) {
-      const adminLink = document.getElementById("profile-admin-link");
-      if (adminLink) adminLink.style.display = "inline-block";
-    }
-
     const { data: profileData, error: profileError } = await supabase.rpc("rpc_get_my_family_details");
     const { data: childrenData, error: childrenLoadError } = await supabase.rpc("rpc_list_my_family_children");
     const { data: parentData, error: parentLoadError } = await supabase.rpc("rpc_get_my_parent_profile");
