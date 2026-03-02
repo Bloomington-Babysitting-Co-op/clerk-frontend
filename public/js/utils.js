@@ -7,9 +7,6 @@ export function formatDateTime(dt) {
 
 export async function setupNavbar(containerId) {
   try {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-
     const container = document.getElementById(containerId);
     
     if (!container) {
