@@ -451,6 +451,7 @@ async function loadRequestInto(containerId) {
   const canEditMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canCancelMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canAssignOffer = isRequester && r.status === "offered";
+  const canClearAcceptedOffer = isRequester && r.status === "assigned";
   const canEdit = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canCancelRequest = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const viewFormValues = getRequestFormValuesFromRequest(r);
@@ -480,6 +481,7 @@ async function loadRequestInto(containerId) {
           ${isRequester
             ? `
               <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
+              ${canClearAcceptedOffer ? `<button id="clear-accepted-offer-btn" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Cancel Accepted Offer</button>` : ""}
               <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
             `
             : ((canEditMyOffer || canCancelMyOffer)
@@ -599,6 +601,10 @@ async function loadRequestInto(containerId) {
 
   if (document.getElementById("cancel-request-btn")) {
     document.getElementById("cancel-request-btn").onclick = () => cancelRequest(id);
+  }
+
+  if (document.getElementById("clear-accepted-offer-btn")) {
+    document.getElementById("clear-accepted-offer-btn").onclick = () => clearAcceptedOffer(id);
   }
 
   if (document.getElementById("edit-request-cancel-btn")) {
@@ -721,6 +727,21 @@ async function loadRequestInto(containerId) {
     if (!confirmed) return;
 
     const { error } = await supabase.rpc("rpc_cancel_request", {
+      p_request_id: requestId
+    });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function clearAcceptedOffer(requestId) {
+    const confirmed = window.confirm("Are you sure you want to cancel the accepted offer?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc("rpc_request_clear_assignee", {
       p_request_id: requestId
     });
 
