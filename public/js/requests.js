@@ -187,10 +187,15 @@ function getRequestFormHtml(prefix, values, options = {}) {
             ? values.available_children.map((child) => {
                 const selected = Array.isArray(values.selected_child_ids) && values.selected_child_ids.includes(child.id);
                 const ageLabel = getChildAgeLabel(child.date_of_birth);
+                const allergiesText = (child.allergies || "").trim();
+                const notesText = (child.notes || "").trim();
                 return `
                   <label class="flex items-center gap-2">
                     <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""} ${disabledAttr}>
-                    <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}</span>
+                    <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}
+                      ${allergiesText ? `<span class="block font-semibold text-gray-800">Allergies: ${allergiesText}</span>` : ""}
+                      ${notesText ? `<span class="block italic text-gray-700">Notes: ${notesText}</span>` : ""}
+                    </span>
                   </label>
                 `;
               }).join("")
@@ -222,6 +227,7 @@ function initRequestFormInteractions(prefix) {
   const requestType = document.getElementById(`${prefix}-request-type`);
   const requestDateInput = document.getElementById(`${prefix}-request-date`);
   const startTimeInput = document.getElementById(`${prefix}-start-time`);
+  const flexibleStartTimeInput = document.getElementById(`${prefix}-flexible-start-time`);
   const endTimeSection = document.getElementById(`${prefix}-end-time-section`);
   const endTimeInput = document.getElementById(`${prefix}-end-time`);
   const flexibleEndTimeInput = document.getElementById(`${prefix}-flexible-end-time`);
@@ -232,6 +238,22 @@ function initRequestFormInteractions(prefix) {
   const mealPreparedBySitter = document.getElementById(`${prefix}-meal-prepared-by-sitter`);
   const mealPreparedWrapper = document.getElementById(`${prefix}-meal-prepared-wrapper`);
   const driveFields = document.getElementById(`${prefix}-drive-fields`);
+  const flexibleStartInitiallyDisabled = flexibleStartTimeInput.disabled;
+  const flexibleEndInitiallyDisabled = flexibleEndTimeInput.disabled;
+
+  function refreshTimeFlexControls() {
+    const hasStartTime = !!startTimeInput.value;
+    if (!hasStartTime) {
+      flexibleStartTimeInput.checked = false;
+    }
+    flexibleStartTimeInput.disabled = flexibleStartInitiallyDisabled || !hasStartTime;
+
+    const hasEndTime = !!endTimeInput.value;
+    if (!hasEndTime) {
+      flexibleEndTimeInput.checked = false;
+    }
+    flexibleEndTimeInput.disabled = flexibleEndInitiallyDisabled || !hasEndTime;
+  }
 
   function refreshCalculatedHours() {
     if (requestType.value !== "babysit") {
@@ -262,12 +284,15 @@ function initRequestFormInteractions(prefix) {
     }
     mealPreparedWrapper.style.display = isBabysit && mealRequired.checked ? "inline-flex" : "none";
     driveFields.style.display = isDrive ? "block" : "none";
+    refreshTimeFlexControls();
     refreshCalculatedHours();
   }
 
   requestType.addEventListener("change", refreshFormVisibility);
   mealRequired.addEventListener("change", refreshFormVisibility);
   requestDateInput.addEventListener("change", refreshCalculatedHours);
+  startTimeInput.addEventListener("input", refreshTimeFlexControls);
+  endTimeInput.addEventListener("input", refreshTimeFlexControls);
   startTimeInput.addEventListener("change", refreshCalculatedHours);
   endTimeInput.addEventListener("change", refreshCalculatedHours);
   refreshFormVisibility();
@@ -442,6 +467,15 @@ async function loadRequestInto(containerId) {
     return;
   }
 
+  const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_entry");
+  if (familiesError) {
+    el.innerHTML = `<p class='text-red-600'>${familiesError.message}</p>`;
+    return;
+  }
+
+  const families = Array.isArray(familiesData) ? familiesData : [];
+  const requestFamilyName = families.find((family) => family.id === r.requester_family_id)?.name || "Unknown family";
+
   const requesterId = r.requester_family_id;
   const isRequester = requesterId === currentFamilyId;
   const canOffer = r.status === "open" && !isRequester;
@@ -473,6 +507,7 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
+      <p class="font-semibold mb-1">Family: <span class="text-gray-800">${requestFamilyName}</span></p>
       <p class="font-semibold mb-4">Status: <span class="${getRequestStatusTextClass(r.status)}">${formatRequestStatusLabel(r.status)}</span></p>
 
       <div id="view-mode">
@@ -511,7 +546,7 @@ async function loadRequestInto(containerId) {
                 <p class="font-semibold text-gray-800 mb-1">${offer.family_name || "Unknown family"}</p>
                 <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.has_used_this_month ? "Yes" : "No"}</p>
-                <p class="text-sm text-gray-600 mb-1">Offered ${formatDateTime(offer.created_at)}</p>
+                <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
                 <p class="text-gray-700"><em>${offer.notes || "No notes"}</em></p>
                 ${isAssignedOffer ? `<p class="text-sm text-green-700 mt-3 font-semibold">Accepted Offer</p>` : ""}
                 ${canAssignOffer && !isAssignedOffer
@@ -760,17 +795,29 @@ async function mountNewRequestForm(containerId) {
   if (!container) return;
 
   const values = getDefaultRequestFormValues();
+  const { data: familyDetailsData, error: familyDetailsError } = await supabase.rpc("rpc_get_my_family_details");
+  if (familyDetailsError) {
+    container.innerHTML = `<p class='text-red-600'>${familyDetailsError.message}</p>`;
+    return;
+  }
+
+  const familyDetails = Array.isArray(familyDetailsData) ? familyDetailsData[0] : familyDetailsData;
+  const familyName = familyDetails?.name || "Unknown family";
+
   const { data: familyChildrenData, error: familyChildrenError } = await supabase.rpc("rpc_list_my_family_children");
   if (familyChildrenError) {
     container.innerHTML = `<p class='text-red-600'>${familyChildrenError.message}</p>`;
     return;
   }
   values.available_children = Array.isArray(familyChildrenData) ? familyChildrenData : [];
-  container.innerHTML = getRequestFormHtml("new-request", values, {
+  container.innerHTML = `
+    <p class="font-semibold mb-4">Family: <span class="text-gray-800">${familyName}</span></p>
+    ${getRequestFormHtml("new-request", values, {
     submitLabel: "Create Request",
     showCancel: false,
     disableType: false
-  });
+  })}
+  `;
 
   initRequestFormInteractions("new-request");
 

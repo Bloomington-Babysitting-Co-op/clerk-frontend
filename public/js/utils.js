@@ -15,13 +15,13 @@ export async function setupNavbar(containerId) {
     }
 
     const navbarHTML = `
-      <nav class="bg-blue-600 text-white shadow">
+      <nav class="bg-violet-500 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <a href="/" class="text-xl font-bold">BBC Ledger</a>
-          <div class="flex gap-6 items-center">
-            <a href="/requests.html" class="hover:text-blue-100">Requests</a>
-            <a href="/ledger.html" class="hover:text-blue-100">Ledger</a>
-            <a href="/profile.html" class="bg-white text-blue-700 hover:bg-blue-100 px-4 py-2 rounded">Profile</a>
+          <div class="flex gap-2 items-center">
+            <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
+            <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
+            <a href="/profile.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Profile</a>
           </div>
         </div>
       </nav>

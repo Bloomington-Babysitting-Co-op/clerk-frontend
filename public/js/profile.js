@@ -49,19 +49,19 @@ function createChildRow(child = {}) {
   wrapper.innerHTML = `
     <div>
       <label class="block text-sm font-medium mb-1">Name</label>
-      <input data-child-field="name" type="text" class="border p-2 w-full rounded" value="${child.name || ""}">
+      <input data-child-field="name" type="text" class="border p-2 w-full rounded" value="${child.name || ""}" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">DOB (Month/Year)</label>
-      <input data-child-field="date_of_birth" type="month" class="border p-2 w-full rounded" value="${monthValueFromDate(child.date_of_birth)}">
+      <label class="block text-sm font-medium mb-1">Month of Birth</label>
+      <input data-child-field="date_of_birth" type="month" class="border p-2 w-full rounded" value="${monthValueFromDate(child.date_of_birth)}" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Dietary restrictions</label>
-      <textarea data-child-field="dietary_restrictions" class="border p-2 w-full rounded" rows="2">${child.dietary_restrictions || ""}</textarea>
+      <label class="block text-sm font-medium mb-1">Allergies/Dietary restrictions</label>
+      <textarea data-child-field="allergies" class="border p-2 w-full rounded" rows="2">${child.allergies || ""}</textarea>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Pet issues</label>
-      <textarea data-child-field="pet_issues" class="border p-2 w-full rounded" rows="2">${child.pet_issues || ""}</textarea>
+      <label class="block text-sm font-medium mb-1">Notes</label>
+      <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
     <div class="md:col-span-2 flex justify-end">
       <button type="button" data-remove-child class="bg-red-600 text-white px-3 py-2 rounded">Remove Child</button>
@@ -107,21 +107,21 @@ function collectChildrenPayload() {
   for (const row of rows) {
     const name = row.querySelector('[data-child-field="name"]')?.value?.trim() || "";
     const dateOfBirth = row.querySelector('[data-child-field="date_of_birth"]')?.value || "";
-    const dietaryRestrictions = row.querySelector('[data-child-field="dietary_restrictions"]')?.value?.trim() || "";
-    const petIssues = row.querySelector('[data-child-field="pet_issues"]')?.value?.trim() || "";
+    const allergies = row.querySelector('[data-child-field="allergies"]')?.value?.trim() || "";
+    const notes = row.querySelector('[data-child-field="notes"]')?.value?.trim() || "";
 
-    const hasAnyValue = !!(name || dateOfBirth || dietaryRestrictions || petIssues);
+    const hasAnyValue = !!(name || dateOfBirth || allergies || notes);
     if (!hasAnyValue) continue;
 
-    if (!name) {
-      return { children: [], error: "Each child entry needs a name." };
+    if (!name || !dateOfBirth) {
+      return { children: [], error: "Each child entry needs both a name and month of birth." };
     }
 
     children.push({
       name,
       date_of_birth: dateOfBirth,
-      dietary_restrictions: dietaryRestrictions,
-      pet_issues: petIssues
+      allergies,
+      notes
     });
   }
 
@@ -134,11 +134,11 @@ function createEmergencyContactRow(contact = {}) {
   wrapper.innerHTML = `
     <div>
       <label class="block text-sm font-medium mb-1">Name</label>
-      <input data-emergency-contact-field="name" type="text" class="border p-2 w-full rounded" value="${contact.name || ""}">
+      <input data-emergency-contact-field="name" type="text" class="border p-2 w-full rounded" value="${contact.name || ""}" required>
     </div>
     <div>
       <label class="block text-sm font-medium mb-1">Phone</label>
-      <input data-emergency-contact-field="phone" type="text" class="border p-2 w-full rounded" value="${contact.phone || ""}">
+      <input data-emergency-contact-field="phone" type="text" class="border p-2 w-full rounded" value="${contact.phone || ""}" required>
     </div>
     <div class="md:col-span-2 flex justify-end">
       <button type="button" data-remove-emergency-contact class="bg-red-600 text-white px-3 py-2 rounded">Remove Contact</button>
@@ -198,6 +198,10 @@ function collectEmergencyContactsPayload() {
     });
   }
 
+  if (!emergencyContacts.length) {
+    return { emergencyContacts: [], error: "At least one emergency contact with name and phone is required." };
+  }
+
   return { emergencyContacts, error: "" };
 }
 
@@ -212,6 +216,31 @@ async function mountProfilePage() {
   const saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) {
     saveBtn.onclick = async () => {
+      const parentName = val("profile-parent-name").trim();
+      const phone = val("profile-phone").trim();
+      const familyName = val("profile-family-name").trim();
+      const address = val("profile-address").trim();
+
+      if (!parentName) {
+        setText("profile-save-message", "Parent Name is required.", true);
+        return;
+      }
+
+      if (!phone) {
+        setText("profile-save-message", "Phone is required.", true);
+        return;
+      }
+
+      if (!familyName) {
+        setText("profile-save-message", "Family Name is required.", true);
+        return;
+      }
+
+      if (!address) {
+        setText("profile-save-message", "Address is required.", true);
+        return;
+      }
+
       const { children, error: childrenError } = collectChildrenPayload();
       if (childrenError) {
         setText("profile-save-message", childrenError, true);
@@ -225,8 +254,8 @@ async function mountProfilePage() {
       }
 
       const { error: parentError } = await supabase.rpc("rpc_upsert_my_parent_profile", {
-        p_name: val("profile-parent-name"),
-        p_phone: val("profile-phone"),
+        p_name: parentName,
+        p_phone: phone,
         p_notify_new_request: bool("notify-new-request"),
         p_notify_unoffered_48h: bool("notify-unoffered-48h"),
         p_notify_request_offered: bool("notify-request-offered"),
@@ -240,8 +269,8 @@ async function mountProfilePage() {
       }
 
       const payload = {
-        p_name: val("profile-family-name"),
-        p_address: val("profile-address"),
+        p_name: familyName,
+        p_address: address,
         p_emergency_contacts: emergencyContacts,
         p_pets: val("profile-pets"),
         p_family_photo_url: val("profile-family-photo-url"),
@@ -342,8 +371,8 @@ async function mountProfilePage() {
     renderChildren(children.map((child) => ({
       name: child.name,
       date_of_birth: monthValueFromDate(child.date_of_birth),
-      dietary_restrictions: child.dietary_restrictions,
-      pet_issues: child.pet_issues
+      allergies: child.allergies,
+      notes: child.notes
     })));
   } catch (error) {
     setText("profile-save-message", error?.message || "Failed to load profile.", true);
