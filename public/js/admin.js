@@ -70,7 +70,7 @@ async function mountAdminPage() {
     setVal("admin-date-joined", profile.admin_date_joined);
     setVal("admin-last-background-check", profile.admin_last_background_check);
     setVal("admin-last-dues-payment", profile.admin_last_dues_payment);
-    setVal("admin-general-notes", profile.admin_general_notes);
+    setVal("admin-notes", profile.admin_general_notes);
   };
 
   await Promise.all([refreshLinkedFamilyEmails(), refreshProfile()]);
@@ -117,7 +117,7 @@ async function mountAdminPage() {
         p_admin_date_joined: val("admin-date-joined") || null,
         p_admin_last_background_check: val("admin-last-background-check") || null,
         p_admin_last_dues_payment: val("admin-last-dues-payment") || null,
-        p_admin_general_notes: val("admin-general-notes")
+        p_admin_general_notes: val("admin-notes")
       };
 
       const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);

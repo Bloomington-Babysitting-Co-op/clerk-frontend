@@ -18,10 +18,10 @@ function formatTimeOnly(isoValue) {
 }
 
 function formatRequestTimeRangeLine(request) {
-  const start = formatTimeOnly(request.start_time);
-  const end = formatTimeOnly(request.end_time);
-  const timeLabel = start && end ? `${start} - ${end}` : "Time not specified";
+  const start = formatTimeOnly(request.start_time) || "TBD";
+  const end = formatTimeOnly(request.end_time) || "TBD";
   const timeFlexible = request.flexible_start_time || request.flexible_end_time;
+  const timeLabel = `${start} - ${end}`;
   return timeFlexible ? `${timeLabel} (Flexible)` : timeLabel;
 }
 
@@ -46,9 +46,11 @@ function renderRequestListCard(request, options = {}) {
   const requestTypeLabel = formatRequestTypeLabel(request.type);
   const requestDateLine = formatRequestDateLine(request);
   const requestTimeLine = formatRequestTimeRangeLine(request);
+  const familyName = request.family_name || "Unknown family";
 
   return `
     <a href="${href}" class="block border p-4 mb-2 rounded hover:shadow transition">
+      <p class="font-semibold text-gray-600 mb-1">${familyName}</p>
       <p class="font-semibold flex items-center gap-2">
         <span class="${statusClass}">${formatRequestStatusLabel(request.status)}</span>
         <span class="text-gray-600">${requestTypeLabel}</span>
