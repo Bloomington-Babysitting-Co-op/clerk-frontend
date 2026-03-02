@@ -24,18 +24,13 @@ export async function setupNavbar(containerId) {
           <div class="flex gap-6 items-center">
             <a href="/requests.html" class="hover:text-blue-100">Requests</a>
             <a href="/ledger.html" class="hover:text-blue-100">Ledger</a>
-            ${session 
-              ? `<a href="/profile.html" class="bg-white text-blue-700 hover:bg-blue-100 px-4 py-2 rounded">Profile</a>` 
-              : `<a href="/login.html" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Log In</a>`
-            }
+            <a href="/profile.html" class="bg-white text-blue-700 hover:bg-blue-100 px-4 py-2 rounded">Profile</a>
           </div>
         </div>
       </nav>
     `;
 
     container.innerHTML = navbarHTML;
-    console.log("Navbar rendered successfully");
-
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }

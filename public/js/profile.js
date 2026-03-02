@@ -8,6 +8,16 @@ function setText(id, message, isError = false) {
   el.className = isError ? "text-sm text-red-600" : "text-sm text-gray-700";
 }
 
+function setLinkedEmails(emails) {
+  const el = document.getElementById("profile-linked-emails");
+  if (!el) return;
+  if (!emails.length) {
+    el.textContent = "No linked login emails yet.";
+    return;
+  }
+  el.textContent = emails.join(", ");
+}
+
 function val(id) {
   const el = document.getElementById(id);
   return el ? el.value : "";
@@ -34,6 +44,15 @@ async function mountProfilePage() {
 
   setVal("profile-current-email", userEmail);
 
+  const refreshLinkedEmails = async () => {
+    const { data, error } = await supabase.rpc("rpc_list_my_household_emails");
+    if (error) throw error;
+    const emails = (Array.isArray(data) ? data : [])
+      .map((row) => row?.email)
+      .filter(Boolean);
+    setLinkedEmails(emails);
+  };
+
   const [{ data: isAdmin, error: adminError }, { data: profileData, error: profileError }] = await Promise.all([
     supabase.rpc("rpc_is_admin"),
     supabase.rpc("rpc_get_my_profile_details")
@@ -47,6 +66,9 @@ async function mountProfilePage() {
   if (isAdmin) {
     const adminSection = document.getElementById("profile-admin-section");
     if (adminSection) adminSection.style.display = "block";
+
+    const householdAssignment = document.getElementById("profile-household-assignment");
+    if (householdAssignment) householdAssignment.style.display = "grid";
   }
 
   if (profile) {
@@ -74,6 +96,36 @@ async function mountProfilePage() {
     setVal("admin-last-background-check", profile.admin_last_background_check);
     setVal("admin-last-dues-payment", profile.admin_last_dues_payment);
     setVal("admin-general-notes", profile.admin_general_notes);
+  }
+
+  await refreshLinkedEmails();
+
+  const linkEmailBtn = document.getElementById("profile-link-email-btn");
+  if (linkEmailBtn) {
+    linkEmailBtn.onclick = async () => {
+      if (!isAdmin) {
+        setText("profile-account-message", "Only admins can assign household logins.", true);
+        return;
+      }
+
+      const emailToLink = val("profile-link-email").trim();
+      if (!emailToLink) {
+        setText("profile-account-message", "Enter an email to link first.", true);
+        return;
+      }
+
+      const { error } = await supabase.rpc("rpc_add_household_member_by_email", {
+        p_email: emailToLink
+      });
+      if (error) {
+        setText("profile-account-message", error.message, true);
+        return;
+      }
+
+      setVal("profile-link-email", "");
+      await refreshLinkedEmails();
+      setText("profile-account-message", "Linked login email added to this household.");
+    };
   }
 
   const updateEmailBtn = document.getElementById("profile-update-email-btn");

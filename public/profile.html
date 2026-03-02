@@ -24,6 +24,19 @@
             <label class="block text-sm font-medium mb-1">Current Email</label>
             <input id="profile-current-email" type="email" class="border p-2 w-full rounded bg-gray-100" disabled>
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Linked Login Emails</label>
+            <p id="profile-linked-emails" class="text-sm text-gray-700 border rounded p-2 bg-gray-50">Loading…</p>
+          </div>
+          <div id="profile-household-assignment" class="grid md:grid-cols-2 gap-3" style="display:none;">
+            <div>
+              <label class="block text-sm font-medium mb-1">Add Linked Login Email</label>
+              <input id="profile-link-email" type="email" class="border p-2 w-full rounded" placeholder="member@example.com">
+            </div>
+            <div class="flex items-end">
+              <button id="profile-link-email-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Link Email To Household</button>
+            </div>
+          </div>
           <div class="grid md:grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium mb-1">New Email</label>
