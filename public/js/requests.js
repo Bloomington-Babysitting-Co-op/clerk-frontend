@@ -113,14 +113,14 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
   return `
     <div class="space-y-2">
-      <label class="block mb-2 font-semibold">Request Type</label>
+      <label class="block mb-2 font-semibold">Request Type <span class="text-red-600">*</span></label>
       <select id="${prefix}-request-type" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${(disableType || readOnly) ? "disabled" : ""}>
         <option value="babysit" ${values.request_type === "babysit" ? "selected" : ""}>Babysit</option>
         <option value="drive" ${values.request_type === "drive" ? "selected" : ""}>Drive</option>
         <option value="favor" ${values.request_type === "favor" ? "selected" : ""}>Favor</option>
       </select>
 
-      <label class="block mb-2 font-semibold">Description</label>
+      <label class="block mb-2 font-semibold">Description <span class="text-red-600">*</span></label>
       <textarea id="${prefix}-notes" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>${values.notes}</textarea>
 
       <div class="flex items-center justify-between mb-2">
@@ -133,7 +133,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
       <input type="date" id="${prefix}-request-date" value="${values.request_date}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
 
       <div class="flex items-center justify-between mb-2">
-        <label class="font-semibold">Start Time (Optional)</label>
+          <label class="font-semibold">Start Time</label>
         <label class="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" id="${prefix}-flexible-start-time" ${values.flexible_start_time ? "checked" : ""} ${disabledAttr}>
           <span>Flexible</span>
@@ -143,7 +143,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       <div id="${prefix}-end-time-section">
         <div class="flex items-center justify-between mb-2">
-          <label class="font-semibold">End Time (Optional)</label>
+          <label class="font-semibold">End Time</label>
           <label class="inline-flex items-center gap-2 text-sm">
             <input type="checkbox" id="${prefix}-flexible-end-time" ${values.flexible_end_time ? "checked" : ""} ${disabledAttr}>
             <span>Flexible</span>
@@ -153,7 +153,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
       </div>
 
       <div id="${prefix}-hours-wrapper">
-        <label class="block mb-2 font-semibold">Hours (Optional)</label>
+        <label class="block mb-2 font-semibold">Hours</label>
         <input type="number" step="0.25" min="0" id="${prefix}-hours" value="${values.hours}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
       </div>
 
@@ -175,7 +175,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <span>Meal prepared by sitter</span>
         </label>
 
-        <label class="inline-flex items-center gap-2 mb-4">
+        <label class="flex items-center gap-2 mb-4">
           <input type="checkbox" id="${prefix}-sitters-children-welcome" ${values.sitters_children_welcome ? "checked" : ""} ${disabledAttr}>
           <span>Sitter's children welcome</span>
         </label>
@@ -219,6 +219,8 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
 function initRequestFormInteractions(prefix) {
   const requestType = document.getElementById(`${prefix}-request-type`);
+  const requestDateInput = document.getElementById(`${prefix}-request-date`);
+  const startTimeInput = document.getElementById(`${prefix}-start-time`);
   const endTimeSection = document.getElementById(`${prefix}-end-time-section`);
   const endTimeInput = document.getElementById(`${prefix}-end-time`);
   const flexibleEndTimeInput = document.getElementById(`${prefix}-flexible-end-time`);
@@ -226,8 +228,20 @@ function initRequestFormInteractions(prefix) {
   const hoursInput = document.getElementById(`${prefix}-hours`);
   const babysitFields = document.getElementById(`${prefix}-babysit-fields`);
   const mealRequired = document.getElementById(`${prefix}-meal-required`);
+  const mealPreparedBySitter = document.getElementById(`${prefix}-meal-prepared-by-sitter`);
   const mealPreparedWrapper = document.getElementById(`${prefix}-meal-prepared-wrapper`);
   const driveFields = document.getElementById(`${prefix}-drive-fields`);
+
+  function refreshCalculatedHours() {
+    if (requestType.value !== "babysit") {
+      return;
+    }
+
+    const startIso = combineDateAndTime(requestDateInput.value, startTimeInput.value);
+    const endIso = combineDateAndTime(requestDateInput.value, endTimeInput.value);
+    const autoHours = calculateHours(startIso, endIso);
+    hoursInput.value = autoHours ?? "";
+  }
 
   function refreshFormVisibility() {
     const isBabysit = requestType.value === "babysit";
@@ -242,12 +256,19 @@ function initRequestFormInteractions(prefix) {
     hoursInput.classList.toggle("bg-gray-100", isBabysit);
     hoursInput.classList.toggle("text-gray-700", isBabysit);
     babysitFields.style.display = isBabysit ? "block" : "none";
+    if (isBabysit && !mealRequired.checked) {
+      mealPreparedBySitter.checked = false;
+    }
     mealPreparedWrapper.style.display = isBabysit && mealRequired.checked ? "inline-flex" : "none";
     driveFields.style.display = isDrive ? "block" : "none";
+    refreshCalculatedHours();
   }
 
   requestType.addEventListener("change", refreshFormVisibility);
   mealRequired.addEventListener("change", refreshFormVisibility);
+  requestDateInput.addEventListener("change", refreshCalculatedHours);
+  startTimeInput.addEventListener("change", refreshCalculatedHours);
+  endTimeInput.addEventListener("change", refreshCalculatedHours);
   refreshFormVisibility();
 }
 
@@ -366,6 +387,16 @@ function formatRequestFlexibility(request) {
   return labels.length ? `Flexible: ${labels.join(", ")}` : "Flexible: None";
 }
 
+function getRequestStatusTextClass(status) {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "open") return "text-blue-600";
+  if (normalized === "offered") return "text-yellow-600";
+  if (normalized === "assigned") return "text-green-600";
+  if (normalized === "completed") return "text-black";
+  if (normalized === "cancelled" || normalized === "expired") return "text-red-600";
+  return "text-gray-700";
+}
+
 async function listRequestsInto(containerId) {
   await requireAuth();
 
@@ -394,7 +425,7 @@ async function listRequestsInto(containerId) {
 }
 
 async function loadRequestInto(containerId) {
-  const session = await requireAuth();
+  await requireAuth();
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
 
@@ -438,12 +469,18 @@ async function loadRequestInto(containerId) {
   const offers = offersData || [];
   const requestChildren = Array.isArray(requestChildrenData) ? requestChildrenData : [];
 
-  const userId = session.user.id;
+  const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_current_family_id");
+  if (currentFamilyError || !currentFamilyId) {
+    el.innerHTML = `<p class='text-red-600'>${currentFamilyError?.message || "Unable to resolve current family."}</p>`;
+    return;
+  }
+
   const requesterId = r.requester_family_id;
-  const isRequester = requesterId === userId;
+  const isRequester = requesterId === currentFamilyId;
   const canOffer = r.status === "open" && !isRequester;
   const canOfferWhenOffered = r.status === "offered" && !isRequester;
-  const hasAlreadyOffered = offers?.some(c => c.family_id === userId);
+  const hasAlreadyOffered = offers?.some(c => c.family_id === currentFamilyId);
+  const canAssignOffer = isRequester && r.status === "offered";
   const canEdit = isRequester && r.status === "open";
   const viewFormValues = getRequestFormValuesFromRequest(r);
   const editFormValues = getRequestFormValuesFromRequest(r);
@@ -464,6 +501,7 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
+      <p class="font-semibold mb-4">Status: <span class="${getRequestStatusTextClass(r.status)}">${r.status || "Unknown"}</span></p>
 
       <div id="view-mode">
         ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
@@ -485,12 +523,22 @@ async function loadRequestInto(containerId) {
         <div class="mt-8 pt-8 border-t">
           <h2 class="text-2xl font-bold mb-4">Offers (${offers.length})</h2>
           <div class="space-y-3">
-            ${offers.map((offer, index) => `
-              <div class="bg-gray-50 p-4 rounded border">
+            ${offers.map((offer) => {
+              const isAssignedOffer = !!r.assignee_family_id && offer.family_id === r.assignee_family_id;
+              return `
+              <div class="${isAssignedOffer ? "bg-green-100 border-green-300" : "bg-gray-50"} p-4 rounded border">
+                <p class="font-semibold text-gray-800 mb-1">${offer.family_name || "Unknown family"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered ${formatDateTime(offer.created_at)}</p>
+                <p class="text-sm text-gray-600 mb-1">Current Hours Balance: ${offer.hours_balance ?? 0}</p>
+                <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.has_used_this_month ? "Yes" : "No"}</p>
                 <p class="text-gray-700">${offer.comment || "<em>No comment</em>"}</p>
+                ${isAssignedOffer ? `<p class="text-sm text-green-700 mt-3 font-semibold">Accepted Offer</p>` : ""}
+                ${canAssignOffer && !isAssignedOffer
+                  ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700" data-offer-id="${offer.id}">Accept Offer</button>`
+                  : ""}
               </div>
-            `).join("")}
+            `;
+            }).join("")}
           </div>
         </div>
       ` : ""}
@@ -498,7 +546,7 @@ async function loadRequestInto(containerId) {
       <p id="request-error" class="text-red-600 mt-4"></p>
     </div>
 
-    <div id="offer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+    <div id="offer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 50;">
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
         <h2 class="text-xl font-bold mb-4">Add a Comment (Optional)</h2>
         <textarea id="offer-comment" placeholder="Why do you want to offer help for this request?" class="border p-2 w-full mb-4 h-24"></textarea>
@@ -526,6 +574,14 @@ async function loadRequestInto(containerId) {
       document.getElementById("offer-modal").style.display = "none";
     };
   }
+
+  document.querySelectorAll(".assign-offer-btn").forEach((button) => {
+    button.onclick = async () => {
+      const offerId = button.getAttribute("data-offer-id");
+      if (!offerId) return;
+      await assignOffer(id, offerId);
+    };
+  });
 
   initRequestFormInteractions("view-request");
 
@@ -595,6 +651,19 @@ async function loadRequestInto(containerId) {
     const { error } = await supabase.rpc("rpc_offer_request", {
       p_request_id: requestId,
       p_comment: comment
+    });
+
+    if (error) {
+      document.getElementById("request-error").textContent = error.message;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function assignOffer(requestId, offerId) {
+    const { error } = await supabase.rpc("rpc_select_request_winner", {
+      p_request_id: requestId,
+      p_offer_id: offerId
     });
 
     if (error) {

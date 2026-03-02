@@ -12,19 +12,7 @@
     <div x-data="dashboardState" x-init="init">
       <!-- Dashboard -->
       <div class="space-y-8">
-        <!-- External Links -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">External Links</h2>
-          <div class="flex items-center justify-between gap-2">
-            <a href="https://groups.google.com/u/1/g/bloomingtonbabysittingco-op" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Groups</a>
-            <a href="https://drive.google.com/drive/folders/144Uxgk9NSpGEji93FCJM6C3hj0-ZztWl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Drive</a>
-            <a href="https://docs.google.com/spreadsheets/d/1j1sRLqTYlOJJsdrh0UVyHjOMN4Wrs-GHlUU77FVWSSk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Roster</a>
-            <a href="https://docs.google.com/presentation/d/11q4GuguHfrANRxbB5el9SDp7hzUzYK1rZUcZrumCKl8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Pictures</a>
-            <a href="https://goo.gl/maps/31PHeVPHckCe1Rwv8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Member Map</a>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Hours Balance -->
           <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
@@ -35,6 +23,21 @@
             <h2 class="text-xl font-bold mb-2">Active This Month</h2>
             <p class="text-3xl font-bold" :class="activeThisMonth ? 'text-green-600' : 'text-red-600'" x-text="activeThisMonth ? 'Yes' : 'No'"></p>
           </div>
+
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">External Links</h2>
+            <div class="space-y-2">
+              <div class="grid grid-cols-3 gap-2">
+                <a href="https://docs.google.com/spreadsheets/d/1j1sRLqTYlOJJsdrh0UVyHjOMN4Wrs-GHlUU77FVWSSk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Roster</a>
+                <a href="https://docs.google.com/presentation/d/11q4GuguHfrANRxbB5el9SDp7hzUzYK1rZUcZrumCKl8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Directory</a>
+                <a href="https://goo.gl/maps/31PHeVPHckCe1Rwv8" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Map</a>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <a href="https://groups.google.com/u/1/g/bloomingtonbabysittingco-op" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Groups</a>
+                <a href="https://drive.google.com/drive/folders/144Uxgk9NSpGEji93FCJM6C3hj0-ZztWl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-md border border-blue-600 text-blue-600 text-sm">Google Drive</a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Your Future Requests -->
@@ -43,9 +46,14 @@
           <div id="user-requests-list"></div>
         </div>
 
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Your Submitted Offers</h2>
+          <div id="submitted-offers-list"></div>
+        </div>
+
         <!-- Active Requests from Others -->
         <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Available Requests</h2>
+          <h2 class="text-xl font-bold mb-4">All Requests</h2>
           <div id="other-requests-list"></div>
         </div>
       </div>

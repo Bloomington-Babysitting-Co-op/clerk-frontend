@@ -120,7 +120,28 @@ function dashboardState() {
           }
         }
 
-        // Get active requests from other users
+        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_my_submitted_offers");
+        if (submittedOffersError) throw submittedOffersError;
+
+        if (submittedOffers) {
+          const container = document.getElementById("submitted-offers-list");
+          if (container) {
+            container.innerHTML = submittedOffers.length
+              ? submittedOffers.map(r => `
+                <div class="border p-4 mb-2 rounded">
+                  <p class="font-semibold text-gray-700">${r.status}</p>
+                  <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
+                  <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
+                  <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
+                  <p class="mt-1">${r.notes || ""}</p>
+                  <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View</a>
+                </div>
+              `).join("")
+              : "<p class='text-gray-600'>No submitted offers at the moment.</p>";
+          }
+        }
+
+        // Get all non-terminal requests
         const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_open_other_requests");
         if (otherRequestsError) throw otherRequestsError;
 
@@ -130,6 +151,7 @@ function dashboardState() {
             container.innerHTML = otherRequests.length
               ? otherRequests.map(r => `
                 <div class="border p-4 mb-2 rounded">
+                  <p class="font-semibold text-gray-700">${r.status}</p>
                   <p class="text-sm text-gray-600">${formatDashboardSchedule(r)}</p>
                   <p class="text-sm text-gray-600">Type: ${r.request_type}</p>
                   <p class="text-sm text-gray-600">${formatDashboardFlexibility(r)}</p>
@@ -137,7 +159,7 @@ function dashboardState() {
                   <a href="/request_view.html?id=${r.id}" class="text-blue-600 underline text-sm">View & Offer</a>
                 </div>
               `).join("")
-              : "<p class='text-gray-600'>No available requests at the moment.</p>";
+              : "<p class='text-gray-600'>No active requests at the moment.</p>";
           }
         }
       } catch (err) {
