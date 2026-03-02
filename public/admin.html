@@ -10,27 +10,26 @@
 
   <main class="flex-1 p-6 max-w-5xl mx-auto w-full">
     <div class="space-y-6">
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h1 class="text-3xl font-bold mb-2">Admin</h1>
-        <p class="text-sm text-gray-600">Manage household assignment and admin profile fields.</p>
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold">Admin</h1>
       </div>
 
       <section class="bg-white p-6 rounded-lg shadow space-y-4">
-        <h2 class="text-2xl font-bold">Household Assignment</h2>
+        <h2 class="text-2xl font-bold">Family Assignment</h2>
         <div>
           <label class="block text-sm font-medium mb-1">Linked Login Emails</label>
-          <p id="admin-linked-emails" class="text-sm text-gray-700 border rounded p-2 bg-gray-50">Loading…</p>
+          <p id="admin-linked-family-emails" class="text-sm text-gray-700 border rounded p-2 bg-gray-50">Loading…</p>
         </div>
         <div class="grid md:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium mb-1">Add Linked Login Email</label>
-            <input id="admin-link-email" type="email" class="border p-2 w-full rounded" placeholder="member@example.com">
+            <input id="admin-link-family-email" type="email" class="border p-2 w-full rounded" placeholder="member@example.com">
           </div>
           <div class="flex items-end">
-            <button id="admin-link-email-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Link Email To Household</button>
+            <button id="admin-link-family-email-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Link Email To Family</button>
           </div>
         </div>
-        <p id="admin-household-message" class="text-sm text-gray-700"></p>
+        <p id="admin-family-message" class="text-sm text-gray-700"></p>
       </section>
 
       <section class="bg-white p-6 rounded-lg shadow space-y-4">

@@ -22,11 +22,17 @@
           <h3 class="text-lg font-semibold">Account</h3>
           <div>
             <label class="block text-sm font-medium mb-1">Current Email</label>
-            <input id="profile-current-email" type="email" class="border p-2 w-full rounded bg-gray-100" disabled>
+            <input id="profile-email" type="email" class="border p-2 w-full rounded bg-gray-100" disabled>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Linked Login Emails</label>
-            <p id="profile-linked-emails" class="text-sm text-gray-700 border rounded p-2 bg-gray-50">Loading…</p>
+            <label class="block text-sm font-medium mb-1">Name</label>
+            <input id="profile-name" type="text" class="border p-2 w-full rounded">
+          </div>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Phone Number</label>
+              <input id="profile-phone" type="text" class="border p-2 w-full rounded">
+            </div>
           </div>
           <div class="grid md:grid-cols-2 gap-3">
             <div>
@@ -60,28 +66,14 @@
         </div>
 
         <div class="border rounded p-4 space-y-3">
-          <h3 class="text-lg font-semibold">Profile Details</h3>
-          <div class="grid md:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium mb-1">Family Name</label>
-              <input id="profile-family-name" type="text" class="border p-2 w-full rounded">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Primary Phone</label>
-              <input id="profile-phone" type="text" class="border p-2 w-full rounded">
-            </div>
+          <h3 class="text-lg font-semibold">Family Details</h3>
+          <div>
+            <label class="block text-sm font-medium mb-1">Linked Family Login Emails</label>
+            <p id="profile-linked-family-emails" class="text-sm text-gray-700 border rounded p-2 bg-gray-50">Loading…</p>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Parent/Member Names</label>
-            <textarea id="profile-parent-member-names" class="border p-2 w-full rounded" rows="2"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Emails</label>
-            <textarea id="profile-member-emails" class="border p-2 w-full rounded" rows="2"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Phone Numbers</label>
-            <textarea id="profile-member-phones" class="border p-2 w-full rounded" rows="2"></textarea>
+            <label class="block text-sm font-medium mb-1">Family Name</label>
+            <input id="profile-family-name" type="text" class="border p-2 w-full rounded">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Address</label>
@@ -115,8 +107,8 @@
       </section>
 
       <div class="bg-white p-6 rounded-lg shadow space-y-3">
-        <button id="profile-save-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Save Profile</button>
-        <button id="profile-logout-btn" class="bg-red-600 text-white px-4 py-2 rounded w-full">Log Out</button>
+        <button id="profile-save-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full cursor-pointer">Save Profile</button>
+        <button id="profile-logout-btn" class="bg-red-600 text-white px-4 py-2 rounded w-full cursor-pointer">Log Out</button>
         <p id="profile-save-message" class="text-sm text-gray-700"></p>
       </div>
     </div>

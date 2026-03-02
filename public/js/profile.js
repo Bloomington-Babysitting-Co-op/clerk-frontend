@@ -8,8 +8,8 @@ function setText(id, message, isError = false) {
   el.className = isError ? "text-sm text-red-600" : "text-sm text-gray-700";
 }
 
-function setLinkedEmails(emails) {
-  const el = document.getElementById("profile-linked-emails");
+function setLinkedFamilyEmails(emails) {
+  const el = document.getElementById("profile-linked-family-emails");
   if (!el) return;
   if (!emails.length) {
     el.textContent = "No linked login emails yet.";
@@ -41,18 +41,33 @@ function setBool(id, value) {
 async function mountProfilePage() {
   const session = await requireAuth();
   const userEmail = session.user.email || "";
+  const userMetadata = session.user.user_metadata || {};
 
-  setVal("profile-current-email", userEmail);
+  setVal("profile-email", userEmail);
+  setVal("profile-name", userMetadata.full_name || "");
+  setVal("profile-phone", userMetadata.phone || "");
 
   const saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) {
     saveBtn.onclick = async () => {
+      const metadataPayload = {
+        full_name: val("profile-name"),
+        phone: val("profile-phone")
+      };
+
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: metadataPayload
+      });
+      if (metadataError) {
+        setText("profile-save-message", metadataError.message, true);
+        return;
+      }
+
       const payload = {
         p_family_name: val("profile-family-name"),
-        p_phone: val("profile-phone"),
-        p_parent_member_names: val("profile-parent-member-names"),
-        p_member_emails: val("profile-member-emails"),
-        p_member_phones: val("profile-member-phones"),
+        p_phone: null,
+        p_parent_member_names: null,
+        p_member_phones: null,
         p_address: val("profile-address"),
         p_emergency_contact_names: val("profile-emergency-contact-names"),
         p_emergency_contact_phones: val("profile-emergency-contact-phones"),
@@ -86,8 +101,8 @@ async function mountProfilePage() {
     };
   }
 
-  const refreshLinkedEmails = async () => {
-    const { data, error } = await supabase.rpc("rpc_list_my_household_emails");
+  const refreshLinkedFamilyEmails = async () => {
+    const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
     if (error) {
       setText("profile-account-message", error.message, true);
       return;
@@ -95,7 +110,7 @@ async function mountProfilePage() {
     const emails = (Array.isArray(data) ? data : [])
       .map((row) => row?.email)
       .filter(Boolean);
-    setLinkedEmails(emails);
+    setLinkedFamilyEmails(emails);
   };
 
   try {
@@ -113,10 +128,6 @@ async function mountProfilePage() {
 
     if (profile) {
       setVal("profile-family-name", profile.family_name);
-      setVal("profile-phone", profile.phone);
-      setVal("profile-parent-member-names", profile.parent_member_names);
-      setVal("profile-member-emails", profile.member_emails);
-      setVal("profile-member-phones", profile.member_phones);
       setVal("profile-address", profile.address);
       setVal("profile-emergency-contact-names", profile.emergency_contact_names);
       setVal("profile-emergency-contact-phones", profile.emergency_contact_phones);
@@ -136,7 +147,7 @@ async function mountProfilePage() {
     setText("profile-save-message", error?.message || "Failed to load profile.", true);
   }
 
-  await refreshLinkedEmails();
+  await refreshLinkedFamilyEmails();
 
   const updateEmailBtn = document.getElementById("profile-update-email-btn");
   if (updateEmailBtn) {
