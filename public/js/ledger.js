@@ -1,46 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-
-function toDateOnly(value) {
-  if (!value) return "";
-  const asString = String(value);
-  const isoMatch = asString.match(/^\d{4}-\d{2}-\d{2}/);
-  if (isoMatch) return isoMatch[0];
-  const parsed = new Date(asString);
-  if (Number.isNaN(parsed.getTime())) return asString;
-  const year = parsed.getFullYear();
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toCsvValue(value) {
-  const asString = value == null ? "" : String(value);
-  if (asString.includes(",") || asString.includes("\"") || asString.includes("\n")) {
-    return `"${asString.replace(/"/g, '""')}"`;
-  }
-  return asString;
-}
-
-function downloadCsv(filename, rows) {
-  const content = rows.map(row => row.map(toCsvValue).join(",")).join("\n");
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
-}
-
-function toDateInputValue(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
 
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
@@ -62,7 +22,7 @@ async function listLedgerInto(containerId, options = {}) {
   el.innerHTML = data.length
     ? data.map(e => `
       <div class="bg-white border p-4 rounded-lg shadow">
-        <p class="font-semibold text-gray-800">${toDateOnly(e.entry_date)}</p>
+        <p class="font-semibold text-gray-800">${toDateOnlyString(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
         <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
         ${showEditLinks ? `<div class="mt-2"><a href="/entry_edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
@@ -127,12 +87,12 @@ async function mountLedgerPage() {
   if (applyBtn) {
     applyBtn.onclick = async () => {
       try {
-        ledgerError.textContent = "";
+        setFormError(ledgerError, "");
         const startDate = startInput?.value || null;
         const endDate = endInput?.value || null;
         currentRows = await listLedgerInto("ledger-list", { startDate, endDate, showEditLinks: !!isAdmin });
       } catch (error) {
-        ledgerError.textContent = error.message;
+        setFormError(ledgerError, error.message);
       }
     };
   }
@@ -140,13 +100,13 @@ async function mountLedgerPage() {
   if (exportBtn) {
     exportBtn.onclick = () => {
       if (!currentRows || !currentRows.length) {
-        ledgerError.textContent = "No rows to export for selected date range.";
+        setFormError(ledgerError, "No rows to export for selected date range.");
         return;
       }
-      ledgerError.textContent = "";
+      setFormError(ledgerError, "");
       const rows = [
         ["id", "request_id", "entry_date", "hours", "from_family_id", "to_family_id"],
-        ...currentRows.map(row => [row.id, row.request_id || "", toDateOnly(row.entry_date), row.hours, row.from_family_id, row.to_family_id])
+        ...currentRows.map(row => [row.id, row.request_id || "", toDateOnlyString(row.entry_date), row.hours, row.from_family_id, row.to_family_id])
       ];
       downloadCsv("ledger_export.csv", rows);
     };

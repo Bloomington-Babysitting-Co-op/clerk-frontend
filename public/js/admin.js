@@ -1,22 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-
-function setText(id, message, isError = false) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = message || "";
-  el.className = isError ? "text-sm text-red-600" : "text-sm text-gray-700";
-}
-
-function val(id) {
-  const el = document.getElementById(id);
-  return el ? el.value : "";
-}
-
-function setVal(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.value = value ?? "";
-}
+import { getInputValue, setInputValue, setStatusText } from "./utils.js";
 
 function setLinkedFamilyEmails(emails) {
   const el = document.getElementById("admin-linked-family-emails");
@@ -33,7 +17,7 @@ async function mountAdminPage() {
 
   const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_get_admin_status");
   if (adminError) {
-    setText("admin-save-message", adminError.message, true);
+    setStatusText("admin-save-message", adminError.message, true);
     return;
   }
 
@@ -47,7 +31,7 @@ async function mountAdminPage() {
   const refreshLinkedFamilyEmails = async () => {
       const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
     if (error) {
-      setText("admin-family-message", error.message, true);
+      setStatusText("admin-family-message", error.message, true);
       return;
     }
 
@@ -60,17 +44,17 @@ async function mountAdminPage() {
   const refreshProfile = async () => {
     const { data, error } = await supabase.rpc("rpc_get_my_family_details");
     if (error) {
-      setText("admin-save-message", error.message, true);
+      setStatusText("admin-save-message", error.message, true);
       return;
     }
 
     profile = Array.isArray(data) ? data[0] : data;
     if (!profile) return;
 
-    setVal("admin-date-joined", profile.admin_date_joined);
-    setVal("admin-last-background-check", profile.admin_last_background_check);
-    setVal("admin-last-dues-payment", profile.admin_last_dues_payment);
-    setVal("admin-notes", profile.admin_general_notes);
+    setInputValue("admin-date-joined", profile.admin_date_joined);
+    setInputValue("admin-last-background-check", profile.admin_last_background_check);
+    setInputValue("admin-last-dues-payment", profile.admin_last_dues_payment);
+    setInputValue("admin-notes", profile.admin_general_notes);
   };
 
   await Promise.all([refreshLinkedFamilyEmails(), refreshProfile()]);
@@ -78,9 +62,9 @@ async function mountAdminPage() {
   const linkEmailBtn = document.getElementById("admin-link-family-email-btn");
   if (linkEmailBtn) {
     linkEmailBtn.onclick = async () => {
-      const emailToLink = val("admin-link-family-email").trim();
+      const emailToLink = getInputValue("admin-link-family-email").trim();
       if (!emailToLink) {
-        setText("admin-family-message", "Enter an email to link first.", true);
+        setStatusText("admin-family-message", "Enter an email to link first.", true);
         return;
       }
 
@@ -89,13 +73,13 @@ async function mountAdminPage() {
       });
 
       if (error) {
-        setText("admin-family-message", error.message, true);
+        setStatusText("admin-family-message", error.message, true);
         return;
       }
 
-      setVal("admin-link-family-email", "");
+      setInputValue("admin-link-family-email", "");
       await refreshLinkedFamilyEmails();
-      setText("admin-family-message", "Linked login email added to this family.");
+      setStatusText("admin-family-message", "Linked login email added to this family.");
     };
   }
 
@@ -103,7 +87,7 @@ async function mountAdminPage() {
   if (saveBtn) {
     saveBtn.onclick = async () => {
       if (!profile) {
-        setText("admin-save-message", "Family details not loaded yet.", true);
+        setStatusText("admin-save-message", "Family details not loaded yet.", true);
         return;
       }
 
@@ -114,20 +98,20 @@ async function mountAdminPage() {
         p_pets: profile.pets,
         p_family_photo_url: profile.family_photo_url,
         p_business_information: profile.business_information,
-        p_admin_date_joined: val("admin-date-joined") || null,
-        p_admin_last_background_check: val("admin-last-background-check") || null,
-        p_admin_last_dues_payment: val("admin-last-dues-payment") || null,
-        p_admin_general_notes: val("admin-notes")
+        p_admin_date_joined: getInputValue("admin-date-joined") || null,
+        p_admin_last_background_check: getInputValue("admin-last-background-check") || null,
+        p_admin_last_dues_payment: getInputValue("admin-last-dues-payment") || null,
+        p_admin_general_notes: getInputValue("admin-notes")
       };
 
       const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);
       if (error) {
-        setText("admin-save-message", error.message, true);
+        setStatusText("admin-save-message", error.message, true);
         return;
       }
 
       await refreshProfile();
-      setText("admin-save-message", "Admin fields saved.");
+      setStatusText("admin-save-message", "Admin fields saved.");
     };
   }
 }
