@@ -39,12 +39,24 @@ async function loadCompletedRequestsForEntry() {
 
 function parseEntryDate(value) {
   if (!value) return null;
-  return new Date(value).toISOString();
+  return value;
 }
 
-function toDateTimeLocalValueFromDateString(dateValue) {
+function toDateInputValueFromDateString(dateValue) {
   if (!dateValue) return "";
-  return `${dateValue}T00:00`;
+  return dateValue;
+}
+
+function toDateInputValueFromStoredDate(dateValue) {
+  if (!dateValue) return "";
+  return String(dateValue).slice(0, 10);
+}
+
+function toLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function toNumberOrZero(value) {
@@ -67,9 +79,8 @@ function normalizeEntryHoursInput(hoursInput) {
   hoursInput.value = rounded.toFixed(2);
 }
 
-function validateEntry({ requirePrefill = false, prefillRequestId = null, fromFamilyId, toFamilyId, hoursValue, entryDateValue }) {
+function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue }) {
   const errors = [];
-  if (requirePrefill && !prefillRequestId) errors.push("Prefill from Completed Request is required.");
   if (!fromFamilyId) errors.push("From Family is required.");
   if (!toFamilyId) errors.push("To Family is required.");
   if (fromFamilyId && toFamilyId && fromFamilyId === toFamilyId) {
@@ -79,14 +90,9 @@ function validateEntry({ requirePrefill = false, prefillRequestId = null, fromFa
   if (!Number.isFinite(hours) || hours <= 0) errors.push("Hours must be greater than zero.");
   if (!entryDateValue) errors.push("Entry date is required.");
   if (entryDateValue) {
-    const selected = new Date(entryDateValue);
-    if (!Number.isNaN(selected.getTime())) {
-      const selectedDateOnly = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate());
-      const now = new Date();
-      const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      if (selectedDateOnly > todayDateOnly) {
-        errors.push("Entry date cannot be in the future.");
-      }
+    const today = toLocalDateString();
+    if (entryDateValue > today) {
+      errors.push("Entry date cannot be in the future.");
     }
   }
   return errors;
@@ -98,15 +104,13 @@ async function mountNewEntryPage() {
     const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_get_family_id");
     if (currentFamilyError) throw currentFamilyError;
     if (!currentFamilyId) throw new Error("Unable to resolve current family.");
-    const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_get_admin_status");
-    if (adminError) throw adminError;
 
     const [families, completed] = await Promise.all([
       loadFamiliesForEntry(),
       loadCompletedRequestsForEntry()
     ]);
 
-    const prefillSelect = document.getElementById("select-request");
+    const requestSelect = document.getElementById("request-select");
     const fromFamilyInput = document.getElementById("from-family");
     const toFamilyInput = document.getElementById("to-family");
     const fromFamilyIdInput = document.getElementById("from-family-id");
@@ -124,16 +128,14 @@ async function mountNewEntryPage() {
 
     const familiesById = new Map(families.map((family) => [family.id, family.name || family.id]));
 
-    const prefillItems = isAdmin
-      ? completed
-      : completed.filter(item => item.to_family_id === currentFamilyId);
+    const requestItems = completed.filter(item => item.to_family_id === currentFamilyId);
 
-    if (!prefillItems.length) {
-      prefillSelect.innerHTML = "<option value=''>No completed requests available</option>";
-      prefillSelect.disabled = true;
+    if (!requestItems.length) {
+      requestSelect.innerHTML = "<option value=''>No completed requests available</option>";
+      requestSelect.disabled = true;
       createBtn.disabled = true;
       createBtn.classList.add("opacity-60", "cursor-not-allowed");
-      setError("entry-error", "No completed requests are available for prefill. An entry cannot be created.");
+      setError("entry-error", "No completed requests are available for selection. An entry cannot be created.");
       return;
     }
 
@@ -153,17 +155,17 @@ async function mountNewEntryPage() {
       };
     }
 
-    prefillSelect.innerHTML = [
-      "<option value='' selected>Select completed request</option>",
-      ...prefillItems.map(item => {
+    requestSelect.innerHTML = [
+      "<option value='' selected>Select a completed request</option>",
+      ...requestItems.map(item => {
         const requestDate = item.request_date || "No request date";
         const notes = item.notes || "No notes";
         return `<option value="${item.request_id}">${requestDate} — ${notes}</option>`;
       })
     ].join("");
 
-    prefillSelect.onchange = () => {
-      const selected = prefillItems.find((item) => item.request_id === prefillSelect.value);
+    requestSelect.onchange = () => {
+      const selected = requestItems.find((item) => item.request_id === requestSelect.value);
       if (!selected) {
         fromFamilyIdInput.value = "";
         toFamilyIdInput.value = "";
@@ -194,18 +196,16 @@ async function mountNewEntryPage() {
       normalizeEntryHoursInput(hoursInput);
 
       if (selected.request_date) {
-        entryDateInput.value = toDateTimeLocalValueFromDateString(selected.request_date);
+        entryDateInput.value = toDateInputValueFromDateString(selected.request_date);
       }
     };
 
     createBtn.onclick = async () => {
       setError("entry-error", "");
-      const requestId = prefillSelect.value || null;
+      const requestId = requestSelect.value || null;
       const fromFamilyId = fromFamilyIdInput.value || "";
       const toFamilyId = toFamilyIdInput.value || "";
       const validationErrors = validateEntry({
-        requirePrefill: true,
-        prefillRequestId: requestId,
         fromFamilyId,
         toFamilyId,
         hoursValue: hoursInput.value,
@@ -271,13 +271,7 @@ async function mountEditEntryPage() {
     hoursInput.value = entry.hours;
     normalizeEntryHoursInput(hoursInput);
 
-    const dt = new Date(entry.entry_date);
-    const y = dt.getFullYear();
-    const m = String(dt.getMonth() + 1).padStart(2, "0");
-    const d = String(dt.getDate()).padStart(2, "0");
-    const hh = String(dt.getHours()).padStart(2, "0");
-    const mm = String(dt.getMinutes()).padStart(2, "0");
-    entryDateInput.value = `${y}-${m}-${d}T${hh}:${mm}`;
+    entryDateInput.value = toDateInputValueFromStoredDate(entry.entry_date);
 
     saveBtn.onclick = async () => {
       setError("entry-error", "");
