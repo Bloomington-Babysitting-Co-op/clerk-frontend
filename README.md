@@ -1,9 +1,9 @@
-# Bloomington Babysitting Co-op Ledger - Frontend
+# Bloomington Babysitting Co-op Clerk - Frontend
 Created for Cloudflare Pages + Supabase + Resend.
 
 ## Setup
 ### Backend Configuration
-1. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/ledger-backend)
+1. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/clerk-backend)
 2. Update `public/js/config.js` with:
    * supabaseUrl
    * supabaseKey

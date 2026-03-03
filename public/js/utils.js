@@ -197,7 +197,7 @@ export async function setupNavbar(containerId) {
     const navbarHTML = `
       <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <a href="/" class="text-xl font-bold">BBC Ledger</a>
+          <a href="/" class="text-xl font-bold">BBC Clerk</a>
           <div class="flex gap-2 items-center">
             <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
             <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
