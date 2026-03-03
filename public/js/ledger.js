@@ -23,6 +23,13 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+function toDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
 
@@ -45,7 +52,7 @@ async function listLedgerInto(containerId, options = {}) {
       <div class="bg-white border p-4 rounded-lg shadow">
         <p class="font-semibold text-gray-800">${formatDateTime(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
-        <p class="text-sm text-gray-600 mt-1">${e.from_family_id} → ${e.to_family_id}</p>
+        <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
         ${showEditLinks ? `<div class="mt-2"><a href="/entry_edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
       </div>
     `).join("")
@@ -86,7 +93,23 @@ async function mountLedgerPage() {
 
   const { data: isAdmin } = await supabase.rpc("rpc_get_admin_status");
 
-  let currentRows = await listLedgerInto("ledger-list", { showEditLinks: !!isAdmin });
+  const now = new Date();
+  const defaultStartDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
+  const defaultEndDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+
+  if (startInput) {
+    startInput.value = defaultStartDate;
+  }
+
+  if (endInput) {
+    endInput.value = defaultEndDate;
+  }
+
+  let currentRows = await listLedgerInto("ledger-list", {
+    startDate: startInput?.value || null,
+    endDate: endInput?.value || null,
+    showEditLinks: !!isAdmin
+  });
   await loadLedgerBalancesInto("ledger-balances");
 
   if (applyBtn) {

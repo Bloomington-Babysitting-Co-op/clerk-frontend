@@ -46,6 +46,8 @@ function renderFamilyCard(family) {
   const parents = Array.isArray(family.parents) ? family.parents : [];
   const emergencyContacts = Array.isArray(family.emergency_contacts) ? family.emergency_contacts : [];
   const children = Array.isArray(family.children) ? family.children : [];
+  const addressValue = (family.address || "").trim();
+  const mapsUrl = addressValue ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressValue)}` : "";
 
   return `
     <article class="bg-white p-6 rounded-lg shadow space-y-4">
@@ -53,7 +55,9 @@ function renderFamilyCard(family) {
 
       <div>
         <p class="text-sm font-semibold text-gray-700">Address</p>
-        <p class="text-gray-800">${escapeHtml(family.address || "Not provided")}</p>
+        <p class="text-gray-800">${addressValue
+          ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-700">${escapeHtml(addressValue)}</a>`
+          : "Not provided"}</p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-3">
