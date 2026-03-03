@@ -415,6 +415,4 @@ async function mountProfilePage() {
 
 }
 
-window.mountProfilePage = mountProfilePage;
-
 export { mountProfilePage };

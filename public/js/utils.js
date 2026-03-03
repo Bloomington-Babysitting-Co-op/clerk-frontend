@@ -15,7 +15,7 @@ export async function setupNavbar(containerId) {
     }
 
     const navbarHTML = `
-      <nav class="bg-violet-500 text-white shadow">
+      <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <a href="/" class="text-xl font-bold">BBC Ledger</a>
           <div class="flex gap-2 items-center">
