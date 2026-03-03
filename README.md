@@ -15,14 +15,16 @@ To set up a local development environment that replicates Cloudflare Pages:
    ```
    npm i -D wrangler@latest
    ```
-3. Start the local development server
+3. Modify `public\js\config.js` to point at the desired backend (remote or local)
+4. Start the local development server
    ```
    npx wrangler pages dev public
    ```
-4. Open a browser to http://localhost:8788 to view the application
+5. Open a browser to http://localhost:8788 to view the application
 
 ## Deploy
-1. Push this folder to GitHub.
-2. Create a Cloudflare Pages project.
-3. Set "Build output directory" to `public`.
-4. Deploy.
+1. Confirm that `public\js\config.js` is pointed to the remote backend
+2. Push this folder to GitHub.
+3. Create a Cloudflare Pages project.
+4. Set "Build output directory" to `public`.
+5. Deploy.
