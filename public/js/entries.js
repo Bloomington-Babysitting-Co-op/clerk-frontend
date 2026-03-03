@@ -25,40 +25,16 @@ async function ensureAdmin() {
   }
 }
 
-async function loadFormData() {
-  const [{ data: families, error: familiesError }, { data: completed, error: completedError }] = await Promise.all([
-    supabase.rpc("rpc_list_families_for_entry"),
-    supabase.rpc("rpc_list_requests_completed_for_prefill")
-  ]);
-
-  if (familiesError) throw familiesError;
-  if (completedError) throw completedError;
-
-  return { families: families || [], completed: completed || [] };
+async function loadFamiliesForEntry() {
+  const { data, error } = await supabase.rpc("rpc_list_families_for_entry");
+  if (error) throw error;
+  return data || [];
 }
 
-function wirePrefill(completed, fromSelect, toSelect, hoursInput, entryDateInput) {
-  const prefillSelect = document.getElementById("select-request");
-  if (!prefillSelect) return;
-
-  prefillSelect.onchange = () => {
-    const selected = completed.find(item => item.request_id === prefillSelect.value);
-    if (!selected) return;
-    fromSelect.value = selected.from_family_id;
-    toSelect.value = selected.to_family_id;
-    if (selected.hours != null) {
-      hoursInput.value = Number(selected.hours).toFixed(2);
-    }
-    if (selected.completed_at) {
-      const dt = new Date(selected.completed_at);
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth() + 1).padStart(2, "0");
-      const d = String(dt.getDate()).padStart(2, "0");
-      const hh = String(dt.getHours()).padStart(2, "0");
-      const mm = String(dt.getMinutes()).padStart(2, "0");
-      entryDateInput.value = `${y}-${m}-${d}T${hh}:${mm}`;
-    }
-  };
+async function loadCompletedRequestsForEntry() {
+  const { data, error } = await supabase.rpc("rpc_list_requests_completed_for_entry");
+  if (error) throw error;
+  return data || [];
 }
 
 function parseEntryDate(value) {
@@ -91,9 +67,9 @@ function normalizeEntryHoursInput(hoursInput) {
   hoursInput.value = rounded.toFixed(2);
 }
 
-function validateEntry(prefillRequestId, fromFamilyId, toFamilyId, hoursValue, entryDateValue) {
+function validateEntry({ requirePrefill = false, prefillRequestId = null, fromFamilyId, toFamilyId, hoursValue, entryDateValue }) {
   const errors = [];
-  if (!prefillRequestId) errors.push("Prefill from Completed Request is required.");
+  if (requirePrefill && !prefillRequestId) errors.push("Prefill from Completed Request is required.");
   if (!fromFamilyId) errors.push("From Family is required.");
   if (!toFamilyId) errors.push("To Family is required.");
   if (fromFamilyId && toFamilyId && fromFamilyId === toFamilyId) {
@@ -125,7 +101,10 @@ async function mountNewEntryPage() {
     const { data: isAdmin, error: adminError } = await supabase.rpc("rpc_get_admin_status");
     if (adminError) throw adminError;
 
-    const { families, completed } = await loadFormData();
+    const [families, completed] = await Promise.all([
+      loadFamiliesForEntry(),
+      loadCompletedRequestsForEntry()
+    ]);
 
     const prefillSelect = document.getElementById("select-request");
     const fromFamilyInput = document.getElementById("from-family");
@@ -224,7 +203,14 @@ async function mountNewEntryPage() {
       const requestId = prefillSelect.value || null;
       const fromFamilyId = fromFamilyIdInput.value || "";
       const toFamilyId = toFamilyIdInput.value || "";
-      const validationErrors = validateEntry(requestId, fromFamilyId, toFamilyId, hoursInput.value, entryDateInput.value);
+      const validationErrors = validateEntry({
+        requirePrefill: true,
+        prefillRequestId: requestId,
+        fromFamilyId,
+        toFamilyId,
+        hoursValue: hoursInput.value,
+        entryDateValue: entryDateInput.value
+      });
       if (validationErrors.length) {
         setError("entry-error", `• ${validationErrors.join("\n• ")}`);
         return;
@@ -259,7 +245,7 @@ async function mountEditEntryPage() {
       return;
     }
 
-    const { families } = await loadFormData();
+    const families = await loadFamiliesForEntry();
     const { data, error } = await supabase.rpc("rpc_get_ledger_entry", { p_entry_id: id });
     if (error) throw error;
 
@@ -297,7 +283,12 @@ async function mountEditEntryPage() {
       setError("entry-error", "");
       const fromFamilyId = fromSelect.value;
       const toFamilyId = toSelect.value;
-      const validationErrors = validateEntry(fromFamilyId, toFamilyId, hoursInput.value, entryDateInput.value);
+      const validationErrors = validateEntry({
+        fromFamilyId,
+        toFamilyId,
+        hoursValue: hoursInput.value,
+        entryDateValue: entryDateInput.value
+      });
       if (validationErrors.length) {
         setError("entry-error", `• ${validationErrors.join("\n• ")}`);
         return;
@@ -321,8 +312,5 @@ async function mountEditEntryPage() {
     setError("entry-error", error.message || "Unable to load page.");
   }
 }
-
-window.mountNewEntryPage = mountNewEntryPage;
-window.mountEditEntryPage = mountEditEntryPage;
 
 export { mountNewEntryPage, mountEditEntryPage };

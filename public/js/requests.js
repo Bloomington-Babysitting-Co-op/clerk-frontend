@@ -20,6 +20,13 @@ function toTimeInputFromIso(isoValue) {
   return `${hours}:${minutes}`;
 }
 
+function toLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function combineDateAndTime(dateValue, timeValue) {
   if (!dateValue || !timeValue) return null;
   return new Date(`${dateValue}T${timeValue}:00`).toISOString();
@@ -63,7 +70,7 @@ function getRequestFormValuesFromRequest(request) {
   return {
     request_type: request.type || "babysit",
     notes: request.notes || "",
-    request_date: request.date || toDateInputFromIso(request.start_time),
+    request_date: request.date || "",
     start_time: toTimeInputFromIso(request.start_time),
     end_time: toTimeInputFromIso(request.end_time),
     flexible_date: !!request.flexible_date,
@@ -336,10 +343,8 @@ function normalizeFormPayload(values, options = {}) {
   }
 
   if (values.request_date) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const requestedDate = new Date(`${values.request_date}T00:00:00`);
-    if (requestedDate < today) {
+    const today = toLocalDateString();
+    if (values.request_date < today) {
       return { error: "Request date cannot be in the past." };
     }
   }
@@ -390,13 +395,6 @@ function normalizeFormPayload(values, options = {}) {
       p_destination: isDrive ? (values.destination || null) : null
     }
   };
-}
-
-function formatSitLocation(value) {
-  if (value === "sitter_house") return "At sitter's house";
-  if (value === "requester_house") return "At requester's house";
-  if (value === "either") return "Either";
-  return "Not specified";
 }
 
 async function listRequestsInto(containerId) {
@@ -840,10 +838,4 @@ async function mountNewRequestForm(containerId) {
   };
 }
 
-// Expose functions
-window.listRequestsInto = listRequestsInto;
-window.loadRequestInto = loadRequestInto;
-window.mountNewRequestForm = mountNewRequestForm;
-
-// Module exports
 export { listRequestsInto, loadRequestInto, mountNewRequestForm };

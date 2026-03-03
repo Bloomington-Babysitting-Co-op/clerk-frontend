@@ -141,9 +141,4 @@ async function mountLedgerPage() {
   }
 }
 
-window.listLedgerInto = listLedgerInto;
-window.mountLedgerPage = mountLedgerPage;
-window.loadLedgerBalancesInto = loadLedgerBalancesInto;
-
-// Module exports
 export { listLedgerInto, loadLedgerBalancesInto, mountLedgerPage };

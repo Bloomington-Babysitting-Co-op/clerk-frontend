@@ -132,6 +132,4 @@ async function mountAdminPage() {
   }
 }
 
-window.mountAdminPage = mountAdminPage;
-
 export { mountAdminPage };

@@ -150,6 +150,4 @@ async function mountFamiliesPage(containerId) {
     : "<p class='text-gray-600'>No families found.</p>";
 }
 
-window.mountFamiliesPage = mountFamiliesPage;
-
 export { mountFamiliesPage };
