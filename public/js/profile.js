@@ -1,12 +1,14 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-
-function setText(id, message, isError = false) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = message || "";
-  el.className = isError ? "text-sm text-red-600 whitespace-pre-line" : "text-sm text-gray-700";
-}
+import {
+  formatValidationErrors,
+  getCheckedValue,
+  getInputValue,
+  monthValueFromDate,
+  setCheckedValue,
+  setInputValue,
+  setStatusText
+} from "./utils.js";
 
 function setLinkedFamilyEmails(emails) {
   const el = document.getElementById("profile-linked-family-emails");
@@ -16,31 +18,6 @@ function setLinkedFamilyEmails(emails) {
     return;
   }
   el.textContent = emails.join(", ");
-}
-
-function val(id) {
-  const el = document.getElementById(id);
-  return el ? el.value : "";
-}
-
-function bool(id) {
-  const el = document.getElementById(id);
-  return !!el?.checked;
-}
-
-function setVal(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.value = value ?? "";
-}
-
-function setBool(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.checked = !!value;
-}
-
-function monthValueFromDate(value) {
-  if (!value) return "";
-  return String(value).slice(0, 7);
 }
 
 function createChildRow(child = {}) {
@@ -99,12 +76,14 @@ function addBlankChildRow() {
 
 function collectChildrenPayload() {
   const list = document.getElementById("profile-children-list");
-  if (!list) return { children: [], error: "" };
+  if (!list) return { children: [], errors: [] };
 
   const rows = Array.from(list.children);
   const children = [];
+  const errors = [];
 
-  for (const row of rows) {
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
     const name = row.querySelector('[data-child-field="name"]')?.value?.trim() || "";
     const dateOfBirth = row.querySelector('[data-child-field="date_of_birth"]')?.value || "";
     const allergies = row.querySelector('[data-child-field="allergies"]')?.value?.trim() || "";
@@ -114,7 +93,8 @@ function collectChildrenPayload() {
     if (!hasAnyValue) continue;
 
     if (!name || !dateOfBirth) {
-      return { children: [], error: "Each child entry needs both a name and month of birth." };
+      errors.push(`Child row ${index + 1} needs both a name and month of birth.`);
+      continue;
     }
 
     children.push({
@@ -125,11 +105,11 @@ function collectChildrenPayload() {
     });
   }
 
-  if (!children.length) {
-    return { children: [], error: "At least one child with name and month of birth is required." };
+  if (!children.length && !errors.length) {
+    errors.push("At least one child with name and month of birth is required.");
   }
 
-  return { children, error: "" };
+  return { children, errors };
 }
 
 function createEmergencyContactRow(contact = {}) {
@@ -180,12 +160,14 @@ function addBlankEmergencyContactRow() {
 
 function collectEmergencyContactsPayload() {
   const list = document.getElementById("profile-emergency-contacts-list");
-  if (!list) return { emergencyContacts: [], error: "" };
+  if (!list) return { emergencyContacts: [], errors: [] };
 
   const rows = Array.from(list.children);
   const emergencyContacts = [];
+  const errors = [];
 
-  for (const row of rows) {
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
     const name = row.querySelector('[data-emergency-contact-field="name"]')?.value?.trim() || "";
     const phone = row.querySelector('[data-emergency-contact-field="phone"]')?.value?.trim() || "";
 
@@ -193,7 +175,8 @@ function collectEmergencyContactsPayload() {
     if (!hasAnyValue) continue;
 
     if (!name || !phone) {
-      return { emergencyContacts: [], error: "Each emergency contact needs both a name and phone." };
+      errors.push(`Emergency contact row ${index + 1} needs both a name and phone.`);
+      continue;
     }
 
     emergencyContacts.push({
@@ -202,28 +185,28 @@ function collectEmergencyContactsPayload() {
     });
   }
 
-  if (!emergencyContacts.length) {
-    return { emergencyContacts: [], error: "At least one emergency contact with name and phone is required." };
+  if (!emergencyContacts.length && !errors.length) {
+    errors.push("At least one emergency contact with name and phone is required.");
   }
 
-  return { emergencyContacts, error: "" };
+  return { emergencyContacts, errors };
 }
 
 async function mountProfilePage() {
   const session = await requireAuth();
   const userEmail = session.user.email || "";
 
-  setVal("profile-email", userEmail);
-  setVal("profile-parent-name", "");
-  setVal("profile-phone", "");
+  setInputValue("profile-email", userEmail);
+  setInputValue("profile-parent-name", "");
+  setInputValue("profile-phone", "");
 
   const saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) {
     saveBtn.onclick = async () => {
-      const parentName = val("profile-parent-name").trim();
-      const phone = val("profile-phone").trim();
-      const familyName = val("profile-family-name").trim();
-      const address = val("profile-address").trim();
+      const parentName = getInputValue("profile-parent-name").trim();
+      const phone = getInputValue("profile-phone").trim();
+      const familyName = getInputValue("profile-family-name").trim();
+      const address = getInputValue("profile-address").trim();
       const validationErrors = [];
 
       if (!parentName) {
@@ -242,33 +225,33 @@ async function mountProfilePage() {
         validationErrors.push("Address is required.");
       }
 
-      const { children, error: childrenError } = collectChildrenPayload();
-      if (childrenError) {
-        validationErrors.push(childrenError);
+      const { children, errors: childrenErrors } = collectChildrenPayload();
+      if (childrenErrors.length) {
+        validationErrors.push(...childrenErrors);
       }
 
-      const { emergencyContacts, error: emergencyContactsError } = collectEmergencyContactsPayload();
-      if (emergencyContactsError) {
-        validationErrors.push(emergencyContactsError);
+      const { emergencyContacts, errors: emergencyContactsErrors } = collectEmergencyContactsPayload();
+      if (emergencyContactsErrors.length) {
+        validationErrors.push(...emergencyContactsErrors);
       }
 
       if (validationErrors.length) {
-        setText("profile-save-message", `• ${validationErrors.join("\n• ")}`, true);
+        setStatusText("profile-save-message", formatValidationErrors(validationErrors), true);
         return;
       }
 
       const { error: parentError } = await supabase.rpc("rpc_upsert_my_parent_profile", {
         p_name: parentName,
         p_phone: phone,
-        p_notify_new_request: bool("notify-new-request"),
-        p_notify_unoffered_48h: bool("notify-unoffered-48h"),
-        p_notify_request_offered: bool("notify-request-offered"),
-        p_notify_offer_cancelled_or_edited: bool("notify-offer-cancelled-edited"),
-        p_notify_ledger_debtor: bool("notify-ledger-debtor"),
-        p_notify_midmonth_inactive: bool("notify-midmonth-inactive")
+        p_notify_new_request: getCheckedValue("notify-new-request"),
+        p_notify_unoffered_48h: getCheckedValue("notify-unoffered-48h"),
+        p_notify_request_offered: getCheckedValue("notify-request-offered"),
+        p_notify_offer_cancelled_or_edited: getCheckedValue("notify-offer-cancelled-edited"),
+        p_notify_ledger_debtor: getCheckedValue("notify-ledger-debtor"),
+        p_notify_midmonth_inactive: getCheckedValue("notify-midmonth-inactive")
       });
       if (parentError) {
-        setText("profile-save-message", parentError.message, true);
+        setStatusText("profile-save-message", parentError.message, true);
         return;
       }
 
@@ -276,14 +259,14 @@ async function mountProfilePage() {
         p_name: familyName,
         p_address: address,
         p_emergency_contacts: emergencyContacts,
-        p_pets: val("profile-pets"),
-        p_family_photo_url: val("profile-family-photo-url"),
-        p_business_information: val("profile-business-information")
+        p_pets: getInputValue("profile-pets"),
+        p_family_photo_url: getInputValue("profile-family-photo-url"),
+        p_business_information: getInputValue("profile-business-information")
       };
 
       const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);
       if (error) {
-        setText("profile-save-message", error.message, true);
+        setStatusText("profile-save-message", error.message, true);
         return;
       }
 
@@ -292,11 +275,11 @@ async function mountProfilePage() {
       });
 
       if (childrenSaveError) {
-        setText("profile-save-message", childrenSaveError.message, true);
+        setStatusText("profile-save-message", childrenSaveError.message, true);
         return;
       }
 
-      setText("profile-save-message", "Profile saved.");
+      setStatusText("profile-save-message", "Profile saved.");
     };
   }
 
@@ -321,7 +304,7 @@ async function mountProfilePage() {
   const refreshLinkedFamilyEmails = async () => {
     const { data, error } = await supabase.rpc("rpc_list_my_family_emails");
     if (error) {
-      setText("profile-account-message", error.message, true);
+      setStatusText("profile-account-message", error.message, true);
       return;
     }
     const emails = (Array.isArray(data) ? data : [])
@@ -344,23 +327,23 @@ async function mountProfilePage() {
     const parent = Array.isArray(parentData) ? parentData[0] : parentData;
 
     if (parent) {
-      setVal("profile-parent-name", parent.name || "");
-      setVal("profile-phone", parent.phone || "");
-      setBool("notify-new-request", parent.notify_new_request);
-      setBool("notify-unoffered-48h", parent.notify_unoffered_48h);
-      setBool("notify-request-offered", parent.notify_request_offered);
-      setBool("notify-offer-cancelled-edited", parent.notify_offer_cancelled_or_edited);
-      setBool("notify-ledger-debtor", parent.notify_ledger_debtor);
-      setBool("notify-midmonth-inactive", parent.notify_midmonth_inactive);
+      setInputValue("profile-parent-name", parent.name || "");
+      setInputValue("profile-phone", parent.phone || "");
+      setCheckedValue("notify-new-request", parent.notify_new_request);
+      setCheckedValue("notify-unoffered-48h", parent.notify_unoffered_48h);
+      setCheckedValue("notify-request-offered", parent.notify_request_offered);
+      setCheckedValue("notify-offer-cancelled-edited", parent.notify_offer_cancelled_or_edited);
+      setCheckedValue("notify-ledger-debtor", parent.notify_ledger_debtor);
+      setCheckedValue("notify-midmonth-inactive", parent.notify_midmonth_inactive);
     }
 
     if (profile) {
-      setVal("profile-family-name", profile.name);
-      setVal("profile-address", profile.address);
+      setInputValue("profile-family-name", profile.name);
+      setInputValue("profile-address", profile.address);
       renderEmergencyContacts(Array.isArray(profile.emergency_contacts) ? profile.emergency_contacts : []);
-      setVal("profile-pets", profile.pets);
-      setVal("profile-family-photo-url", profile.family_photo_url);
-      setVal("profile-business-information", profile.business_information);
+      setInputValue("profile-pets", profile.pets);
+      setInputValue("profile-family-photo-url", profile.family_photo_url);
+      setInputValue("profile-business-information", profile.business_information);
 
     } else {
       renderEmergencyContacts([]);
@@ -373,7 +356,7 @@ async function mountProfilePage() {
       notes: child.notes
     })));
   } catch (error) {
-    setText("profile-save-message", error?.message || "Failed to load profile.", true);
+    setStatusText("profile-save-message", error?.message || "Failed to load profile.", true);
   }
 
   await refreshLinkedFamilyEmails();
@@ -381,35 +364,35 @@ async function mountProfilePage() {
   const updateEmailBtn = document.getElementById("profile-update-email-btn");
   if (updateEmailBtn) {
     updateEmailBtn.onclick = async () => {
-      const newEmail = val("profile-new-email").trim();
+      const newEmail = getInputValue("profile-new-email").trim();
       if (!newEmail) {
-        setText("profile-account-message", "Enter a new email first.", true);
+        setStatusText("profile-account-message", "Enter a new email first.", true);
         return;
       }
       const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) {
-        setText("profile-account-message", error.message, true);
+        setStatusText("profile-account-message", error.message, true);
         return;
       }
-      setText("profile-account-message", "Email update requested. Check inbox for confirmation.");
+      setStatusText("profile-account-message", "Email update requested. Check inbox for confirmation.");
     };
   }
 
   const updatePasswordBtn = document.getElementById("profile-update-password-btn");
   if (updatePasswordBtn) {
     updatePasswordBtn.onclick = async () => {
-      const newPassword = val("profile-new-password");
+      const newPassword = getInputValue("profile-new-password");
       if (!newPassword || newPassword.length < 6) {
-        setText("profile-account-message", "Password must be at least 6 characters.", true);
+        setStatusText("profile-account-message", "Password must be at least 6 characters.", true);
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        setText("profile-account-message", error.message, true);
+        setStatusText("profile-account-message", error.message, true);
         return;
       }
-      setText("profile-account-message", "Password updated.");
-      setVal("profile-new-password", "");
+      setStatusText("profile-account-message", "Password updated.");
+      setInputValue("profile-new-password", "");
     };
   }
 

@@ -1,4 +1,5 @@
 import { supabase } from "/js/supabase.js";
+import { getAgeLabel } from "/js/utils.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -7,32 +8,6 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function getAgeLabel(dateOfBirthValue) {
-  if (!dateOfBirthValue) return "";
-
-  const dob = new Date(dateOfBirthValue);
-  if (Number.isNaN(dob.getTime())) return "";
-
-  const today = new Date();
-  let years = today.getFullYear() - dob.getFullYear();
-  let months = today.getMonth() - dob.getMonth();
-
-  if (today.getDate() < dob.getDate()) {
-    months -= 1;
-  }
-
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  if (years < 0) {
-    return "0y 0m";
-  }
-
-  return `${years}y ${months}m`;
 }
 
 function renderRowsOrFallback(items, renderItem, fallback) {

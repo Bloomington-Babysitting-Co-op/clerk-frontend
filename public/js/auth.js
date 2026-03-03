@@ -129,11 +129,22 @@ async function requireAuth() {
   return data.session;
 }
 
+async function requireAdmin() {
+  await requireAuth();
+  const { data, error } = await supabase.rpc("rpc_get_admin_status");
+  if (error) throw error;
+  if (!data) {
+    throw new Error("Admin access required.");
+  }
+  return true;
+}
+
 // Alpine needs these on window
 window.authState = authState;
 window.loginForm = loginForm;
 window.dashboardState = dashboardState;
 window.requireAuth = requireAuth;
+window.requireAdmin = requireAdmin;
 
 // Module exports
-export { authState, loginForm, dashboardState, requireAuth };
+export { authState, loginForm, dashboardState, requireAuth, requireAdmin };

@@ -1,78 +1,23 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { formatDateTime } from "./utils.js";
+import {
+  calculateHours,
+  downloadCsv,
+  formatDateTime,
+  getAgeLabel,
+  setFormError,
+  toDateInputValue,
+  toTimeInputValue
+} from "./utils.js";
 import { formatRequestStatusLabel, getRequestStatusTextClass, renderRequestListCard } from "./request-cards.js";
-
-function toDateInputFromIso(isoValue) {
-  if (!isoValue) return "";
-  const date = new Date(isoValue);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toTimeInputFromIso(isoValue) {
-  if (!isoValue) return "";
-  const date = new Date(isoValue);
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function toLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function combineDateAndTime(dateValue, timeValue) {
-  if (!dateValue || !timeValue) return null;
-  return new Date(`${dateValue}T${timeValue}:00`).toISOString();
-}
-
-function calculateHours(startIso, endIso) {
-  if (!startIso || !endIso) return null;
-  const ms = new Date(endIso) - new Date(startIso);
-  if (ms <= 0) return null;
-  const quarterHours = Math.ceil(ms / (15 * 60 * 1000));
-  return quarterHours * 0.25;
-}
-
-function getChildAgeLabel(dateOfBirthValue) {
-  if (!dateOfBirthValue) return "";
-
-  const dateOfBirth = new Date(dateOfBirthValue);
-  if (Number.isNaN(dateOfBirth.getTime())) return "";
-
-  const today = new Date();
-  let years = today.getFullYear() - dateOfBirth.getFullYear();
-  let months = today.getMonth() - dateOfBirth.getMonth();
-
-  if (today.getDate() < dateOfBirth.getDate()) {
-    months -= 1;
-  }
-
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  if (years < 0) {
-    return "0y 0m";
-  }
-
-  return `${years}y ${months}m`;
-}
 
 function getRequestFormValuesFromRequest(request) {
   return {
     request_type: request.type || "babysit",
     notes: request.notes || "",
     request_date: request.date || "",
-    start_time: toTimeInputFromIso(request.start_time),
-    end_time: toTimeInputFromIso(request.end_time),
+    start_time: toTimeInputValue(request.start_time),
+    end_time: toTimeInputValue(request.end_time),
     flexible_date: !!request.flexible_date,
     flexible_start_time: !!request.flexible_start_time,
     flexible_end_time: !!request.flexible_end_time,
@@ -193,7 +138,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
           ${Array.isArray(values.available_children) && values.available_children.length
             ? values.available_children.map((child) => {
                 const selected = Array.isArray(values.selected_child_ids) && values.selected_child_ids.includes(child.id);
-                const ageLabel = getChildAgeLabel(child.date_of_birth);
+                const ageLabel = getAgeLabel(child.date_of_birth);
                 const allergiesText = (child.allergies || "").trim();
                 const notesText = (child.notes || "").trim();
                 return `
@@ -225,7 +170,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
       </div>
       ` : ""}
 
-      <p id="${prefix}-error" class="text-red-600 mt-2"></p>
+      <p id="${prefix}-error" class="text-red-600 mt-2 whitespace-pre-line"></p>
     </div>
   `;
 }
@@ -267,9 +212,7 @@ function initRequestFormInteractions(prefix) {
       return;
     }
 
-    const startIso = combineDateAndTime(requestDateInput.value, startTimeInput.value);
-    const endIso = combineDateAndTime(requestDateInput.value, endTimeInput.value);
-    const autoHours = calculateHours(startIso, endIso);
+    const autoHours = calculateHours(startTimeInput.value, endTimeInput.value);
     hoursInput.value = autoHours ?? "";
   }
 
@@ -333,43 +276,48 @@ function readRequestFormValues(prefix) {
 function normalizeFormPayload(values, options = {}) {
   const requestType = options.requestTypeOverride || values.request_type;
   const description = (values.notes || "").trim();
+  const errors = [];
 
   if (!requestType || !["babysit", "drive", "favor"].includes(requestType)) {
-    return { error: "Request type is required." };
+    errors.push("Request type is required.");
   }
 
   if (!description) {
-    return { error: "Description is required." };
+    errors.push("Description is required.");
   }
 
   if (values.request_date) {
-    const today = toLocalDateString();
+    const today = toDateInputValue();
     if (values.request_date < today) {
-      return { error: "Request date cannot be in the past." };
+      errors.push("Request date cannot be in the past.");
     }
   }
 
   if (!values.request_date) {
-    return { error: "Request date is required." };
+    errors.push("Request date is required.");
   }
 
-  const startIso = combineDateAndTime(values.request_date, values.start_time);
-  const endIso = combineDateAndTime(values.request_date, values.end_time);
+  const startTimeValue = values.start_time || null;
+  const endTimeValue = values.end_time || null;
 
-  if (startIso && endIso && new Date(endIso) <= new Date(startIso)) {
-    return { error: "End time must be after start time." };
+  if (startTimeValue && endTimeValue && calculateHours(startTimeValue, endTimeValue) === null) {
+    errors.push("End time must be after start time.");
   }
 
   if (values.meal_prepared_by_sitter && !values.meal_required) {
-    return { error: "Meal cannot be prepared by sitter unless meal is required." };
+    errors.push("Meal cannot be prepared by sitter unless meal is required.");
   }
 
-  const autoHours = requestType === "babysit" ? calculateHours(startIso, endIso) : null;
+  const autoHours = requestType === "babysit" ? calculateHours(startTimeValue, endTimeValue) : null;
   const manualHours = requestType !== "babysit" && values.hours !== "" ? Number(values.hours) : null;
   const payloadHours = autoHours ?? manualHours;
 
   if (payloadHours !== null && (!Number.isFinite(payloadHours) || payloadHours <= 0)) {
-    return { error: "Hours must be greater than zero." };
+    errors.push("Hours must be greater than zero.");
+  }
+
+  if (errors.length > 0) {
+    return { errors };
   }
 
   const isBabysit = requestType === "babysit";
@@ -380,8 +328,8 @@ function normalizeFormPayload(values, options = {}) {
       p_type: requestType,
       p_notes: description,
       p_date: values.request_date || null,
-      p_start_time: startIso,
-      p_end_time: endIso,
+      p_start_time: startTimeValue,
+      p_end_time: endTimeValue,
       p_flexible_date: !!values.flexible_date,
       p_flexible_start_time: !!values.flexible_start_time,
       p_flexible_end_time: !!values.flexible_end_time,
@@ -395,34 +343,6 @@ function normalizeFormPayload(values, options = {}) {
       p_destination: isDrive ? (values.destination || null) : null
     }
   };
-}
-
-function toCsvValue(value) {
-  const asString = value == null ? "" : String(value);
-  if (asString.includes(",") || asString.includes("\"") || asString.includes("\n")) {
-    return `"${asString.replace(/"/g, '""')}"`;
-  }
-  return asString;
-}
-
-function downloadCsv(filename, rows) {
-  const content = rows.map((row) => row.map(toCsvValue).join(",")).join("\n");
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
-}
-
-function toDateInputValue(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 async function listRequestsInto(containerId, options = {}) {
@@ -485,7 +405,7 @@ async function mountRequestsPage() {
   if (applyBtn) {
     applyBtn.onclick = async () => {
       try {
-        if (errorEl) errorEl.textContent = "";
+        setFormError(errorEl, "");
         currentRows = await listRequestsInto("requests-list", {
           startDate: startInput?.value || null,
           endDate: endInput?.value || null,
@@ -493,7 +413,7 @@ async function mountRequestsPage() {
           futureOnly: !!futureOnlyCheckbox?.checked
         });
       } catch (error) {
-        if (errorEl) errorEl.textContent = error.message;
+        setFormError(errorEl, error.message);
       }
     };
   }
@@ -501,10 +421,10 @@ async function mountRequestsPage() {
   if (exportBtn) {
     exportBtn.onclick = () => {
       if (!currentRows || !currentRows.length) {
-        if (errorEl) errorEl.textContent = "No rows to export for selected filters.";
+        setFormError(errorEl, "No rows to export for selected filters.");
         return;
       }
-      if (errorEl) errorEl.textContent = "";
+      setFormError(errorEl, "");
       const rows = [
         ["id", "date", "type", "status", "family_name", "hours", "notes"],
         ...currentRows.map((row) => [
@@ -769,12 +689,12 @@ async function loadRequestInto(containerId) {
 
   async function saveRequest(requestId) {
     const values = readRequestFormValues("edit-request");
-    const { payload, error: validationError } = normalizeFormPayload(values, {
+    const { payload, errors } = normalizeFormPayload(values, {
       requestTypeOverride: r.type
     });
 
-    if (validationError) {
-      document.getElementById("edit-request-error").textContent = validationError;
+    if (errors?.length) {
+      setFormError("edit-request-error", errors);
       return;
     }
 
@@ -798,7 +718,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("edit-request-error").textContent = error.message;
+      setFormError("edit-request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -813,7 +733,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -826,7 +746,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -841,7 +761,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -857,7 +777,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -872,7 +792,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -887,7 +807,7 @@ async function loadRequestInto(containerId) {
     });
 
     if (error) {
-      document.getElementById("request-error").textContent = error.message;
+      setFormError("request-error", error.message);
     } else {
       window.location.reload();
     }
@@ -929,17 +849,17 @@ async function mountNewRequestForm(containerId) {
 
   document.getElementById("new-request-submit-btn").onclick = async () => {
     const formValues = readRequestFormValues("new-request");
-    const { payload, error: validationError } = normalizeFormPayload(formValues);
+    const { payload, errors } = normalizeFormPayload(formValues);
 
-    if (validationError) {
-      document.getElementById("new-request-error").textContent = validationError;
+    if (errors?.length) {
+      setFormError("new-request-error", errors);
       return;
     }
 
     const { error } = await supabase.rpc("rpc_create_request", payload);
 
     if (error) {
-      document.getElementById("new-request-error").textContent = error.message;
+      setFormError("new-request-error", error.message);
     } else {
       window.location = "/";
     }

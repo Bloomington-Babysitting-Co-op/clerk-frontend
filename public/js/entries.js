@@ -1,28 +1,18 @@
 import { supabase } from "./supabase.js";
-import { requireAuth } from "./auth.js";
+import { requireAdmin, requireAuth } from "./auth.js";
+import {
+  normalizeQuarterHoursInput,
+  setFormError,
+  toDateInputValue,
+  toDateOnlyString,
+  toNullableDate,
+  toNumberOrZero
+} from "./utils.js";
 
 function populateUserOptions(selectEl, families, selectedValue = "") {
   selectEl.innerHTML = families
     .map((family) => `<option value="${family.id}" ${family.id === selectedValue ? "selected" : ""}>${family.name}</option>`)
     .join("");
-}
-
-function setError(id, message) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = message || "";
-  if (id === "entry-error") {
-    el.classList.add("whitespace-pre-line");
-  }
-}
-
-async function ensureAdmin() {
-  await requireAuth();
-  const { data, error } = await supabase.rpc("rpc_get_admin_status");
-  if (error) throw error;
-  if (!data) {
-    throw new Error("Admin access required.");
-  }
 }
 
 async function loadFamiliesForEntry() {
@@ -37,48 +27,6 @@ async function loadCompletedRequestsForEntry() {
   return data || [];
 }
 
-function parseEntryDate(value) {
-  if (!value) return null;
-  return value;
-}
-
-function toDateInputValueFromDateString(dateValue) {
-  if (!dateValue) return "";
-  return dateValue;
-}
-
-function toDateInputValueFromStoredDate(dateValue) {
-  if (!dateValue) return "";
-  return String(dateValue).slice(0, 10);
-}
-
-function toLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toNumberOrZero(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function roundUpToQuarter(value) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.ceil(parsed * 4) / 4;
-}
-
-function normalizeEntryHoursInput(hoursInput) {
-  if (!hoursInput) return;
-  const raw = hoursInput.value;
-  if (raw == null || raw === "") return;
-  const rounded = roundUpToQuarter(raw);
-  if (rounded == null) return;
-  hoursInput.value = rounded.toFixed(2);
-}
-
 function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue }) {
   const errors = [];
   if (!fromFamilyId) errors.push("From Family is required.");
@@ -90,7 +38,7 @@ function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue })
   if (!Number.isFinite(hours) || hours <= 0) errors.push("Hours must be greater than zero.");
   if (!entryDateValue) errors.push("Entry date is required.");
   if (entryDateValue) {
-    const today = toLocalDateString();
+    const today = toDateInputValue();
     if (entryDateValue > today) {
       errors.push("Entry date cannot be in the future.");
     }
@@ -122,8 +70,8 @@ async function mountNewEntryPage() {
     const createBtn = document.getElementById("create-entry-btn");
 
     if (hoursInput) {
-      hoursInput.addEventListener("input", () => normalizeEntryHoursInput(hoursInput));
-      hoursInput.addEventListener("change", () => normalizeEntryHoursInput(hoursInput));
+      hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
+      hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
     }
 
     const familiesById = new Map(families.map((family) => [family.id, family.name || family.id]));
@@ -135,7 +83,7 @@ async function mountNewEntryPage() {
       requestSelect.disabled = true;
       createBtn.disabled = true;
       createBtn.classList.add("opacity-60", "cursor-not-allowed");
-      setError("entry-error", "No completed requests are available for selection. An entry cannot be created.");
+      setFormError("entry-error", "No completed requests are available for selection. An entry cannot be created.");
       return;
     }
 
@@ -193,15 +141,15 @@ async function mountNewEntryPage() {
 
       const adjustedHours = baseHours + (hasDriveTime ? 0.5 : 0) + (hasMealServed ? 0.5 : 0);
       hoursInput.value = toNumberOrZero(adjustedHours).toFixed(2);
-      normalizeEntryHoursInput(hoursInput);
+      normalizeQuarterHoursInput(hoursInput);
 
       if (selected.request_date) {
-        entryDateInput.value = toDateInputValueFromDateString(selected.request_date);
+        entryDateInput.value = toDateOnlyString(selected.request_date);
       }
     };
 
     createBtn.onclick = async () => {
-      setError("entry-error", "");
+      setFormError("entry-error", "");
       const requestId = requestSelect.value || null;
       const fromFamilyId = fromFamilyIdInput.value || "";
       const toFamilyId = toFamilyIdInput.value || "";
@@ -212,7 +160,7 @@ async function mountNewEntryPage() {
         entryDateValue: entryDateInput.value
       });
       if (validationErrors.length) {
-        setError("entry-error", `• ${validationErrors.join("\n• ")}`);
+        setFormError("entry-error", validationErrors);
         return;
       }
 
@@ -221,27 +169,27 @@ async function mountNewEntryPage() {
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
         p_hours: Number(hoursInput.value),
-        p_entry_date: parseEntryDate(entryDateInput.value)
+        p_entry_date: toNullableDate(entryDateInput.value)
       });
 
       if (error) {
-        setError("entry-error", error.message);
+        setFormError("entry-error", error.message);
       } else {
         window.location = "/ledger.html";
       }
     };
   } catch (error) {
-    setError("entry-error", error.message || "Unable to load page.");
+    setFormError("entry-error", error.message || "Unable to load page.");
   }
 }
 
 async function mountEditEntryPage() {
   try {
-    await ensureAdmin();
+    await requireAdmin();
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     if (!id) {
-      setError("entry-error", "Missing entry id.");
+      setFormError("entry-error", "Missing entry id.");
       return;
     }
 
@@ -251,7 +199,7 @@ async function mountEditEntryPage() {
 
     const entry = Array.isArray(data) ? data[0] : data;
     if (!entry) {
-      setError("entry-error", "Ledger entry not found.");
+      setFormError("entry-error", "Ledger entry not found.");
       return;
     }
 
@@ -262,19 +210,19 @@ async function mountEditEntryPage() {
     const saveBtn = document.getElementById("save-entry-btn");
 
     if (hoursInput) {
-      hoursInput.addEventListener("input", () => normalizeEntryHoursInput(hoursInput));
-      hoursInput.addEventListener("change", () => normalizeEntryHoursInput(hoursInput));
+      hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
+      hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
     }
 
     populateUserOptions(fromSelect, families, entry.from_family_id);
     populateUserOptions(toSelect, families, entry.to_family_id);
     hoursInput.value = entry.hours;
-    normalizeEntryHoursInput(hoursInput);
+    normalizeQuarterHoursInput(hoursInput);
 
-    entryDateInput.value = toDateInputValueFromStoredDate(entry.entry_date);
+    entryDateInput.value = toDateOnlyString(entry.entry_date);
 
     saveBtn.onclick = async () => {
-      setError("entry-error", "");
+      setFormError("entry-error", "");
       const fromFamilyId = fromSelect.value;
       const toFamilyId = toSelect.value;
       const validationErrors = validateEntry({
@@ -284,7 +232,7 @@ async function mountEditEntryPage() {
         entryDateValue: entryDateInput.value
       });
       if (validationErrors.length) {
-        setError("entry-error", `• ${validationErrors.join("\n• ")}`);
+        setFormError("entry-error", validationErrors);
         return;
       }
 
@@ -293,17 +241,17 @@ async function mountEditEntryPage() {
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
         p_hours: Number(hoursInput.value),
-        p_entry_date: parseEntryDate(entryDateInput.value)
+        p_entry_date: toNullableDate(entryDateInput.value)
       });
 
       if (saveError) {
-        setError("entry-error", saveError.message);
+        setFormError("entry-error", saveError.message);
       } else {
         window.location = "/ledger.html";
       }
     };
   } catch (error) {
-    setError("entry-error", error.message || "Unable to load page.");
+    setFormError("entry-error", error.message || "Unable to load page.");
   }
 }
 

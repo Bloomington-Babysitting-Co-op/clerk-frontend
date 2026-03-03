@@ -1,3 +1,5 @@
+import { formatTimeOnly } from "./utils.js";
+
 function formatRequestTypeLabel(requestType) {
   const normalized = String(requestType || "").toLowerCase();
   if (!normalized) return "Unknown";
@@ -10,11 +12,6 @@ function formatRequestDateLine(request) {
     ? new Date(`${requestDate}T00:00:00`).toLocaleDateString()
     : "No date";
   return request.flexible_date ? `${dateLabel} (Flexible)` : dateLabel;
-}
-
-function formatTimeOnly(isoValue) {
-  if (!isoValue) return "";
-  return new Date(isoValue).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).toLowerCase();
 }
 
 function formatRequestTimeRangeLine(request) {
