@@ -14,17 +14,51 @@
       <a href="/request_new.html" class="bg-blue-600 text-white px-4 py-2 rounded">New Request</a>
     </div>
 
+    <div class="bg-white border p-4 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-3">Filter + Export</h2>
+      <div class="grid md:grid-cols-6 gap-3 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-1">Start Date</label>
+          <input id="requests-start-date" type="date" class="border p-2 w-full rounded">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">End Date</label>
+          <input id="requests-end-date" type="date" class="border p-2 w-full rounded">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Status</label>
+          <select id="requests-status" class="border p-2 w-full rounded">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="open">Open</option>
+            <option value="offered">Offered</option>
+            <option value="assigned">Assigned</option>
+            <option value="completed">Completed</option>
+            <option value="expired">Expired</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <label class="inline-flex items-center gap-2 text-sm pb-2">
+          <input id="requests-future-only" type="checkbox">
+          <span>Future request dates only</span>
+        </label>
+        <button id="requests-apply-filter-btn" class="bg-gray-700 text-white px-4 py-2 rounded">Apply Filters</button>
+        <button id="requests-export-csv-btn" class="bg-green-600 text-white px-4 py-2 rounded">Export CSV</button>
+      </div>
+      <p id="requests-error" class="text-red-600 mt-2"></p>
+    </div>
+
     <div id="requests-list" class="grid gap-4"></div>
   </main>
 
   <script type="module">
     import { setupNavbar } from "/js/utils.js";
     import { requireAuth } from "/js/auth.js";
-    import { listRequestsInto } from "/js/requests.js";
+    import { mountRequestsPage } from "/js/requests.js";
 
     await setupNavbar("navbar");
     await requireAuth();
-    listRequestsInto("requests-list");
+    await mountRequestsPage();
   </script>
 
   <script src="https://unpkg.com/alpinejs" defer></script>
