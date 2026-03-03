@@ -1,6 +1,18 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { formatDateTime } from "./utils.js";
+
+function toDateOnly(value) {
+  if (!value) return "";
+  const asString = String(value);
+  const isoMatch = asString.match(/^\d{4}-\d{2}-\d{2}/);
+  if (isoMatch) return isoMatch[0];
+  const parsed = new Date(asString);
+  if (Number.isNaN(parsed.getTime())) return asString;
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function toCsvValue(value) {
   const asString = value == null ? "" : String(value);
@@ -50,7 +62,7 @@ async function listLedgerInto(containerId, options = {}) {
   el.innerHTML = data.length
     ? data.map(e => `
       <div class="bg-white border p-4 rounded-lg shadow">
-        <p class="font-semibold text-gray-800">${formatDateTime(e.entry_date)}</p>
+        <p class="font-semibold text-gray-800">${toDateOnly(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
         <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
         ${showEditLinks ? `<div class="mt-2"><a href="/entry_edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
@@ -134,7 +146,7 @@ async function mountLedgerPage() {
       ledgerError.textContent = "";
       const rows = [
         ["id", "request_id", "entry_date", "hours", "from_family_id", "to_family_id"],
-        ...currentRows.map(row => [row.id, row.request_id || "", row.entry_date, row.hours, row.from_family_id, row.to_family_id])
+        ...currentRows.map(row => [row.id, row.request_id || "", toDateOnly(row.entry_date), row.hours, row.from_family_id, row.to_family_id])
       ];
       downloadCsv("ledger_export.csv", rows);
     };
