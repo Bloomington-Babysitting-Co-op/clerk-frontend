@@ -5,7 +5,7 @@ function setText(id, message, isError = false) {
   const el = document.getElementById(id);
   if (!el) return;
   el.textContent = message || "";
-  el.className = isError ? "text-sm text-red-600" : "text-sm text-gray-700";
+  el.className = isError ? "text-sm text-red-600 whitespace-pre-line" : "text-sm text-gray-700";
 }
 
 function setLinkedFamilyEmails(emails) {
@@ -48,11 +48,11 @@ function createChildRow(child = {}) {
   wrapper.className = "border rounded p-3 grid md:grid-cols-2 gap-3";
   wrapper.innerHTML = `
     <div>
-      <label class="block text-sm font-medium mb-1">Name</label>
+      <label class="block text-sm font-medium mb-1">Name <span class="text-red-600">*</span></label>
       <input data-child-field="name" type="text" class="border p-2 w-full rounded" value="${child.name || ""}" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Month of Birth</label>
+      <label class="block text-sm font-medium mb-1">Month of Birth <span class="text-red-600">*</span></label>
       <input data-child-field="date_of_birth" type="month" class="border p-2 w-full rounded" value="${monthValueFromDate(child.date_of_birth)}" required>
     </div>
     <div>
@@ -64,7 +64,7 @@ function createChildRow(child = {}) {
       <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
     <div class="md:col-span-2 flex justify-end">
-      <button type="button" data-remove-child class="bg-red-600 text-white px-3 py-2 rounded">Remove Child</button>
+      <button type="button" data-remove-child class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Child</button>
     </div>
   `;
 
@@ -125,6 +125,10 @@ function collectChildrenPayload() {
     });
   }
 
+  if (!children.length) {
+    return { children: [], error: "At least one child with name and month of birth is required." };
+  }
+
   return { children, error: "" };
 }
 
@@ -133,15 +137,15 @@ function createEmergencyContactRow(contact = {}) {
   wrapper.className = "border rounded p-3 grid md:grid-cols-2 gap-3";
   wrapper.innerHTML = `
     <div>
-      <label class="block text-sm font-medium mb-1">Name</label>
+      <label class="block text-sm font-medium mb-1">Name <span class="text-red-600">*</span></label>
       <input data-emergency-contact-field="name" type="text" class="border p-2 w-full rounded" value="${contact.name || ""}" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Phone</label>
+      <label class="block text-sm font-medium mb-1">Phone <span class="text-red-600">*</span></label>
       <input data-emergency-contact-field="phone" type="text" class="border p-2 w-full rounded" value="${contact.phone || ""}" required>
     </div>
     <div class="md:col-span-2 flex justify-end">
-      <button type="button" data-remove-emergency-contact class="bg-red-600 text-white px-3 py-2 rounded">Remove Contact</button>
+      <button type="button" data-remove-emergency-contact class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Contact</button>
     </div>
   `;
 
@@ -220,36 +224,36 @@ async function mountProfilePage() {
       const phone = val("profile-phone").trim();
       const familyName = val("profile-family-name").trim();
       const address = val("profile-address").trim();
+      const validationErrors = [];
 
       if (!parentName) {
-        setText("profile-save-message", "Parent Name is required.", true);
-        return;
+        validationErrors.push("Parent Name is required.");
       }
 
       if (!phone) {
-        setText("profile-save-message", "Phone is required.", true);
-        return;
+        validationErrors.push("Phone is required.");
       }
 
       if (!familyName) {
-        setText("profile-save-message", "Family Name is required.", true);
-        return;
+        validationErrors.push("Family Name is required.");
       }
 
       if (!address) {
-        setText("profile-save-message", "Address is required.", true);
-        return;
+        validationErrors.push("Address is required.");
       }
 
       const { children, error: childrenError } = collectChildrenPayload();
       if (childrenError) {
-        setText("profile-save-message", childrenError, true);
-        return;
+        validationErrors.push(childrenError);
       }
 
       const { emergencyContacts, error: emergencyContactsError } = collectEmergencyContactsPayload();
       if (emergencyContactsError) {
-        setText("profile-save-message", emergencyContactsError, true);
+        validationErrors.push(emergencyContactsError);
+      }
+
+      if (validationErrors.length) {
+        setText("profile-save-message", `• ${validationErrors.join("\n• ")}`, true);
         return;
       }
 

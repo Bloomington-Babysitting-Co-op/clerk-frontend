@@ -11,25 +11,35 @@
   <main class="flex-1 p-6 max-w-3xl mx-auto w-full">
     <div class="bg-white p-6 rounded-lg shadow">
       <h1 class="text-2xl font-bold mb-4">New Entry</h1>
-      <p class="text-sm text-gray-600 mb-3">Submit an hours transfer. Non-admin submissions always use you as the recipient.</p>
-      <p id="entry-admin-note" class="text-sm text-blue-700 mb-3" style="display:none;">Admin mode: you can transfer hours from any user to any user.</p>
+      <p class="text-sm text-gray-600 mb-3">Submit an hours transfer.</p>
 
-      <label class="block mb-2 font-semibold">Prefill from Completed Request (Optional)</label>
-      <select id="prefill-request" class="border p-2 w-full mb-4"></select>
+      <label class="block mb-2 font-semibold">Prefill from Completed Request <span class="text-red-600">*</span></label>
+      <select id="select-request" class="border p-2 w-full mb-4" required></select>
 
-      <label class="block mb-2 font-semibold">From User</label>
-      <select id="from-user" class="border p-2 w-full mb-4"></select>
+      <div class="flex items-center gap-2 mb-4">
+        <input id="from-family" type="text" class="border p-2 flex-1 bg-gray-100 text-gray-700" readonly>
+        <span class="text-gray-600 font-semibold">→</span>
+        <input id="to-family" type="text" class="border p-2 flex-1 bg-gray-100 text-gray-700" readonly>
+      </div>
+      <input id="from-family-id" type="hidden">
+      <input id="to-family-id" type="hidden">
 
-      <label class="block mb-2 font-semibold">To User</label>
-      <select id="to-user" class="border p-2 w-full mb-4"></select>
-      <p id="to-user-help" class="text-xs text-gray-600 mb-3"></p>
-
-      <label class="block mb-2 font-semibold">Hours</label>
-      <input id="hours" type="number" step="0.25" min="0" class="border p-2 w-full mb-4">
-
-      <label class="block mb-2 font-semibold">Entry date</label>
+      <label class="block mb-2 font-semibold">Date <span class="text-red-600">*</span></label>
       <input id="entry-date" type="datetime-local" required class="border p-2 w-full mb-4">
-      <p id="entry-date-help" class="text-xs text-gray-600 mb-3"></p>
+
+      <label class="block mb-2 font-semibold">Hours <span class="text-red-600">*</span></label>
+      <input id="entry-hours" type="number" step="0.25" min="0" class="border p-2 w-full mb-4">
+
+      <div class="flex flex-wrap items-center gap-4 mb-4">
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input id="entry-add-drive-time" type="checkbox">
+          <span>Add 30min Drive Time</span>
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input id="entry-add-meal-served" type="checkbox">
+          <span>Add 30min Meal Served</span>
+        </label>
+      </div>
 
       <button id="create-entry-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Create Entry</button>
       <p id="entry-error" class="text-red-600 mt-3"></p>
