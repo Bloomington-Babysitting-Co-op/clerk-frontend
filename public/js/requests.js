@@ -397,21 +397,129 @@ function normalizeFormPayload(values, options = {}) {
   };
 }
 
-async function listRequestsInto(containerId) {
+function toCsvValue(value) {
+  const asString = value == null ? "" : String(value);
+  if (asString.includes(",") || asString.includes("\"") || asString.includes("\n")) {
+    return `"${asString.replace(/"/g, '""')}"`;
+  }
+  return asString;
+}
+
+function downloadCsv(filename, rows) {
+  const content = rows.map((row) => row.map(toCsvValue).join(",")).join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
+function toDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+async function listRequestsInto(containerId, options = {}) {
   await requireAuth();
 
-  const { data, error } = await supabase.rpc("rpc_list_requests");
+  const {
+    startDate = null,
+    endDate = null,
+    status = "all",
+    futureOnly = false
+  } = options;
+
+  const { data, error } = await supabase.rpc("rpc_list_requests_filtered", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_status: status,
+    p_future_only: !!futureOnly
+  });
 
   const el = document.getElementById(containerId);
 
   if (error) {
     el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
-    return;
+    return [];
   }
 
   el.innerHTML = data.length
     ? data.map((r) => renderRequestListCard(r)).join("")
     : "<p class='text-gray-600'>No requests yet.</p>";
+
+  return data;
+}
+
+async function mountRequestsPage() {
+  await requireAuth();
+
+  const startInput = document.getElementById("requests-start-date");
+  const endInput = document.getElementById("requests-end-date");
+  const statusSelect = document.getElementById("requests-status");
+  const futureOnlyCheckbox = document.getElementById("requests-future-only");
+  const applyBtn = document.getElementById("requests-apply-filter-btn");
+  const exportBtn = document.getElementById("requests-export-csv-btn");
+  const errorEl = document.getElementById("requests-error");
+
+  const now = new Date();
+  const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  if (startInput) startInput.value = toDateInputValue(previousMonthStart);
+  if (endInput) endInput.value = "";
+  if (statusSelect && !statusSelect.value) statusSelect.value = "all";
+  if (futureOnlyCheckbox) futureOnlyCheckbox.checked = false;
+
+  let currentRows = await listRequestsInto("requests-list", {
+    startDate: startInput?.value || null,
+    endDate: endInput?.value || null,
+    status: statusSelect?.value || "all",
+    futureOnly: !!futureOnlyCheckbox?.checked
+  });
+
+  if (applyBtn) {
+    applyBtn.onclick = async () => {
+      try {
+        if (errorEl) errorEl.textContent = "";
+        currentRows = await listRequestsInto("requests-list", {
+          startDate: startInput?.value || null,
+          endDate: endInput?.value || null,
+          status: statusSelect?.value || "all",
+          futureOnly: !!futureOnlyCheckbox?.checked
+        });
+      } catch (error) {
+        if (errorEl) errorEl.textContent = error.message;
+      }
+    };
+  }
+
+  if (exportBtn) {
+    exportBtn.onclick = () => {
+      if (!currentRows || !currentRows.length) {
+        if (errorEl) errorEl.textContent = "No rows to export for selected filters.";
+        return;
+      }
+      if (errorEl) errorEl.textContent = "";
+      const rows = [
+        ["id", "date", "type", "status", "family_name", "hours", "notes"],
+        ...currentRows.map((row) => [
+          row.id,
+          row.date || "",
+          row.type || "",
+          row.status || "",
+          row.family_name || "",
+          row.hours ?? "",
+          row.notes || ""
+        ])
+      ];
+      downloadCsv("requests_export.csv", rows);
+    };
+  }
 }
 
 async function loadRequestInto(containerId) {
@@ -838,4 +946,4 @@ async function mountNewRequestForm(containerId) {
   };
 }
 
-export { listRequestsInto, loadRequestInto, mountNewRequestForm };
+export { listRequestsInto, loadRequestInto, mountNewRequestForm, mountRequestsPage };
