@@ -1,6 +1,6 @@
 import { supabase } from "/js/supabase.js";
 import { renderRequestListCard } from "/js/request-cards.js";
-import { hasAdminPrivileges } from "/js/utils.js";
+import { hasAdmin } from "/js/utils.js";
 
 function authState() {
   return {
@@ -152,8 +152,8 @@ async function requireAuth() {
 
 async function requireAdmin() {
   await requireAuth();
-  if (!(await hasAdminPrivileges())) {
-    throw new Error("Admin access requires admin privileges.");
+  if (!(await hasAdmin())) {
+    throw new Error("Admin access required.");
   }
   return true;
 }
