@@ -112,7 +112,7 @@ function familyOptionsHtml(selectedFamilyId = "") {
 }
 
 function renderFamilies() {
-  const listEl = document.getElementById("families-admin-families-list");
+  const listEl = document.getElementById("families-admin-list");
   if (!listEl) return;
 
   if (!familiesCache.length) {
@@ -129,10 +129,6 @@ function renderFamilies() {
       </header>
       <div class="family-admin-content hidden p-4 space-y-3">
         <div class="grid md:grid-cols-3 gap-3">
-          <label class="text-sm"><input id="family-active-${family.id}" type="checkbox" class="mr-2" ${family.is_active ? "checked" : ""}>Active</label>
-          <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
-        </div>
-        <div class="grid md:grid-cols-3 gap-3">
           <div>
             <label class="text-sm block mb-1">Date Joined</label>
             <input id="family-date-joined-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_date_joined)}">
@@ -145,6 +141,10 @@ function renderFamilies() {
             <label class="text-sm block mb-1">Last Dues Payment</label>
             <input id="family-last-dues-payment-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_last_dues_payment)}">
           </div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="text-sm"><input id="family-active-${family.id}" type="checkbox" class="mr-2" ${family.is_active ? "checked" : ""}>Active</label>
+          <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
         </div>
         <div class="flex flex-wrap gap-2">
           <button data-family-save="${family.id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
@@ -212,7 +212,7 @@ function renderFamilies() {
 }
 
 function renderUsers() {
-  const listEl = document.getElementById("families-admin-users-list");
+  const listEl = document.getElementById("users-admin-list");
   if (!listEl) return;
 
   if (!usersCache.length) {
@@ -221,17 +221,20 @@ function renderUsers() {
   }
 
   listEl.innerHTML = usersCache.map((user) => `
-    <article class="border rounded p-4 bg-gray-50 space-y-2">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <p class="font-medium">${user.email || user.user_id}</p>
-        <span class="text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">${user.family_is_active ? "Family active" : "Family inactive"}</span>
-      </div>
-      <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
-        <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
-        <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
-        <button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${user.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${user.can_delete ? "" : "disabled"}>Delete User</button>
-      </div>
-    </article>
+      <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
+        <header class="user-admin-header flex items-center p-3 cursor-pointer">
+          <button type="button" class="user-toggle-btn w-8 h-8 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+          <p class="font-medium">${user.email || user.user_id}</p>
+          <span class="ml-auto text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">${user.family_is_active ? "Family active" : "Family inactive"}</span>
+        </header>
+        <div class="user-admin-content hidden p-3">
+          <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
+            <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
+            <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
+            <button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${user.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${user.can_delete ? "" : "disabled"}>Delete User</button>
+          </div>
+        </div>
+      </article>
   `).join("");
 
   listEl.querySelectorAll("[data-user-move]").forEach((button) => {
@@ -249,6 +252,45 @@ function renderUsers() {
       await deleteUser(userId);
     });
   });
+
+  // attach collapse/expand behavior for users
+  function setUserArticleExpanded(article, expanded) {
+    const btn = article.querySelector('.user-toggle-btn');
+    const content = article.querySelector('.user-admin-content');
+    if (!btn || !content) return;
+    if (expanded) {
+      btn.textContent = "-";
+      btn.setAttribute('aria-expanded', 'true');
+      content.classList.remove('hidden');
+    } else {
+      btn.textContent = "+";
+      btn.setAttribute('aria-expanded', 'false');
+      content.classList.add('hidden');
+    }
+  }
+
+  const userArticles = Array.from(listEl.querySelectorAll('.user-admin-card'));
+  userArticles.forEach((article) => {
+    const header = article.querySelector('.user-admin-header');
+    const btn = article.querySelector('.user-toggle-btn');
+    setUserArticleExpanded(article, false);
+
+    const toggle = (ev) => {
+      ev && ev.preventDefault();
+      const content = article.querySelector('.user-admin-content');
+      const isHidden = content.classList.contains('hidden');
+      setUserArticleExpanded(article, isHidden);
+    };
+
+    if (header) header.addEventListener('click', toggle);
+    if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
+  });
+
+  // expand/collapse all for users
+  const usersExpandAllBtn = document.getElementById('users-admin-expand-all');
+  const usersCollapseAllBtn = document.getElementById('users-admin-collapse-all');
+  if (usersExpandAllBtn) usersExpandAllBtn.addEventListener('click', () => userArticles.forEach((a) => setUserArticleExpanded(a, true)));
+  if (usersCollapseAllBtn) usersCollapseAllBtn.addEventListener('click', () => userArticles.forEach((a) => setUserArticleExpanded(a, false)));
 }
 
 async function loadFamilies() {
@@ -289,22 +331,22 @@ async function saveFamily(familyId) {
 
   const { error } = await supabase.rpc("rpc_admin_update_family", payload);
   if (error) {
-    setStatusText("families-admin-families-status", error.message, true);
+    setStatusText("families-admin-status", error.message, true);
     return;
   }
 
-  setStatusText("families-admin-families-status", "Family updated.");
+  setStatusText("families-admin-status", "Family updated.");
   await refreshAll();
 }
 
 async function deleteFamily(familyId) {
   const { error } = await supabase.rpc("rpc_admin_delete_family", { p_family_id: familyId });
   if (error) {
-    setStatusText("families-admin-families-status", error.message, true);
+    setStatusText("families-admin-status", error.message, true);
     return;
   }
 
-  setStatusText("families-admin-families-status", "Family deleted.");
+  setStatusText("families-admin-status", "Family deleted.");
   await refreshAll();
 }
 
@@ -319,11 +361,11 @@ async function saveUserFamily(userId) {
   });
 
   if (error) {
-    setStatusText("families-admin-users-status", error.message, true);
+    setStatusText("users-admin-status", error.message, true);
     return;
   }
 
-  setStatusText("families-admin-users-status", "User family updated.");
+  setStatusText("users-admin-status", "User family updated.");
   await refreshAll();
 }
 
@@ -336,11 +378,11 @@ async function deleteUser(userId) {
 
   const result = await resp.json().catch(() => ({}));
   if (!resp.ok) {
-    setStatusText("families-admin-users-status", result?.error || "Error deleting user", true);
+    setStatusText("users-admin-status", result?.error || "Error deleting user", true);
     return;
   }
 
-  setStatusText("families-admin-users-status", "User deleted.");
+  setStatusText("users-admin-status", "User deleted.");
   await refreshAll();
 }
 
@@ -351,18 +393,18 @@ async function wireCreateFamily() {
   createFamilyBtn.onclick = async () => {
     const name = getInputValue("families-admin-new-family-name").trim();
     if (!name) {
-      setStatusText("families-admin-family-create-status", "Family name is required.", true);
+      setStatusText("family-admin-create-status", "Family name is required.", true);
       return;
     }
 
     const { error } = await supabase.rpc("rpc_admin_create_family", { p_name: name });
     if (error) {
-      setStatusText("families-admin-family-create-status", error.message, true);
+      setStatusText("family-admin-create-status", error.message, true);
       return;
     }
 
     setInputValue("families-admin-new-family-name", "");
-    setStatusText("families-admin-family-create-status", "Family created.");
+    setStatusText("family-admin-create-status", "Family created.");
     await refreshAll();
   };
 }
@@ -376,7 +418,7 @@ async function wireCreateUser() {
     const password = getInputValue("families-admin-new-user-password");
 
     if (!email || !password) {
-      setStatusText("families-admin-user-create-status", "Email and password are required.", true);
+      setStatusText("user-admin-create-status", "Email and password are required.", true);
       return;
     }
 
@@ -388,13 +430,13 @@ async function wireCreateUser() {
 
     const result = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      setStatusText("families-admin-user-create-status", result?.error || "Error creating user", true);
+      setStatusText("user-admin-create-status", result?.error || "Error creating user", true);
       return;
     }
 
     setInputValue("families-admin-new-user-email", "");
     setInputValue("families-admin-new-user-password", "");
-    setStatusText("families-admin-user-create-status", "User created.");
+    setStatusText("user-admin-create-status", "User created.");
     await refreshAll();
   };
 }
