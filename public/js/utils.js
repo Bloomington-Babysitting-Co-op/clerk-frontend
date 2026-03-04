@@ -1,6 +1,5 @@
 import { supabase } from "/js/supabase.js";
 
-const ADMIN_STORAGE_KEY = "bbc_clerk_admin_enabled";
 let adminStatusCache = null;
 
 export function monthValueFromDate(value) {
@@ -190,18 +189,6 @@ export function getAgeLabel(dateOfBirthValue) {
   return `${years}y ${months}m`;
 }
 
-export function setAdminEnabled(value) {
-  if (value) {
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
-  } else {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
-  }
-}
-
-export function isAdminEnabled() {
-  return window.sessionStorage.getItem(ADMIN_STORAGE_KEY) === "true";
-}
-
 export async function hasAdminPrivileges(forceRefresh = false) {
   if (!forceRefresh && adminStatusCache != null) {
     return adminStatusCache;
@@ -217,11 +204,6 @@ export async function hasAdminPrivileges(forceRefresh = false) {
   return adminStatusCache;
 }
 
-export async function isAdminUiEnabled() {
-  const hasPrivileges = await hasAdminPrivileges();
-  return hasPrivileges && isAdminEnabled();
-}
-
 export async function setupNavbar(containerId) {
   try {
     const container = document.getElementById(containerId);
@@ -231,37 +213,11 @@ export async function setupNavbar(containerId) {
       return;
     }
 
-    const hasPrivileges = await hasAdminPrivileges();
-    const showAdminUi = hasPrivileges && isAdminEnabled();
-    const navbarColorClass = showAdminUi ? "bg-rose-900" : "bg-indigo-600";
-
-    const adminToggleButtonHtml = hasPrivileges
-      ? `
-          <button
-            id="navbar-admin-toggle"
-            type="button"
-            aria-pressed="${showAdminUi ? "true" : "false"}"
-            class="${showAdminUi ? "bg-rose-700 text-white hover:bg-rose-800" : "bg-white text-blue-600 hover:bg-blue-300"} p-2 rounded"
-            title="Toggle admin mode"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10" aria-hidden="true">
-              <path fill-rule="evenodd" d="M11.49 3.17c.38-1.56 2.63-1.56 3.01 0a1.53 1.53 0 0 0 2.29.95c1.36-.8 2.95.79 2.15 2.15a1.53 1.53 0 0 0 .95 2.29c1.56.38 1.56 2.63 0 3.01a1.53 1.53 0 0 0-.95 2.29c.8 1.36-.79 2.95-2.15 2.15a1.53 1.53 0 0 0-2.29.95c-.38 1.56-2.63 1.56-3.01 0a1.53 1.53 0 0 0-2.29-.95c-1.36.8-2.95-.79-2.15-2.15a1.53 1.53 0 0 0-.95-2.29c-1.56-.38-1.56-2.63 0-3.01a1.53 1.53 0 0 0 .95-2.29c-.8-1.36.79-2.95 2.15-2.15a1.53 1.53 0 0 0 2.29-.95ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        `
-      : "";
-
     const navbarHTML = `
-      <nav class="${navbarColorClass} text-white shadow">
+      <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <div class="flex items-center gap-3">
-            <a href="/" class="bg-white text-blue-600 hover:bg-blue-300 p-2 rounded" title="Go to dashboard">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10" aria-hidden="true">
-                <path d="M10.55 2.53a2.25 2.25 0 0 1 2.9 0l7.5 6.5a2.25 2.25 0 0 1-1.48 3.97h-.22V19.5A2.5 2.5 0 0 1 16.75 22h-2.5a.75.75 0 0 1-.75-.75V17a.75.75 0 0 0-.75-.75h-1.5A.75.75 0 0 0 10.5 17v4.25a.75.75 0 0 1-.75.75h-2.5a2.5 2.5 0 0 1-2.5-2.5V13h-.22a2.25 2.25 0 0 1-1.48-3.97l7.5-6.5Z" />
-              </svg>
-            </a>
-            <a href="/" class="text-xl font-bold">BBC Clerk</a>
-            ${adminToggleButtonHtml}
+            <a href="/" class="bg-white text-indigo-600 text-2xl font-bold hover:bg-blue-300 px-4 py-1 rounded" title="Go to dashboard">BBC Clerk</a>
           </div>
           <div class="flex gap-2 items-center">
             <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
@@ -273,14 +229,6 @@ export async function setupNavbar(containerId) {
     `;
 
     container.innerHTML = navbarHTML;
-
-    const adminToggleButton = container.querySelector("#navbar-admin-toggle");
-    if (adminToggleButton) {
-      adminToggleButton.addEventListener("click", () => {
-        setAdminEnabled(!isAdminEnabled());
-        window.location.reload();
-      });
-    }
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }

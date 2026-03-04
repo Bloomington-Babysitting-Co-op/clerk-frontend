@@ -1,5 +1,5 @@
 import { supabase } from "./supabase.js";
-import { isAdminUiEnabled, setFormError } from "./utils.js";
+import { hasAdminPrivileges, setFormError } from "./utils.js";
 
 async function loadFamilies() {
   const { data, error } = await supabase.rpc("rpc_admin_list_families");
@@ -20,7 +20,7 @@ function isDivisibleByQuarter(num) {
 }
 
 async function mountAdminEntriesPage() {
-  if (!(await isAdminUiEnabled())) {
+  if (!(await hasAdminPrivileges())) {
     window.location.href = "/profile.html";
     return;
   }

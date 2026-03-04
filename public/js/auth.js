@@ -1,6 +1,6 @@
 import { supabase } from "/js/supabase.js";
 import { renderRequestListCard } from "/js/request-cards.js";
-import { isAdminUiEnabled } from "/js/utils.js";
+import { hasAdminPrivileges } from "/js/utils.js";
 
 function authState() {
   return {
@@ -152,9 +152,8 @@ async function requireAuth() {
 
 async function requireAdmin() {
   await requireAuth();
-  const showAdminUi = await isAdminUiEnabled();
-  if (!showAdminUi) {
-    throw new Error("Admin access requires admin mode to be enabled in the navbar.");
+  if (!(await hasAdminPrivileges())) {
+    throw new Error("Admin access requires admin privileges.");
   }
   return true;
 }

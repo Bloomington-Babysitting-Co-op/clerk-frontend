@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { downloadCsv, isAdminUiEnabled, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
+import { downloadCsv, hasAdminPrivileges, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
 
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
@@ -63,7 +63,7 @@ async function mountLedgerPage() {
   const exportBtn = document.getElementById("ledger-export-csv-btn");
   const ledgerError = document.getElementById("ledger-error");
 
-  const showAdminUi = await isAdminUiEnabled();
+  const hasAdmin = await hasAdminPrivileges();
 
   const now = new Date();
   const defaultStartDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -80,7 +80,7 @@ async function mountLedgerPage() {
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
     endDate: endInput?.value || null,
-    showEditLinks: showAdminUi
+    showEditLinks: hasAdmin
   });
   await loadLedgerBalancesInto("ledger-balances");
 
@@ -90,7 +90,7 @@ async function mountLedgerPage() {
         setFormError(ledgerError, "");
         const startDate = startInput?.value || null;
         const endDate = endInput?.value || null;
-        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, showEditLinks: showAdminUi });
+        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, showEditLinks: hasAdmin });
       } catch (error) {
         setFormError(ledgerError, error.message);
       }
