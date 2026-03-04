@@ -160,8 +160,8 @@ async function mountFamiliesPage(containerId) {
   });
 
   // expand / collapse all buttons (if present on page)
-  const expandAllBtn = document.getElementById('expand-all-btn');
-  const collapseAllBtn = document.getElementById('collapse-all-btn');
+  const expandAllBtn = document.getElementById('families-expand-all');
+  const collapseAllBtn = document.getElementById('families-collapse-all');
   if (expandAllBtn) expandAllBtn.addEventListener('click', () => articles.forEach((a) => setArticleExpanded(a, true)));
   if (collapseAllBtn) collapseAllBtn.addEventListener('click', () => articles.forEach((a) => setArticleExpanded(a, false)));
 }
