@@ -25,7 +25,7 @@ async function listLedgerInto(containerId, options = {}) {
         <p class="font-semibold text-gray-800">${toDateOnlyString(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
         <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
-        ${showEditLinks ? `<div class="mt-2"><a href="/entry_edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
+          ${showEditLinks ? `<div class="mt-2"><a href="/entry-edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
       </div>
     `).join("")
     : "<p class='text-gray-600'>No ledger entries yet.</p>";
