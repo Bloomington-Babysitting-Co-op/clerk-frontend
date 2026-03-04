@@ -350,16 +350,12 @@ async function listRequestsInto(containerId, options = {}) {
 
   const {
     startDate = null,
-    endDate = null,
-    status = "all",
-    futureOnly = false
+    endDate = null
   } = options;
 
   const { data, error } = await supabase.rpc("rpc_list_requests_filtered", {
     p_start_date: startDate,
-    p_end_date: endDate,
-    p_status: status,
-    p_future_only: !!futureOnly
+    p_end_date: endDate
   });
 
   const el = document.getElementById(containerId);
@@ -381,25 +377,16 @@ async function mountRequestsPage() {
 
   const startInput = document.getElementById("requests-start-date");
   const endInput = document.getElementById("requests-end-date");
-  const statusSelect = document.getElementById("requests-status");
-  const futureOnlyCheckbox = document.getElementById("requests-future-only");
   const applyBtn = document.getElementById("requests-apply-filter-btn");
   const exportBtn = document.getElementById("requests-export-csv-btn");
   const errorEl = document.getElementById("requests-error");
 
-  const now = new Date();
-  const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-  if (startInput) startInput.value = toDateInputValue(previousMonthStart);
+  if (startInput) startInput.value = toDateInputValue();
   if (endInput) endInput.value = "";
-  if (statusSelect && !statusSelect.value) statusSelect.value = "all";
-  if (futureOnlyCheckbox) futureOnlyCheckbox.checked = false;
 
   let currentRows = await listRequestsInto("requests-list", {
     startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    status: statusSelect?.value || "all",
-    futureOnly: !!futureOnlyCheckbox?.checked
+    endDate: endInput?.value || null
   });
 
   if (applyBtn) {
@@ -408,9 +395,7 @@ async function mountRequestsPage() {
         setFormError(errorEl, "");
         currentRows = await listRequestsInto("requests-list", {
           startDate: startInput?.value || null,
-          endDate: endInput?.value || null,
-          status: statusSelect?.value || "all",
-          futureOnly: !!futureOnlyCheckbox?.checked
+          endDate: endInput?.value || null
         });
       } catch (error) {
         setFormError(errorEl, error.message);
@@ -533,8 +518,8 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
-      <p class="font-semibold mb-1">Family: <span class="text-gray-800">${requestFamilyName}</span></p>
-      <p class="font-semibold mb-4">Status: <span class="${getRequestStatusTextClass(r.status)}">${formatRequestStatusLabel(r.status)}</span></p>
+      <label class="font-semibold mb-1"><span class="text-gray-800">${requestFamilyName}</span></label>
+      <label class="font-semibold mb-4"><span class="${getRequestStatusTextClass(r.status)}">${formatRequestStatusLabel(r.status)}</span></label>
 
       <div id="view-mode">
         ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
@@ -837,7 +822,6 @@ async function mountNewRequestForm(containerId) {
   }
   values.available_children = Array.isArray(familyChildrenData) ? familyChildrenData : [];
   container.innerHTML = `
-    <p class="font-semibold mb-4">Family: <span class="text-gray-800">${familyName}</span></p>
     ${getRequestFormHtml("new-request", values, {
     submitLabel: "Create Request",
     showCancel: false,

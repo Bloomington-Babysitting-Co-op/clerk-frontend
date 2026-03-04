@@ -1,5 +1,6 @@
 import { supabase } from "/js/supabase.js";
 import { renderRequestListCard } from "/js/request-cards.js";
+import { isAdminUiEnabled } from "/js/utils.js";
 
 function authState() {
   return {
@@ -32,6 +33,12 @@ function loginForm() {
       if (error) {
         this.error = error.message;
       } else {
+        const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
+        if (activeError || !isActive) {
+          await supabase.auth.signOut();
+          this.error = activeError?.message || "Your family is inactive. Please contact an admin.";
+          return;
+        }
         window.location = "/";
       }
     }
@@ -65,6 +72,12 @@ function dashboardState() {
       if (error) {
         this.error = error.message;
       } else {
+        const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
+        if (activeError || !isActive) {
+          await supabase.auth.signOut();
+          this.error = activeError?.message || "Your family is inactive. Please contact an admin.";
+          return;
+        }
         window.location.reload();
       }
     },
@@ -126,15 +139,22 @@ async function requireAuth() {
     window.location.href = "/login.html";
     throw new Error("Not authenticated");
   }
+
+  const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
+  if (activeError || !isActive) {
+    await supabase.auth.signOut();
+    window.location.href = "/login.html";
+    throw new Error(activeError?.message || "Your family is inactive. Please contact an admin.");
+  }
+
   return data.session;
 }
 
 async function requireAdmin() {
   await requireAuth();
-  const { data, error } = await supabase.rpc("rpc_get_admin_status");
-  if (error) throw error;
-  if (!data) {
-    throw new Error("Admin access required.");
+  const showAdminUi = await isAdminUiEnabled();
+  if (!showAdminUi) {
+    throw new Error("Admin access requires admin mode to be enabled in the navbar.");
   }
   return true;
 }
