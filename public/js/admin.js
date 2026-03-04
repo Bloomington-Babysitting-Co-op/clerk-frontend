@@ -204,11 +204,26 @@ function renderFamilies() {
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
   });
 
-  // expand/collapse all buttons
-  const expandAllBtn = document.getElementById('families-admin-expand-all');
-  const collapseAllBtn = document.getElementById('families-admin-collapse-all');
-  if (expandAllBtn) expandAllBtn.addEventListener('click', () => adminArticles.forEach((a) => setAdminArticleExpanded(a, true)));
-  if (collapseAllBtn) collapseAllBtn.addEventListener('click', () => adminArticles.forEach((a) => setAdminArticleExpanded(a, false)));
+  const familiesToggleAllBtn = document.getElementById('families-admin-toggle-all');
+  function updateFamiliesToggleAll() {
+    if (!familiesToggleAllBtn) return;
+    const anyHidden = adminArticles.some(a => a.querySelector('.family-admin-content').classList.contains('hidden'));
+    familiesToggleAllBtn.textContent = anyHidden ? '+' : '-';
+  }
+  if (familiesToggleAllBtn) {
+    updateFamiliesToggleAll();
+    familiesToggleAllBtn.addEventListener('click', () => {
+      const anyHidden = adminArticles.some(a => a.querySelector('.family-admin-content').classList.contains('hidden'));
+      adminArticles.forEach((a) => setAdminArticleExpanded(a, anyHidden));
+      familiesToggleAllBtn.textContent = anyHidden ? '-' : '+';
+    });
+  }
+  adminArticles.forEach((article) => {
+    const header = article.querySelector('.family-admin-header');
+    const btn = article.querySelector('.family-toggle-btn');
+    if (header) header.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+    if (btn) btn.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+  });
 }
 
 function renderUsers() {
@@ -223,7 +238,7 @@ function renderUsers() {
   listEl.innerHTML = usersCache.map((user) => `
       <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
-          <button type="button" class="user-toggle-btn w-8 h-8 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+          <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
           <span class="ml-auto text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">${user.family_is_active ? "Family active" : "Family inactive"}</span>
         </header>
@@ -286,11 +301,26 @@ function renderUsers() {
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
   });
 
-  // expand/collapse all for users
-  const usersExpandAllBtn = document.getElementById('users-admin-expand-all');
-  const usersCollapseAllBtn = document.getElementById('users-admin-collapse-all');
-  if (usersExpandAllBtn) usersExpandAllBtn.addEventListener('click', () => userArticles.forEach((a) => setUserArticleExpanded(a, true)));
-  if (usersCollapseAllBtn) usersCollapseAllBtn.addEventListener('click', () => userArticles.forEach((a) => setUserArticleExpanded(a, false)));
+  const usersToggleAllBtn = document.getElementById('users-admin-toggle-all');
+  function updateUsersToggleAll() {
+    if (!usersToggleAllBtn) return;
+    const anyHidden = userArticles.some(a => a.querySelector('.user-admin-content').classList.contains('hidden'));
+    usersToggleAllBtn.textContent = anyHidden ? '+' : '-';
+  }
+  if (usersToggleAllBtn) {
+    updateUsersToggleAll();
+    usersToggleAllBtn.addEventListener('click', () => {
+      const anyHidden = userArticles.some(a => a.querySelector('.user-admin-content').classList.contains('hidden'));
+      userArticles.forEach((a) => setUserArticleExpanded(a, anyHidden));
+      usersToggleAllBtn.textContent = anyHidden ? '-' : '+';
+    });
+  }
+  userArticles.forEach((article) => {
+    const header = article.querySelector('.user-admin-header');
+    const btn = article.querySelector('.user-toggle-btn');
+    if (header) header.addEventListener('click', () => setTimeout(updateUsersToggleAll, 0));
+    if (btn) btn.addEventListener('click', () => setTimeout(updateUsersToggleAll, 0));
+  });
 }
 
 async function loadFamilies() {

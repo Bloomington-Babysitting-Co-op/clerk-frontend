@@ -159,11 +159,30 @@ async function mountFamiliesPage(containerId) {
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
   });
 
-  // expand / collapse all buttons (if present on page)
-  const expandAllBtn = document.getElementById('families-expand-all');
-  const collapseAllBtn = document.getElementById('families-collapse-all');
-  if (expandAllBtn) expandAllBtn.addEventListener('click', () => articles.forEach((a) => setArticleExpanded(a, true)));
-  if (collapseAllBtn) collapseAllBtn.addEventListener('click', () => articles.forEach((a) => setArticleExpanded(a, false)));
+    // toggle-all button
+    const toggleAllBtn = document.getElementById('families-toggle-all');
+    function updateFamiliesToggleAll() {
+      if (!toggleAllBtn) return;
+      const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
+      toggleAllBtn.textContent = anyHidden ? '+' : '-';
+    }
+
+    if (toggleAllBtn) {
+      updateFamiliesToggleAll();
+      toggleAllBtn.addEventListener('click', () => {
+        const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
+        articles.forEach((a) => setArticleExpanded(a, anyHidden));
+        toggleAllBtn.textContent = anyHidden ? '-' : '+';
+      });
+    }
+
+    // ensure per-item toggles update the toggle-all button state
+    articles.forEach((article) => {
+      const observerHeader = article.querySelector('.family-header');
+      if (observerHeader) observerHeader.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+      const btn = article.querySelector('.family-toggle-btn');
+      if (btn) btn.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+    });
 }
 
 export { mountFamiliesPage };
