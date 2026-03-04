@@ -19,6 +19,11 @@
               class="bg-blue-600 text-white px-4 py-2 w-full rounded">
         Log In
       </button>
+      <button @click="forgotPassword"
+              x-bind:disabled="resetting"
+              class="mt-2 bg-yellow-600 text-white px-4 py-2 w-full rounded">
+        <span x-text="resetting ? 'Sending...' : 'Forgot my password'"></span>
+      </button>
       <p class="text-red-600 mt-2" x-text="error"></p>
     </div>
   </main>
