@@ -185,9 +185,15 @@ async function saveUserFamily(userId) {
 }
 
 async function deleteUser(userId) {
-	const { error } = await supabase.rpc("rpc_admin_delete_user", { p_user_id: userId });
-	if (error) {
-		setStatusText("families-admin-users-status", error.message, true);
+	const resp = await fetch("/api/delete-user", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ userId })
+	});
+
+	const result = await resp.json().catch(() => ({}));
+	if (!resp.ok) {
+		setStatusText("families-admin-users-status", result?.error || "Error deleting user", true);
 		return;
 	}
 
@@ -225,32 +231,26 @@ async function wireCreateUser() {
 	createUserBtn.onclick = async () => {
 		const email = getInputValue("families-admin-new-user-email").trim();
 		const password = getInputValue("families-admin-new-user-password");
-		const name = getInputValue("families-admin-new-user-name").trim();
-		const phone = getInputValue("families-admin-new-user-phone").trim();
-		const familyId = getInputValue("families-admin-new-user-family");
 
-		if (!email || !password || !familyId) {
-			setStatusText("families-admin-user-create-status", "Email, password, and family are required.", true);
+		if (!email || !password) {
+			setStatusText("families-admin-user-create-status", "Email and password are required.", true);
 			return;
 		}
 
-		const { error } = await supabase.rpc("rpc_admin_create_user", {
-			p_email: email,
-			p_password: password,
-			p_family_id: familyId,
-			p_name: name || null,
-			p_phone: phone || null
+		const resp = await fetch("/api/create-user", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email, password })
 		});
 
-		if (error) {
-			setStatusText("families-admin-user-create-status", error.message, true);
+		const result = await resp.json().catch(() => ({}));
+		if (!resp.ok) {
+			setStatusText("families-admin-user-create-status", result?.error || "Error creating user", true);
 			return;
 		}
 
 		setInputValue("families-admin-new-user-email", "");
 		setInputValue("families-admin-new-user-password", "");
-		setInputValue("families-admin-new-user-name", "");
-		setInputValue("families-admin-new-user-phone", "");
 		setStatusText("families-admin-user-create-status", "User created.");
 		await refreshAll();
 	};
