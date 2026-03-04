@@ -124,10 +124,14 @@ function renderFamilies() {
     <article class="family-admin-card rounded bg-gray-50 shadow-sm" data-family-id="${family.id}">
       <header class="family-admin-header flex items-center p-3 cursor-pointer">
         <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
-        <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
-        <span class="ml-auto text-xs text-gray-600">${family.member_count ?? 0} Users</span>
-        <span class="ml-auto text-xs ${family.is_active ? "text-green-700" : "text-red-700"}">${family.is_active ? "Active" : "Inactive"}</span>
-        <span class="ml-auto text-xs "text-red-700">${family.is_admin ? "Admin" : ""}</span>
+        <div class="flex-1">
+          <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
+        </div>
+        <div class="flex items-center space-x-3 text-xs">
+          <span class="text-gray-600">${family.member_count ?? 0} Users</span>
+          <span class="${family.is_active ? "text-green-700" : "text-red-700"}">${family.is_active ? "Active" : "Inactive"}</span>
+          <span class="text-red-700 ${family.is_admin ? "" : "hidden"}">Admin</span>
+        </div>
       </header>
       <div class="family-admin-content hidden p-4 space-y-3">
         <div class="grid md:grid-cols-3 gap-3">
@@ -252,9 +256,13 @@ function renderUsers() {
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
+            <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
             <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
-            <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
-            <button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${user.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${user.can_delete ? "" : "disabled"}>Delete User</button>
+            <div class="flex flex-wrap gap-2">
+              <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
+              <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm">Reset Password</button>
+              <button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${user.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${user.can_delete ? "" : "disabled"}>Delete User</button>
+            </div>
           </div>
         </div>
       </article>
@@ -263,7 +271,7 @@ function renderUsers() {
   listEl.querySelectorAll("[data-user-move]").forEach((button) => {
     button.addEventListener("click", async () => {
       const userId = button.getAttribute("data-user-move");
-      await saveUserFamily(userId);
+      await saveUser(userId);
     });
   });
 
@@ -273,6 +281,46 @@ function renderUsers() {
       if (!userId) return;
       if (!window.confirm("Delete this user? This only works when their family is eligible for deletion.")) return;
       await deleteUser(userId);
+    });
+  });
+
+  listEl.querySelectorAll("[data-user-reset]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const userId = button.getAttribute("data-user-reset");
+      if (!userId) return;
+      // use current input value if present
+      const emailInput = document.getElementById(`user-admin-edit-email-${userId}`);
+      const email = (emailInput?.value || "").trim();
+      if (!email) {
+        setStatusText('users-admin-edit-status', 'No email provided for this user', true);
+        return;
+      }
+      const confirmed = window.confirm(`Send password reset email to ${email}?`);
+      if (!confirmed) return;
+
+      // disable button while in-flight
+      const btn = button;
+      const prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      try {
+        const resp = await fetch('/api/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const result = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setStatusText('users-admin-edit-status', result?.error || 'Failed to send reset email', true);
+          return;
+        }
+        setStatusText('users-admin-edit-status', 'Password reset email sent.');
+      } catch (err) {
+        setStatusText('users-admin-edit-status', err?.message || 'Failed to send reset email', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prev;
+      }
     });
   });
 
@@ -408,6 +456,59 @@ async function saveUserFamily(userId) {
   await refreshAll();
 }
 
+async function saveUser(userId) {
+  if (!userId) return;
+  const saveBtn = document.querySelector(`[data-user-move="${userId}"]`);
+  const emailInput = document.getElementById(`user-admin-edit-email-${userId}`);
+  const newEmail = (emailInput?.value || "").trim();
+
+  const originalUser = usersCache.find(u => u.user_id === userId) || {};
+  const originalEmail = (originalUser.email || "").trim();
+
+  // disable button + optimistic UI
+  let prevBtnText = null;
+  if (saveBtn) {
+    prevBtnText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+  }
+
+  try {
+    // Only update email if it actually changed
+    if (newEmail && newEmail !== originalEmail) {
+      const confirmed = window.confirm(`Change user email from "${originalEmail || '(blank)'}" to "${newEmail}"? This will update the authentication email.`);
+      if (!confirmed) {
+        setStatusText('users-admin-edit-status', 'Email change cancelled.');
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/update-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, email: newEmail })
+        });
+        const result = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setStatusText('users-admin-edit-status', result?.error || 'Failed to update user email', true);
+          return;
+        }
+      } catch (err) {
+        setStatusText('users-admin-edit-status', err?.message || 'Failed to update user email', true);
+        return;
+      }
+    }
+
+    // then update family link (reuses existing RPC)
+    await saveUserFamily(userId);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = prevBtnText || 'Save User';
+    }
+  }
+}
+
 async function deleteUser(userId) {
   const resp = await fetch("/api/delete-user", {
     method: "POST",
@@ -449,12 +550,12 @@ async function wireCreateFamily() {
 }
 
 async function wireCreateUser() {
-  const createUserBtn = document.getElementById("families-admin-create-user-btn");
+  const createUserBtn = document.getElementById("users-admin-create-user-btn");
   if (!createUserBtn) return;
 
   createUserBtn.onclick = async () => {
-    const email = getInputValue("families-admin-new-user-email").trim();
-    const password = getInputValue("families-admin-new-user-password");
+    const email = getInputValue("users-admin-new-user-email").trim();
+    const password = getInputValue("users-admin-new-user-password");
 
     if (!email || !password) {
       setStatusText("user-admin-create-status", "Email and password are required.", true);
@@ -473,8 +574,8 @@ async function wireCreateUser() {
       return;
     }
 
-    setInputValue("families-admin-new-user-email", "");
-    setInputValue("families-admin-new-user-password", "");
+    setInputValue("users-admin-new-user-email", "");
+    setInputValue("users-admin-new-user-password", "");
     setStatusText("user-admin-create-status", "User created.");
     await refreshAll();
   };

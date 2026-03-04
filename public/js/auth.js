@@ -42,6 +42,35 @@ function loginForm() {
         window.location = "/";
       }
     }
+
+    async forgotPassword() {
+      if (!this.email || !this.email.trim()) {
+        this.error = 'Enter your email to reset password.';
+        return;
+      }
+      const email = this.email.trim();
+      const ok = window.confirm(`Send password reset email to ${email}?`);
+      if (!ok) return;
+      this.resetting = true;
+      this.error = '';
+      try {
+        const resp = await fetch('/api/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const result = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          this.error = result?.error || 'Failed to send reset email';
+        } else {
+          this.error = 'Password reset email sent.';
+        }
+      } catch (err) {
+        this.error = err?.message || 'Failed to send reset email';
+      } finally {
+        this.resetting = false;
+      }
+    }
   };
 }
 
