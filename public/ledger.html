@@ -15,7 +15,6 @@
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <h2 class="text-lg font-semibold mb-3">Filter + Export</h2>
       <div class="grid md:grid-cols-4 gap-3 items-end">
         <div>
           <label class="block text-sm font-medium mb-1">Start Date</label>
@@ -25,14 +24,13 @@
           <label class="block text-sm font-medium mb-1">End Date</label>
           <input id="ledger-end-date" type="date" class="border p-2 w-full rounded">
         </div>
-        <button id="ledger-apply-filter-btn" class="bg-gray-700 text-white px-4 py-2 rounded">Apply Date Range</button>
+        <button id="ledger-apply-filter-btn" class="bg-gray-700 text-white px-4 py-2 rounded">Apply Filter</button>
         <button id="ledger-export-csv-btn" class="bg-green-600 text-white px-4 py-2 rounded">Export CSV</button>
       </div>
       <p id="ledger-error" class="text-red-600 mt-2"></p>
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <h2 class="text-lg font-semibold mb-3">All Families' Current Hour Balance</h2>
       <div id="ledger-balances"></div>
     </div>
 
