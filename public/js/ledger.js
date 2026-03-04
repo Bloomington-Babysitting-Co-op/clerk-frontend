@@ -1,11 +1,11 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { downloadCsv, hasAdminPrivileges, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
+import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
 
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
 
-  const { startDate = null, endDate = null, showEditLinks = false } = options;
+  const { startDate = null, endDate = null } = options;
 
   const { data, error } = await supabase.rpc("rpc_list_ledger_entries_filtered", {
     p_start_date: startDate,
@@ -25,7 +25,6 @@ async function listLedgerInto(containerId, options = {}) {
         <p class="font-semibold text-gray-800">${toDateOnlyString(e.entry_date)}</p>
         <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
         <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
-          ${showEditLinks ? `<div class="mt-2"><a href="/entry-edit.html?id=${e.id}" class="text-blue-600 underline text-sm">Edit Entry</a></div>` : ""}
       </div>
     `).join("")
     : "<p class='text-gray-600'>No ledger entries yet.</p>";
@@ -63,8 +62,6 @@ async function mountLedgerPage() {
   const exportBtn = document.getElementById("ledger-export-csv-btn");
   const ledgerError = document.getElementById("ledger-error");
 
-  const hasAdmin = await hasAdminPrivileges();
-
   const now = new Date();
   const defaultStartDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   const defaultEndDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
@@ -79,8 +76,7 @@ async function mountLedgerPage() {
 
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    showEditLinks: hasAdmin
+    endDate: endInput?.value || null
   });
   await loadLedgerBalancesInto("ledger-balances");
 
@@ -90,7 +86,7 @@ async function mountLedgerPage() {
         setFormError(ledgerError, "");
         const startDate = startInput?.value || null;
         const endDate = endInput?.value || null;
-        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, showEditLinks: hasAdmin });
+        currentRows = await listLedgerInto("ledger-list", { startDate, endDate });
       } catch (error) {
         setFormError(ledgerError, error.message);
       }
