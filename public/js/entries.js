@@ -67,6 +67,7 @@ async function mountNewEntryPage() {
     const hoursInput = document.getElementById("entry-hours");
     const addDriveTimeCheckbox = document.getElementById("entry-add-drive-time");
     const addMealServedCheckbox = document.getElementById("entry-add-meal-served");
+    const notesInput = document.getElementById("entry-notes");
     const createBtn = document.getElementById("create-entry-btn");
 
     if (hoursInput) {
@@ -169,7 +170,8 @@ async function mountNewEntryPage() {
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
         p_hours: Number(hoursInput.value),
-        p_entry_date: toNullableDate(entryDateInput.value)
+        p_entry_date: toNullableDate(entryDateInput.value),
+        p_notes: notesInput ? notesInput.value : null
       });
 
       if (error) {
