@@ -28,8 +28,8 @@ function renderFamilyCard(family, idx) {
   const idAttr = escapeHtml(String(family.id ?? family.family_id ?? idx));
   return `
     <article class="family-card bg-white rounded-lg shadow" data-family-id="${idAttr}">
-      <header class="family-header flex items-center p-4 cursor-pointer border-b">
-        <button type="button" class="family-toggle-btn w-8 h-8 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+      <header class="family-header flex items-center p-4 cursor-pointer">
+        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
         <h2 class="text-2xl font-bold">${escapeHtml(family.family_name || "Unnamed family")}</h2>
       </header>
 

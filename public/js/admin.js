@@ -121,32 +121,35 @@ function renderFamilies() {
   }
 
   listEl.innerHTML = familiesCache.map((family) => `
-    <article class="border rounded p-4 bg-gray-50 space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
+    <article class="family-admin-card rounded bg-gray-50 shadow-sm" data-family-id="${family.id}">
+      <header class="family-admin-header flex items-center p-3 cursor-pointer">
+        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
         <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
-        <span class="text-xs text-gray-600">Members: ${family.member_count ?? 0}</span>
-      </div>
-      <div class="grid md:grid-cols-3 gap-3">
-        <label class="text-sm"><input id="family-active-${family.id}" type="checkbox" class="mr-2" ${family.is_active ? "checked" : ""}>Active</label>
-        <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
-      </div>
-      <div class="grid md:grid-cols-3 gap-3">
-        <div>
-          <label class="text-sm block mb-1">Date Joined</label>
-          <input id="family-date-joined-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_date_joined)}">
+        <span class="ml-auto text-xs text-gray-600">Members: ${family.member_count ?? 0}</span>
+      </header>
+      <div class="family-admin-content hidden p-4 space-y-3">
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="text-sm"><input id="family-active-${family.id}" type="checkbox" class="mr-2" ${family.is_active ? "checked" : ""}>Active</label>
+          <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
         </div>
-        <div>
-          <label class="text-sm block mb-1">Last Background Check</label>
-          <input id="family-last-background-check-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_last_background_check)}">
+        <div class="grid md:grid-cols-3 gap-3">
+          <div>
+            <label class="text-sm block mb-1">Date Joined</label>
+            <input id="family-date-joined-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_date_joined)}">
+          </div>
+          <div>
+            <label class="text-sm block mb-1">Last Background Check</label>
+            <input id="family-last-background-check-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_last_background_check)}">
+          </div>
+          <div>
+            <label class="text-sm block mb-1">Last Dues Payment</label>
+            <input id="family-last-dues-payment-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_last_dues_payment)}">
+          </div>
         </div>
-        <div>
-          <label class="text-sm block mb-1">Last Dues Payment</label>
-          <input id="family-last-dues-payment-${family.id}" type="date" class="border rounded p-2 w-full" value="${toDateOnlyString(family.admin_last_dues_payment)}">
+        <div class="flex flex-wrap gap-2">
+          <button data-family-save="${family.id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
+          <button data-family-delete="${family.id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${family.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${family.can_delete ? "" : "disabled"}>Delete Family</button>
         </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button data-family-save="${family.id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
-        <button data-family-delete="${family.id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${family.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${family.can_delete ? "" : "disabled"}>Delete Family</button>
       </div>
     </article>
   `).join("");
@@ -166,6 +169,46 @@ function renderFamilies() {
       await deleteFamily(familyId);
     });
   });
+
+  // attach collapse/expand behavior similar to public families page
+  function setAdminArticleExpanded(article, expanded) {
+    const btn = article.querySelector('.family-toggle-btn');
+    const content = article.querySelector('.family-admin-content');
+    if (!btn || !content) return;
+    if (expanded) {
+      btn.textContent = "-";
+      btn.setAttribute('aria-expanded', 'true');
+      content.classList.remove('hidden');
+    } else {
+      btn.textContent = "+";
+      btn.setAttribute('aria-expanded', 'false');
+      content.classList.add('hidden');
+    }
+  }
+
+  const adminArticles = Array.from(listEl.querySelectorAll('.family-admin-card'));
+  adminArticles.forEach((article) => {
+    const header = article.querySelector('.family-admin-header');
+    const btn = article.querySelector('.family-toggle-btn');
+    // start collapsed
+    setAdminArticleExpanded(article, false);
+
+    const toggle = (ev) => {
+      ev && ev.preventDefault();
+      const content = article.querySelector('.family-admin-content');
+      const isHidden = content.classList.contains('hidden');
+      setAdminArticleExpanded(article, isHidden);
+    };
+
+    if (header) header.addEventListener('click', toggle);
+    if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
+  });
+
+  // expand/collapse all buttons
+  const expandAllBtn = document.getElementById('families-admin-expand-all');
+  const collapseAllBtn = document.getElementById('families-admin-collapse-all');
+  if (expandAllBtn) expandAllBtn.addEventListener('click', () => adminArticles.forEach((a) => setAdminArticleExpanded(a, true)));
+  if (collapseAllBtn) collapseAllBtn.addEventListener('click', () => adminArticles.forEach((a) => setAdminArticleExpanded(a, false)));
 }
 
 function renderUsers() {
