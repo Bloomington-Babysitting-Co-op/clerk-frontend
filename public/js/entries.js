@@ -1,5 +1,5 @@
 import { supabase } from "./supabase.js";
-import { requireAdmin, requireAuth } from "./auth.js";
+import { requireAuth } from "./auth.js";
 import {
   normalizeQuarterHoursInput,
   setFormError,
@@ -165,7 +165,7 @@ async function mountNewEntryPage() {
         return;
       }
 
-      const { error } = await supabase.rpc("rpc_create_manual_ledger_entry", {
+      const { error } = await supabase.rpc("rpc_create_ledger_entry", {
         p_request_id: requestId,
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
@@ -185,76 +185,4 @@ async function mountNewEntryPage() {
   }
 }
 
-async function mountEditEntryPage() {
-  try {
-    await requireAdmin();
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    if (!id) {
-      setFormError("entry-error", "Missing entry id.");
-      return;
-    }
-
-    const families = await loadFamiliesForEntry();
-    const { data, error } = await supabase.rpc("rpc_get_ledger_entry", { p_entry_id: id });
-    if (error) throw error;
-
-    const entry = Array.isArray(data) ? data[0] : data;
-    if (!entry) {
-      setFormError("entry-error", "Ledger entry not found.");
-      return;
-    }
-
-    const fromSelect = document.getElementById("from-family");
-    const toSelect = document.getElementById("to-family");
-    const entryDateInput = document.getElementById("entry-date");
-    const hoursInput = document.getElementById("entry-hours");
-    const saveBtn = document.getElementById("save-entry-btn");
-
-    if (hoursInput) {
-      hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
-      hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
-    }
-
-    populateUserOptions(fromSelect, families, entry.from_family_id);
-    populateUserOptions(toSelect, families, entry.to_family_id);
-    hoursInput.value = entry.hours;
-    normalizeQuarterHoursInput(hoursInput);
-
-    entryDateInput.value = toDateOnlyString(entry.entry_date);
-
-    saveBtn.onclick = async () => {
-      setFormError("entry-error", "");
-      const fromFamilyId = fromSelect.value;
-      const toFamilyId = toSelect.value;
-      const validationErrors = validateEntry({
-        fromFamilyId,
-        toFamilyId,
-        hoursValue: hoursInput.value,
-        entryDateValue: entryDateInput.value
-      });
-      if (validationErrors.length) {
-        setFormError("entry-error", validationErrors);
-        return;
-      }
-
-      const { error: saveError } = await supabase.rpc("rpc_update_ledger_entry", {
-        p_entry_id: id,
-        p_from_family_id: fromFamilyId,
-        p_to_family_id: toFamilyId,
-        p_hours: Number(hoursInput.value),
-        p_entry_date: toNullableDate(entryDateInput.value)
-      });
-
-      if (saveError) {
-        setFormError("entry-error", saveError.message);
-      } else {
-        window.location = "/ledger.html";
-      }
-    };
-  } catch (error) {
-    setFormError("entry-error", error.message || "Unable to load page.");
-  }
-}
-
-export { mountNewEntryPage, mountEditEntryPage };
+export { mountNewEntryPage };
