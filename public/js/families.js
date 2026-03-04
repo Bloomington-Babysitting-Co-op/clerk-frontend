@@ -1,5 +1,5 @@
 import { supabase } from "/js/supabase.js";
-import { getAgeLabel } from "/js/utils.js";
+import { getAgeLabel, isAdminUiEnabled } from "/js/utils.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -107,8 +107,8 @@ async function mountFamiliesPage(containerId) {
   if (!container) return;
 
   const adminLink = document.getElementById("families-admin-link");
-  const { data: isAdminData, error: isAdminError } = await supabase.rpc("rpc_get_admin_status");
-  if (!isAdminError && isAdminData && adminLink) {
+  const showAdminUi = await isAdminUiEnabled();
+  if (showAdminUi && adminLink) {
     adminLink.style.display = "inline-block";
   }
 

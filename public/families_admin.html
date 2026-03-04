@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Families Admin – BBC Clerk</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="flex flex-col min-h-screen bg-gray-50">
+  <nav id="navbar"></nav>
+
+  <main class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6">
+    <header>
+      <h1 class="text-3xl font-bold">Families Admin</h1>
+      <p class="text-sm text-gray-600">Manage families and users.</p>
+    </header>
+
+    <section class="bg-white p-6 rounded-lg shadow space-y-3">
+      <h2 class="text-xl font-semibold">Create Family</h2>
+      <div class="grid md:grid-cols-[1fr_auto] gap-3">
+        <input id="families-admin-new-family-name" type="text" class="border rounded p-2" placeholder="Family name">
+        <button id="families-admin-create-family-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Create Family</button>
+      </div>
+      <p id="families-admin-family-create-status" class="text-sm text-gray-700"></p>
+    </section>
+
+    <section class="bg-white p-6 rounded-lg shadow space-y-3">
+      <h2 class="text-xl font-semibold">Families</h2>
+      <p id="families-admin-families-status" class="text-sm text-gray-700"></p>
+      <div id="families-admin-families-list" class="space-y-3"></div>
+    </section>
+
+    <section class="bg-white p-6 rounded-lg shadow space-y-3">
+      <h2 class="text-xl font-semibold">Create User</h2>
+      <div class="grid md:grid-cols-2 gap-3">
+        <input id="families-admin-new-user-email" type="email" class="border rounded p-2" placeholder="Email">
+        <input id="families-admin-new-user-password" type="password" class="border rounded p-2" placeholder="Temporary password (8+ chars)">
+        <input id="families-admin-new-user-name" type="text" class="border rounded p-2" placeholder="Parent name (optional)">
+        <input id="families-admin-new-user-phone" type="text" class="border rounded p-2" placeholder="Phone (optional)">
+      </div>
+      <div class="grid md:grid-cols-[1fr_auto] gap-3">
+        <select id="families-admin-new-user-family" class="border rounded p-2"></select>
+        <button id="families-admin-create-user-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Create User</button>
+      </div>
+      <p id="families-admin-user-create-status" class="text-sm text-gray-700"></p>
+    </section>
+
+    <section class="bg-white p-6 rounded-lg shadow space-y-3">
+      <h2 class="text-xl font-semibold">Users</h2>
+      <p id="families-admin-users-status" class="text-sm text-gray-700"></p>
+      <div id="families-admin-users-list" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { setupNavbar } from "/js/utils.js";
+    import { mountFamiliesAdminPage } from "/js/families_admin.js";
+
+    await setupNavbar("navbar");
+    await mountFamiliesAdminPage();
+  </script>
+</body>
+</html>
