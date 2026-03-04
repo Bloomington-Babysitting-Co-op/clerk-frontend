@@ -29,7 +29,7 @@ function renderFamilyCard(family, idx) {
   return `
     <article class="family-card bg-white rounded-lg shadow" data-family-id="${idAttr}">
       <header class="family-header flex items-center p-4 cursor-pointer">
-        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
         <h2 class="text-2xl font-bold">${escapeHtml(family.family_name || "Unnamed family")}</h2>
       </header>
 
@@ -133,10 +133,14 @@ async function mountFamiliesPage(containerId) {
     if (expanded) {
       btn.textContent = "-";
       btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-pressed', 'true');
+      btn.setAttribute('aria-label', 'Collapse family');
       content.classList.remove('hidden');
     } else {
       btn.textContent = "+";
       btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Expand family');
       content.classList.add('hidden');
     }
   }
@@ -165,6 +169,8 @@ async function mountFamiliesPage(containerId) {
       if (!toggleAllBtn) return;
       const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
       toggleAllBtn.textContent = anyHidden ? '+' : '-';
+      toggleAllBtn.setAttribute('aria-pressed', anyHidden ? 'false' : 'true');
+      toggleAllBtn.setAttribute('aria-label', anyHidden ? 'Expand all families' : 'Collapse all families');
     }
 
     if (toggleAllBtn) {
@@ -172,7 +178,7 @@ async function mountFamiliesPage(containerId) {
       toggleAllBtn.addEventListener('click', () => {
         const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
         articles.forEach((a) => setArticleExpanded(a, anyHidden));
-        toggleAllBtn.textContent = anyHidden ? '-' : '+';
+        updateFamiliesToggleAll();
       });
     }
 

@@ -112,7 +112,7 @@ function familyOptionsHtml(selectedFamilyId = "") {
 }
 
 function renderFamilies() {
-  const listEl = document.getElementById("families-admin-list");
+  const listEl = document.getElementById("families-admin-edit-list");
   if (!listEl) return;
 
   if (!familiesCache.length) {
@@ -123,9 +123,11 @@ function renderFamilies() {
   listEl.innerHTML = familiesCache.map((family) => `
     <article class="family-admin-card rounded bg-gray-50 shadow-sm" data-family-id="${family.id}">
       <header class="family-admin-header flex items-center p-3 cursor-pointer">
-        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
         <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
-        <span class="ml-auto text-xs text-gray-600">Members: ${family.member_count ?? 0}</span>
+        <span class="ml-auto text-xs text-gray-600">${family.member_count ?? 0} Users</span>
+        <span class="ml-auto text-xs ${family.is_active ? "text-green-700" : "text-red-700"}">${family.is_active ? "Active" : "Inactive"}</span>
+        <span class="ml-auto text-xs "text-red-700">${family.is_admin ? "Admin" : ""}</span>
       </header>
       <div class="family-admin-content hidden p-4 space-y-3">
         <div class="grid md:grid-cols-3 gap-3">
@@ -178,10 +180,14 @@ function renderFamilies() {
     if (expanded) {
       btn.textContent = "-";
       btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-pressed', 'true');
+      btn.setAttribute('aria-label', 'Collapse family');
       content.classList.remove('hidden');
     } else {
       btn.textContent = "+";
       btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Expand family');
       content.classList.add('hidden');
     }
   }
@@ -209,13 +215,15 @@ function renderFamilies() {
     if (!familiesToggleAllBtn) return;
     const anyHidden = adminArticles.some(a => a.querySelector('.family-admin-content').classList.contains('hidden'));
     familiesToggleAllBtn.textContent = anyHidden ? '+' : '-';
+    familiesToggleAllBtn.setAttribute('aria-pressed', anyHidden ? 'false' : 'true');
+    familiesToggleAllBtn.setAttribute('aria-label', anyHidden ? 'Expand all families' : 'Collapse all families');
   }
   if (familiesToggleAllBtn) {
     updateFamiliesToggleAll();
     familiesToggleAllBtn.addEventListener('click', () => {
       const anyHidden = adminArticles.some(a => a.querySelector('.family-admin-content').classList.contains('hidden'));
       adminArticles.forEach((a) => setAdminArticleExpanded(a, anyHidden));
-      familiesToggleAllBtn.textContent = anyHidden ? '-' : '+';
+      updateFamiliesToggleAll();
     });
   }
   adminArticles.forEach((article) => {
@@ -227,7 +235,7 @@ function renderFamilies() {
 }
 
 function renderUsers() {
-  const listEl = document.getElementById("users-admin-list");
+  const listEl = document.getElementById("users-admin-edit-list");
   if (!listEl) return;
 
   if (!usersCache.length) {
@@ -238,9 +246,9 @@ function renderUsers() {
   listEl.innerHTML = usersCache.map((user) => `
       <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
-          <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false">+</button>
+          <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
-          <span class="ml-auto text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">${user.family_is_active ? "Family active" : "Family inactive"}</span>
+          <span class="ml-auto text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">Family ${user.family_is_active ? "Active" : "Inactive"}</span>
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
@@ -276,10 +284,14 @@ function renderUsers() {
     if (expanded) {
       btn.textContent = "-";
       btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-pressed', 'true');
+      btn.setAttribute('aria-label', 'Collapse user');
       content.classList.remove('hidden');
     } else {
       btn.textContent = "+";
       btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Expand user');
       content.classList.add('hidden');
     }
   }
@@ -306,13 +318,15 @@ function renderUsers() {
     if (!usersToggleAllBtn) return;
     const anyHidden = userArticles.some(a => a.querySelector('.user-admin-content').classList.contains('hidden'));
     usersToggleAllBtn.textContent = anyHidden ? '+' : '-';
+    usersToggleAllBtn.setAttribute('aria-pressed', anyHidden ? 'false' : 'true');
+    usersToggleAllBtn.setAttribute('aria-label', anyHidden ? 'Expand all users' : 'Collapse all users');
   }
   if (usersToggleAllBtn) {
     updateUsersToggleAll();
     usersToggleAllBtn.addEventListener('click', () => {
       const anyHidden = userArticles.some(a => a.querySelector('.user-admin-content').classList.contains('hidden'));
       userArticles.forEach((a) => setUserArticleExpanded(a, anyHidden));
-      usersToggleAllBtn.textContent = anyHidden ? '-' : '+';
+      updateUsersToggleAll();
     });
   }
   userArticles.forEach((article) => {
@@ -328,11 +342,6 @@ async function loadFamilies() {
   if (error) throw error;
   familiesCache = Array.isArray(data) ? data : [];
   renderFamilies();
-
-  const familySelect = document.getElementById("families-admin-new-user-family");
-  if (familySelect) {
-    familySelect.innerHTML = familyOptionsHtml();
-  }
 }
 
 async function loadUsers() {
@@ -361,22 +370,22 @@ async function saveFamily(familyId) {
 
   const { error } = await supabase.rpc("rpc_admin_update_family", payload);
   if (error) {
-    setStatusText("families-admin-status", error.message, true);
+    setStatusText("families-admin-edit-status", error.message, true);
     return;
   }
 
-  setStatusText("families-admin-status", "Family updated.");
+  setStatusText("families-admin-edit-status", "Family updated.");
   await refreshAll();
 }
 
 async function deleteFamily(familyId) {
   const { error } = await supabase.rpc("rpc_admin_delete_family", { p_family_id: familyId });
   if (error) {
-    setStatusText("families-admin-status", error.message, true);
+    setStatusText("families-admin-edit-status", error.message, true);
     return;
   }
 
-  setStatusText("families-admin-status", "Family deleted.");
+  setStatusText("families-admin-edit-status", "Family deleted.");
   await refreshAll();
 }
 
@@ -391,11 +400,11 @@ async function saveUserFamily(userId) {
   });
 
   if (error) {
-    setStatusText("users-admin-status", error.message, true);
+    setStatusText("users-admin-edit-status", error.message, true);
     return;
   }
 
-  setStatusText("users-admin-status", "User family updated.");
+  setStatusText("users-admin-edit-status", "User family updated.");
   await refreshAll();
 }
 
@@ -408,11 +417,11 @@ async function deleteUser(userId) {
 
   const result = await resp.json().catch(() => ({}));
   if (!resp.ok) {
-    setStatusText("users-admin-status", result?.error || "Error deleting user", true);
+    setStatusText("users-admin-edit-status", result?.error || "Error deleting user", true);
     return;
   }
 
-  setStatusText("users-admin-status", "User deleted.");
+  setStatusText("users-admin-edit-status", "User deleted.");
   await refreshAll();
 }
 
