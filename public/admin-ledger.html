@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ledger Admin – BBC Clerk</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="flex flex-col min-h-screen bg-gray-50">
+  <nav id="navbar"></nav>
+
+  <main class="flex-1 p-6 max-w-3xl mx-auto w-full">
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex items-center gap-2">
+        <h1 class="text-3xl font-bold">Ledger Admin</h1>
+        <a href="/ledger.html" class="bg-gray-600 text-white px-4 py-2 rounded">User</a>
+      </div>
+
+      <form id="mass-ledger-form" class="space-y-4">
+        <div class="flex items-center gap-2 mb-4"></div>
+          <div>
+            <label class="block mb-2 font-semibold">From Families</label>
+            <select id="from-families" class="border p-2 w-full mb-2" multiple size="6"></select>
+          </div>
+          <span class="text-gray-600 font-semibold">→</span>
+          <div>
+            <label class="block mb-2 font-semibold">To Families</label>
+            <select id="to-families" class="border p-2 w-full mb-2" multiple size="6"></select>
+          </div>
+        </div>
+
+        <label class="block mb-2 font-semibold">Date <span class="text-red-600">*</span></label>
+        <input id="mass-entry-date" type="date" required class="border p-2 w-full mb-2">
+
+        <label class="block mb-2 font-semibold">Hours <span class="text-red-600">*</span></label>
+        <input id="mass-entry-hours" type="number" step="0.25" min="0.25" required class="border p-2 w-full mb-2">
+
+        <div>
+          <label class="block mb-2 font-semibold">Notes</label>
+          <textarea id="mass-entry-notes" class="border p-2 w-full mb-2" rows="2" placeholder="Optional notes..."></textarea>
+        </div>
+
+        <button id="mass-create-btn" type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Create Entries</button>
+        <p id="mass-entry-error" class="text-red-600 mt-3"></p>
+        <p id="mass-entry-success" class="text-green-600 mt-3"></p>
+      </form>
+    </div>
+  </main>
+
+  <script type="module">
+    import { setupNavbar } from "/js/utils.js";
+    import { requireAdmin } from "/js/auth.js";
+    import { mountAdminEntriesPage } from "/js/admin-ledger.js";
+
+    await setupNavbar("navbar");
+    await requireAdmin();
+    await mountAdminEntriesPage();
+  </script>
+
+</body>
+</html>
