@@ -189,7 +189,7 @@ export function getAgeLabel(dateOfBirthValue) {
   return `${years}y ${months}m`;
 }
 
-export async function hasAdminPrivileges(forceRefresh = false) {
+export async function hasAdmin(forceRefresh = false) {
   if (!forceRefresh && adminStatusCache != null) {
     return adminStatusCache;
   }
@@ -213,6 +213,10 @@ export async function setupNavbar(containerId) {
       return;
     }
 
+    const adminBtn = await hasAdmin()
+      ? `<a href="/admin.html" class="bg-red-600 text-white hover:bg-red-300 px-4 py-2 rounded">Admin</a>`
+      : "";
+
     const navbarHTML = `
       <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -223,6 +227,7 @@ export async function setupNavbar(containerId) {
             <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
             <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
             <a href="/families.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Families</a>
+            ${adminBtn}
           </div>
         </div>
       </nav>

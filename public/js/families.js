@@ -1,5 +1,5 @@
 import { supabase } from "/js/supabase.js";
-import { getAgeLabel, hasAdminPrivileges } from "/js/utils.js";
+import { getAgeLabel } from "/js/utils.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -105,12 +105,6 @@ function renderFamilyCard(family) {
 async function mountFamiliesPage(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
-
-  const adminLink = document.getElementById("families-admin-link");
-  const hasAdmin = await hasAdminPrivileges();
-  if (hasAdmin && adminLink) {
-    adminLink.style.display = "inline-block";
-  }
 
   const { data, error } = await supabase.rpc("rpc_list_families_full");
 
