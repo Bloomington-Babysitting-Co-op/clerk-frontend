@@ -29,6 +29,7 @@
       <label class="block mb-2 font-semibold">Hours <span class="text-red-600">*</span></label>
       <input id="entry-hours" type="number" step="0.25" min="0" class="border p-2 w-full mb-4">
 
+
       <div class="flex flex-wrap items-center gap-4 mb-4">
         <label class="inline-flex items-center gap-2 text-sm">
           <input id="entry-add-drive-time" type="checkbox">
@@ -39,6 +40,9 @@
           <span>Add 30min Meal Served</span>
         </label>
       </div>
+
+      <label class="block mb-2 font-semibold">Notes</label>
+      <textarea id="entry-notes" class="border p-2 w-full mb-4" rows="2" placeholder="Optional notes..."></textarea>
 
       <button id="create-entry-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Create Entry</button>
       <p id="entry-error" class="text-red-600 mt-3"></p>

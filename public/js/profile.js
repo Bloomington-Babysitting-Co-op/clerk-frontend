@@ -261,7 +261,7 @@ async function mountProfilePage() {
         p_emergency_contacts: emergencyContacts,
         p_pets: getInputValue("profile-pets"),
         p_family_photo_url: getInputValue("profile-family-photo-url"),
-        p_business_information: getInputValue("profile-business-information")
+        p_notes: getInputValue("profile-notes")
       };
 
       const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);
@@ -343,7 +343,7 @@ async function mountProfilePage() {
       renderEmergencyContacts(Array.isArray(profile.emergency_contacts) ? profile.emergency_contacts : []);
       setInputValue("profile-pets", profile.pets);
       setInputValue("profile-family-photo-url", profile.family_photo_url);
-      setInputValue("profile-business-information", profile.business_information);
+      setInputValue("profile-notes", profile.notes);
 
     } else {
       renderEmergencyContacts([]);

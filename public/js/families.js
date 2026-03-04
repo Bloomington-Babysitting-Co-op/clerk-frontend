@@ -94,8 +94,8 @@ function renderFamilyCard(family) {
           <p class="text-gray-800 break-all">${escapeHtml(family.family_photo_url || "Not provided")}</p>
         </div>
         <div>
-          <p class="text-sm font-semibold text-gray-700">Business Information</p>
-          <p class="text-gray-800">${escapeHtml(family.business_information || "Not provided")}</p>
+          <p class="text-sm font-semibold text-gray-700">Notes</p>
+          <p class="text-gray-800">${escapeHtml(family.notes || "Not provided")}</p>
         </div>
       </div>
     </article>
