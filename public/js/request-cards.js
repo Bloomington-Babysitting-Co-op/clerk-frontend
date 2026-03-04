@@ -38,7 +38,7 @@ function formatRequestStatusLabel(status) {
 }
 
 function renderRequestListCard(request, options = {}) {
-  const href = options.href || `/request_view.html?id=${request.id}`;
+  const href = options.href || `/request-view.html?id=${request.id}`;
   const statusClass = options.statusClass || getRequestStatusTextClass(request.status);
   const requestTypeLabel = formatRequestTypeLabel(request.type);
   const requestDateLine = formatRequestDateLine(request);
