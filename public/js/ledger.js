@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString } from "./utils.js";
+import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString, formatDateOnly, escapeHtml } from "./utils.js";
 
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
@@ -21,13 +21,25 @@ async function listLedgerInto(containerId, options = {}) {
   }
 
   el.innerHTML = data.length
-    ? data.map(e => `
-      <div class="bg-white border p-4 rounded-lg shadow">
-        <p class="font-semibold text-gray-800">${toDateOnlyString(e.entry_date)}</p>
-        <p class="text-lg text-blue-600 font-bold mt-2">${e.hours} hours</p>
-        <p class="text-sm text-gray-600 mt-1">${e.from_family_name || e.from_family_id} → ${e.to_family_name || e.to_family_id}</p>
+    ? data.map(e => {
+      const dateDisplay = formatDateOnly(e.entry_date) || "";
+      const fromTo = `${e.from_family_name || e.from_family_id || ''} → ${e.to_family_name || e.to_family_id || ''}`;
+      const notes = e.notes || "";
+      const request = e.request_id
+        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-sm text-blue-600 hover:underline" rel="noopener" aria-label="View request ${escapeHtml(e.request_id)}">View Request</a>`
+        : `<span class="text-sm text-gray-600">Created by Admin</span>`;
+
+      return `
+      <div class="py-3">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
+          <div class="text-sm text-gray-800 font-medium">${escapeHtml(dateDisplay)}</div>
+          <div class="text-lg text-blue-600 font-bold">${escapeHtml(String(e.hours))} hrs</div>
+          <div class="text-sm text-gray-800">${escapeHtml(fromTo)}</div>
+          <div class="text-sm text-gray-800 truncate">${escapeHtml(notes)}</div>
+          <div class="text-right">${request}</div>
+        </div>
       </div>
-    `).join("")
+    `}).join('<hr class="border-t border-gray-200 my-2"/>')
     : "<p class='text-gray-600'>No ledger entries yet.</p>";
 
   return data;
@@ -135,14 +147,15 @@ async function mountLedgerPage() {
       }
       setFormError(ledgerError, "");
       const rows = [
-        ["id", "request_id", "entry_date", "hours", "from_family_name", "to_family_name"],
+        ["id", "entry_date", "hours", "from_family_name", "to_family_name", "notes", "request_id"],
         ...currentRows.map(row => [
           row.id,
-          row.request_id || "",
           toDateOnlyString(row.entry_date),
           row.hours,
           row.from_family_name || row.from_family_id || "",
-          row.to_family_name || row.to_family_id || ""
+          row.to_family_name || row.to_family_id || "",
+          row.notes || "",
+          row.request_id || ""
         ])
       ];
       downloadCsv("ledger_export.csv", rows);
