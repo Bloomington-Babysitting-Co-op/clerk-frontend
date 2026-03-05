@@ -8,7 +8,8 @@ import {
   getInputValue,
   setInputValue,
   setStatusText,
-  toDateOnlyString
+  toDateOnlyString,
+  escapeHtml
 } from "/js/utils.js";
 
 // --- Ledger admin (mass entries) ---
@@ -519,7 +520,6 @@ async function saveUser(userId) {
       }
     }
 
-    // then update family link (reuses existing RPC)
     await saveUserFamily(userId);
   } finally {
     if (saveBtn) {
@@ -614,9 +614,145 @@ async function mountFamiliesAdminPage() {
   await refreshAll();
 }
 
+// Admin banner management
+async function loadAdminBannerSettings() {
+  try {
+    const { data, error } = await supabase.rpc('rpc_get_dashboard_banner');
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return;
+    const enabledEl = document.getElementById('admin-banner-enabled');
+    const textEl = document.getElementById('admin-banner-text');
+    const bgEl = document.getElementById('admin-banner-bg');
+    const textColorEl = document.getElementById('admin-banner-text-color');
+    if (enabledEl) enabledEl.checked = !!row.enabled;
+    if (textEl) textEl.value = row.text || '';
+    if (bgEl) bgEl.value = row.bg_color || '#F87171';
+    if (textColorEl) textColorEl.value = row.text_color || '#FFFFFF';
+  } catch (err) {
+    console.error('Failed loading banner settings', err);
+  }
+}
+
+function wireAdminBannerForm() {
+  const saveBtn = document.getElementById('admin-banner-save');
+  if (!saveBtn) return;
+  saveBtn.onclick = async () => {
+    const enabled = !!document.getElementById('admin-banner-enabled')?.checked;
+    const text = document.getElementById('admin-banner-text')?.value || '';
+    const bg = document.getElementById('admin-banner-bg')?.value || '#F87171';
+    const txtColor = document.getElementById('admin-banner-text-color')?.value || '#FFFFFF';
+    const statusEl = document.getElementById('admin-banner-status');
+    if (statusEl) statusEl.textContent = '';
+
+    const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_banner', {
+      p_enabled: enabled,
+      p_text: text,
+      p_bg_color: bg,
+      p_text_color: txtColor
+    });
+    if (error) {
+      if (statusEl) statusEl.textContent = error.message;
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Saved.';
+  };
+}
+
+// Admin links management
+function appendAdminLinkRow(url = '', text = '', row = 1, order = 0) {
+  const listEl = document.getElementById('admin-links-list');
+  if (!listEl) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'grid md:grid-cols-6 gap-2 items-center border rounded p-2';
+  wrapper.innerHTML = `
+    <input class="col-span-2 border p-1 rounded" data-link-url value="${escapeHtml(url)}">
+    <input class="col-span-2 border p-1 rounded" data-link-text value="${escapeHtml(text)}">
+    <input class="border p-1 rounded" type="number" min="1" data-link-row value="${escapeHtml(row)}">
+    <input class="border p-1 rounded" type="number" min="0" data-link-order value="${escapeHtml(order)}">
+    <div class="md:col-span-6 flex gap-2 mt-2">
+      <button type="button" class="bg-yellow-600 text-white px-2 py-1 rounded" data-link-move-up>Up</button>
+      <button type="button" class="bg-yellow-600 text-white px-2 py-1 rounded" data-link-move-down>Down</button>
+      <button type="button" class="bg-red-600 text-white px-2 py-1 rounded" data-link-remove>Remove</button>
+    </div>
+  `;
+
+  listEl.appendChild(wrapper);
+
+  wrapper.querySelector('[data-link-remove]').onclick = () => wrapper.remove();
+  wrapper.querySelector('[data-link-move-up]').onclick = () => {
+    const prev = wrapper.previousElementSibling;
+    if (prev) listEl.insertBefore(wrapper, prev);
+  };
+  wrapper.querySelector('[data-link-move-down]').onclick = () => {
+    const next = wrapper.nextElementSibling;
+    if (next) listEl.insertBefore(next, wrapper);
+  };
+}
+
+async function loadAdminLinksSettings() {
+  try {
+    const { data, error } = await supabase.rpc('rpc_get_dashboard_links');
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : (data ? [data] : []);
+    const listEl = document.getElementById('admin-links-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    rows.sort((a,b) => (a.link_row - b.link_row) || (a.link_order - b.link_order));
+    rows.forEach((r, idx) => appendAdminLinkRow(r.link_url, r.link_text, r.link_row, r.link_order));
+  } catch (err) {
+    console.error('Failed to load admin links', err);
+  }
+}
+
+function wireAdminLinksForm() {
+  const addBtn = document.getElementById('admin-link-add');
+  if (addBtn) {
+    addBtn.onclick = () => {
+      const url = document.getElementById('admin-link-url')?.value || '';
+      const text = document.getElementById('admin-link-text')?.value || '';
+      const row = parseInt(document.getElementById('admin-link-row')?.value || '1', 10) || 1;
+      const order = parseInt(document.getElementById('admin-link-order')?.value || '0', 10) || 0;
+      appendAdminLinkRow(url, text, row, order);
+    };
+  }
+
+  const saveBtn = document.getElementById('admin-links-save');
+  if (!saveBtn) return;
+  saveBtn.onclick = async () => {
+    const statusEl = document.getElementById('admin-links-status');
+    if (statusEl) statusEl.textContent = '';
+    const listEl = document.getElementById('admin-links-list');
+    if (!listEl) return;
+    const rows = Array.from(listEl.children).map((rowEl, idx) => {
+      const url = rowEl.querySelector('[data-link-url]')?.value || '';
+      const text = rowEl.querySelector('[data-link-text]')?.value || '';
+      const r = parseInt(rowEl.querySelector('[data-link-row]')?.value || '1', 10) || 1;
+      const ord = parseInt(rowEl.querySelector('[data-link-order]')?.value || '0', 10) || 0;
+      return { url, text, row: r, order: ord };
+    });
+
+    try {
+      const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_links', { p_links: JSON.stringify(rows) });
+      if (error) {
+        if (statusEl) statusEl.textContent = error.message;
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Saved.';
+    } catch (err) {
+      console.error('Failed to save links', err);
+      if (statusEl) statusEl.textContent = err.message || 'Save failed';
+    }
+  };
+}
+
 export async function mountAdminPage() {
   await setupNavbar("navbar");
   await requireAdmin();
   await mountAdminEntriesPage();
   await mountFamiliesAdminPage();
+  await loadAdminBannerSettings();
+  wireAdminBannerForm();
+  await loadAdminLinksSettings();
+  wireAdminLinksForm();
 }

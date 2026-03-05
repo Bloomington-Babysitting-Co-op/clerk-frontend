@@ -78,6 +78,73 @@
         <div id="users-admin-edit-list" class="space-y-3"></div>
       </div>
     </section>
+    
+    <section class="flex-1 p-6 max-w-3xl mx-auto w-full">
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h1 class="text-2xl font-bold mb-4">Edit Dashboard</h1>
+
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-lg font-semibold mb-2">Banner Message</h2>
+            <div class="space-y-3">
+              <label class="flex items-center gap-2"><input id="admin-banner-enabled" type="checkbox"> Enable Banner Message</label>
+              <div>
+                <label class="block text-sm font-medium mb-1">Banner Text</label>
+                <textarea id="admin-banner-text" class="border p-2 w-full rounded" rows="3"></textarea>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Background Color</label>
+                  <input id="admin-banner-bg" type="color" class="w-20 h-10 p-0 border rounded">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Text Color</label>
+                  <input id="admin-banner-text-color" type="color" class="w-20 h-10 p-0 border rounded">
+                </div>
+              </div>
+              <div>
+                <button id="admin-banner-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Banner</button>
+                <span id="admin-banner-status" class="ml-3 text-sm text-gray-700"></span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="text-lg font-semibold mb-2">External Links</h2>
+            <div id="admin-links-editor" class="space-y-3">
+              <div class="grid md:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Link</label>
+                  <input id="admin-link-url" type="url" class="border p-2 w-full rounded">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Text</label>
+                  <input id="admin-link-text" type="text" class="border p-2 w-full rounded">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Row</label>
+                  <input id="admin-link-row" type="number" min="1" value="1" class="border p-2 w-full rounded">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Order</label>
+                  <input id="admin-link-order" type="number" min="0" value="0" class="border p-2 w-full rounded">
+                </div>
+              </div>
+              <div>
+                <button id="admin-link-add" class="bg-green-600 text-white px-3 py-1 rounded">Add Link</button>
+              </div>
+
+              <div id="admin-links-list" class="space-y-2"></div>
+
+              <div>
+                <button id="admin-links-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Links</button>
+                <span id="admin-links-status" class="ml-3 text-sm text-gray-700"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
