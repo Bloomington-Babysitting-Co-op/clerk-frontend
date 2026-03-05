@@ -97,7 +97,12 @@ async function mountAdminEntriesPage() {
       if (error) failed++;
       else created++;
     }
-    if (created) successEl.textContent = `Created ${created} ledger entr${created === 1 ? 'y' : 'ies'}.`;
+    if (created) {
+      successEl.textContent = `Created ${created} ledger entr${created === 1 ? 'y' : 'ies'}.`;
+      // clear form fields after successful creation
+      Array.from(fromSelect.options).forEach((o) => (o.selected = false));
+      Array.from(toSelect.options).forEach((o) => (o.selected = false));
+    }
     if (failed) setFormError(errorEl, `Failed to create ${failed} entr${failed === 1 ? 'y' : 'ies'}.`);
   };
 }

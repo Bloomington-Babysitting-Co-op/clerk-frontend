@@ -55,7 +55,7 @@ function renderRequestListCard(request, options = {}) {
   return `
     <a href="${href}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-4">
       <div class="min-w-0">
-        <p class="font-semibold text-gray-800 mb-1">${familyName}</p>
+        <p class="font-semibold mb-1">${familyName}</p>
         <p class="font-semibold flex items-center gap-2">
           <span class="${statusClass}">${formatRequestStatusLabel(request.status)}</span>
           <span class="text-gray-800">${requestTypeLabel}</span>
