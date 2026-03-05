@@ -45,16 +45,16 @@ function renderRequestListCard(request, options = {}) {
   const requestTimeLine = formatRequestTimeRangeLine(request);
   const familyName = request.family_name || "Unknown family";
 
-  const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests.html"))
-    ? `<div class="ml-4 hidden sm:flex items-center gap-4 min-w-0">
-         <div class="w-1/4 text-lg text-blue-600">${request.hours}</div>
+  const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests"))
+    ? `<div class="hidden sm:flex items-center gap-4 min-w-0">
+         <div class="w-1/4 text-lg text-blue-600 font-bold">${request.hours} hrs</div>
          <div class="flex-1 text-sm text-gray-800 break-words">${request.notes}</div>
        </div>`
     : "";
 
   return `
-    <a href="${href}" class="flex items-center justify-between border p-4 mb-2 rounded hover:shadow transition gap-4">
-      <div class="flex-1 min-w-0">
+    <a href="${href}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-4">
+      <div class="min-w-0">
         <p class="font-semibold text-gray-800 mb-1">${familyName}</p>
         <p class="font-semibold flex items-center gap-2">
           <span class="${statusClass}">${formatRequestStatusLabel(request.status)}</span>
