@@ -135,8 +135,15 @@ async function mountLedgerPage() {
       }
       setFormError(ledgerError, "");
       const rows = [
-        ["id", "request_id", "entry_date", "hours", "from_family_id", "to_family_id"],
-        ...currentRows.map(row => [row.id, row.request_id || "", toDateOnlyString(row.entry_date), row.hours, row.from_family_id, row.to_family_id])
+        ["id", "request_id", "entry_date", "hours", "from_family_name", "to_family_name"],
+        ...currentRows.map(row => [
+          row.id,
+          row.request_id || "",
+          toDateOnlyString(row.entry_date),
+          row.hours,
+          row.from_family_name || row.from_family_id || "",
+          row.to_family_name || row.to_family_id || ""
+        ])
       ];
       downloadCsv("ledger_export.csv", rows);
     };
