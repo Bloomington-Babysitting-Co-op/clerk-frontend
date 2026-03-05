@@ -37,7 +37,7 @@ function loginForm() {
         const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
         if (activeError || !isActive) {
           await supabase.auth.signOut();
-          this.error = activeError?.message || "Your family is inactive. Please contact an admin.";
+          this.error = "Inactive login credentials";
           return;
         }
         window.location = "/";
@@ -102,12 +102,6 @@ function dashboardState() {
       if (error) {
         this.error = error.message;
       } else {
-        const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
-        if (activeError || !isActive) {
-          await supabase.auth.signOut();
-          this.error = activeError?.message || "Your family is inactive. Please contact an admin.";
-          return;
-        }
         window.location.reload();
       }
     },
@@ -174,7 +168,7 @@ async function requireAuth() {
   if (activeError || !isActive) {
     await supabase.auth.signOut();
     window.location.href = "/login.html";
-    throw new Error(activeError?.message || "Your family is inactive. Please contact an admin.");
+    throw new Error(activeError?.message || "Inactive login credentials");
   }
 
   return data.session;
