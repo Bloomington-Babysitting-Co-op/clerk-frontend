@@ -128,9 +128,9 @@ function renderFamilies() {
           <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
         </div>
         <div class="flex items-center space-x-3 text-xs">
-          <span class="text-gray-600">${family.member_count ?? 0} Users</span>
+          <span class="text-gray-600">${(family.member_count ?? 0) === 1 ? "1 User" : (family.member_count ?? 0) + " Users"}</span>
           <span class="${family.is_active ? "text-green-700" : "text-red-700"}">${family.is_active ? "Active" : "Inactive"}</span>
-          <span class="text-red-700 ${family.is_admin ? "" : "hidden"}">Admin</span>
+          ${family.is_admin ? `<span class="bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center">Admin</span>` : ""}
         </div>
       </header>
       <div class="family-admin-content hidden p-4 space-y-3">
@@ -152,9 +152,9 @@ function renderFamilies() {
           <label class="text-sm"><input id="family-active-${family.id}" type="checkbox" class="mr-2" ${family.is_active ? "checked" : ""}>Active</label>
           <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
           <button data-family-save="${family.id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
-          <button data-family-delete="${family.id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${family.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${family.can_delete ? "" : "disabled"}>Delete Family</button>
+          ${family.can_delete ? `<button data-family-delete="${family.id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete Family</button>` : ''}
         </div>
       </div>
     </article>
@@ -171,7 +171,7 @@ function renderFamilies() {
     button.addEventListener("click", async () => {
       const familyId = button.getAttribute("data-family-delete");
       if (!familyId) return;
-      if (!window.confirm("Delete this family and linked users? This only works for eligible families.")) return;
+      if (!window.confirm("Delete this family?")) return;
       await deleteFamily(familyId);
     });
   });
@@ -212,6 +212,16 @@ function renderFamilies() {
 
     if (header) header.addEventListener('click', toggle);
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
+  });
+
+  // remove delete buttons from the DOM for families that are not deletable
+  adminArticles.forEach((article) => {
+    const familyId = article.getAttribute('data-family-id');
+    const family = familiesCache.find(f => f.id === familyId) || {};
+    if (!family.can_delete) {
+      const delBtn = article.querySelector(`[data-family-delete="${familyId}"]`);
+      if (delBtn) delBtn.remove();
+    }
   });
 
   const familiesToggleAllBtn = document.getElementById('families-admin-toggle-all');
@@ -256,12 +266,12 @@ function renderUsers() {
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
-            <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
             <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
-            <div class="flex flex-wrap gap-2">
+            <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
+            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm">Reset Password</button>
+            <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
               <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
-              <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm">Reset Password</button>
-              <button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm ${user.can_delete ? "" : "opacity-50 cursor-not-allowed"}" ${user.can_delete ? "" : "disabled"}>Delete User</button>
+              ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}
             </div>
           </div>
         </div>
@@ -359,6 +369,16 @@ function renderUsers() {
 
     if (header) header.addEventListener('click', toggle);
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
+  });
+
+  // remove delete buttons from the DOM for users that are not deletable
+  userArticles.forEach((article) => {
+    const userId = article.getAttribute('data-user-id');
+    const user = usersCache.find(u => u.user_id === userId) || {};
+    if (!user.can_delete) {
+      const delBtn = article.querySelector(`[data-user-delete="${userId}"]`);
+      if (delBtn) delBtn.remove();
+    }
   });
 
   const usersToggleAllBtn = document.getElementById('users-admin-toggle-all');

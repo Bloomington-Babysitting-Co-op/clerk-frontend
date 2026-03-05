@@ -4,6 +4,7 @@ import {
   formatValidationErrors,
   getCheckedValue,
   getInputValue,
+  formatDateOnly,
   monthValueFromDate,
   setCheckedValue,
   setInputValue,
@@ -40,7 +41,7 @@ function createChildRow(child = {}) {
       <label class="block text-sm font-medium mb-1">Notes</label>
       <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
-    <div class="md:col-span-2 flex justify-end">
+    <div class="md:col-span-2 flex justify-start">
       <button type="button" data-remove-child class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Child</button>
     </div>
   `;
@@ -124,7 +125,7 @@ function createEmergencyContactRow(contact = {}) {
       <label class="block text-sm font-medium mb-1">Phone <span class="text-red-600">*</span></label>
       <input data-emergency-contact-field="phone" type="text" class="border p-2 w-full rounded" value="${contact.phone || ""}" required>
     </div>
-    <div class="md:col-span-2 flex justify-end">
+    <div class="md:col-span-2 flex justify-start">
       <button type="button" data-remove-emergency-contact class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Contact</button>
     </div>
   `;
@@ -344,6 +345,14 @@ async function mountProfilePage() {
       setInputValue("profile-pets", profile.pets);
       setInputValue("profile-family-photo-url", profile.family_photo_url);
       setInputValue("profile-notes", profile.notes);
+
+      // populate admin metadata (uneditable)
+      const joinedEl = document.getElementById('profile-admin-joined');
+      const bgEl = document.getElementById('profile-admin-background');
+      const duesEl = document.getElementById('profile-admin-dues');
+      if (joinedEl) joinedEl.textContent = formatDateOnly(profile.admin_date_joined) || 'N/A';
+      if (bgEl) bgEl.textContent = formatDateOnly(profile.admin_last_background_check) || 'N/A';
+      if (duesEl) duesEl.textContent = formatDateOnly(profile.admin_last_dues_payment) || 'N/A';
 
     } else {
       renderEmergencyContacts([]);
