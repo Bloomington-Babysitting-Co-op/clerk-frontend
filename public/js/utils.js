@@ -12,6 +12,16 @@ export function formatDateTime(dt) {
   return new Date(dt).toLocaleString();
 }
 
+export function formatDateOnly(value) {
+  if (!value) return "";
+  const asString = String(value);
+  // Accept ISO-like date prefixes (YYYY-MM-DD) or full timestamps
+  const isoMatch = asString.match(/^\d{4}-\d{2}-\d{2}/);
+  const parsed = isoMatch ? new Date(isoMatch[0]) : new Date(asString);
+  if (Number.isNaN(parsed.getTime())) return asString;
+  return parsed.toLocaleDateString();
+}
+
 export function formatTimeOnly(timeValue) {
   if (!timeValue) return "";
   const inputValue = toTimeInputValue(timeValue);
