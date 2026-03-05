@@ -108,7 +108,7 @@ let usersCache = [];
 
 function familyOptionsHtml(selectedFamilyId = "") {
   const placeholderSelected = !selectedFamilyId;
-  const placeholder = `<option value="" ${placeholderSelected ? "selected" : ""}>-- No family --</option>`;
+  const placeholder = `<option value="" ${placeholderSelected ? "selected" : ""}>--- Unassigned ---</option>`;
   const options = familiesCache
     .map((family) => `<option value="${family.id}" ${family.id === selectedFamilyId ? "selected" : ""}>${family.name || family.id}</option>`)
     .join("");
