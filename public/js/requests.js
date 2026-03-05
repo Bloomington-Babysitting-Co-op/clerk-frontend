@@ -426,7 +426,22 @@ async function mountRequestsPage() {
   }
 
   if (exportBtn) {
+    // default to bg-green-600
+    exportBtn.classList.add("bg-green-600");
     exportBtn.onclick = () => {
+      const prevAria = exportBtn.getAttribute("aria-label");
+      const prevDisabled = exportBtn.disabled;
+      exportBtn.setAttribute("aria-label", "Exporting...");
+      exportBtn.classList.remove("bg-green-600");
+      exportBtn.classList.add("bg-green-300");
+      exportBtn.disabled = true;
+      setTimeout(() => {
+        if (prevAria === null) exportBtn.removeAttribute("aria-label"); else exportBtn.setAttribute("aria-label", prevAria);
+        exportBtn.classList.remove("bg-green-300");
+        exportBtn.classList.add("bg-green-600");
+        exportBtn.disabled = prevDisabled;
+      }, 2000);
+
       if (!currentRows || !currentRows.length) {
         setFormError(errorEl, "No rows to export for selected filters.");
         return;
