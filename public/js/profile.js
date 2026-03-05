@@ -241,7 +241,7 @@ async function mountProfilePage() {
         return;
       }
 
-      const { error: parentError } = await supabase.rpc("rpc_upsert_my_parent_profile", {
+      const { error: parentError } = await supabase.rpc("rpc_update_my_parent_profile", {
         p_name: parentName,
         p_phone: phone,
         p_notify_new_request: getCheckedValue("notify-new-request"),

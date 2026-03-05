@@ -25,9 +25,9 @@ async function listLedgerInto(containerId, options = {}) {
       const dateDisplay = formatDateOnly(e.entry_date) || "";
       const fromTo = `${e.from_family_name || e.from_family_id || ''} → ${e.to_family_name || e.to_family_id || ''}`;
       const notes = e.notes || "";
-      const request = e.request_id
-        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-sm text-blue-600 hover:underline" rel="noopener" aria-label="View request ${escapeHtml(e.request_id)}">View Request</a>`
-        : `<span class="text-sm text-gray-600">Created by Admin</span>`;
+      const createdBy = e.request_id
+        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-sm text-blue-600 hover:underline" rel="noopener" aria-label="View request">Created by: ${escapeHtml(e.email)}</a>`
+        : `<span class="text-sm text-red-600">Created by Admin: ${escapeHtml(e.email)}</span>`;
 
       return `
       <div class="py-3">
@@ -36,7 +36,7 @@ async function listLedgerInto(containerId, options = {}) {
           <div class="text-lg text-blue-600 font-bold">${escapeHtml(String(e.hours))} hrs</div>
           <div class="text-sm text-gray-800">${escapeHtml(fromTo)}</div>
           <div class="text-sm text-gray-800 truncate">${escapeHtml(notes)}</div>
-          <div class="text-right">${request}</div>
+          <div class="text-right">${createdBy}</div>
         </div>
       </div>
     `}).join('<hr class="border-t border-gray-200 my-2"/>')
