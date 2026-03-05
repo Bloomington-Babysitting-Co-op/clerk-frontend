@@ -107,9 +107,12 @@ let familiesCache = [];
 let usersCache = [];
 
 function familyOptionsHtml(selectedFamilyId = "") {
-  return familiesCache
+  const placeholderSelected = !selectedFamilyId;
+  const placeholder = `<option value="" ${placeholderSelected ? "selected" : ""}>-- No family --</option>`;
+  const options = familiesCache
     .map((family) => `<option value="${family.id}" ${family.id === selectedFamilyId ? "selected" : ""}>${family.name || family.id}</option>`)
     .join("");
+  return placeholder + options;
 }
 
 function renderFamilies() {
@@ -258,20 +261,29 @@ function renderUsers() {
     return;
   }
 
+  const family_active_color = user.family_is_active === true ? 'text-green-700' : user.family_is_active === false ? 'text-red-700' : 'text-yellow-700';
+  const family_active_label = user.family_is_active === true ? 'Family Active' : user.family_is_active === false ? 'Family Inactive' : 'Family Unassigned';
+
   listEl.innerHTML = usersCache.map((user) => `
       <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
           <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
-          <span class="ml-auto text-xs ${user.family_is_active ? "text-green-700" : "text-red-700"}">Family ${user.family_is_active ? "Active" : "Inactive"}</span>
+          <span class="ml-auto text-xs ${family_active_color}">${family_active_label}</span>
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
-            <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
-            <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
+            <div>
+              <label class="text-sm block mb-1">Family</label>
+              <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
+            </div>
+            <div>
+              <label class="text-sm block mb-1">Email</label>
+              <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
+            </div>
             <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm">Reset Password</button>
             <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-              <button data-user-move="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
+              <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
               ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}
             </div>
           </div>
@@ -279,9 +291,9 @@ function renderUsers() {
       </article>
   `).join("");
 
-  listEl.querySelectorAll("[data-user-move]").forEach((button) => {
+  listEl.querySelectorAll("[data-user-save]").forEach((button) => {
     button.addEventListener("click", async () => {
-      const userId = button.getAttribute("data-user-move");
+      const userId = button.getAttribute("data-user-save");
       await saveUser(userId);
     });
   });
@@ -463,6 +475,11 @@ async function saveUserFamily(userId) {
   const familySelect = document.getElementById(`user-family-${userId}`);
   const familyId = familySelect?.value;
 
+  if (!familyId) {
+    setStatusText("users-admin-edit-status", "Select a family before saving.", true);
+    return;
+  }
+
   const { error } = await supabase.rpc("rpc_admin_update_user_family", {
     p_user_id: userId,
     p_family_id: familyId
@@ -479,7 +496,7 @@ async function saveUserFamily(userId) {
 
 async function saveUser(userId) {
   if (!userId) return;
-  const saveBtn = document.querySelector(`[data-user-move="${userId}"]`);
+  const saveBtn = document.querySelector(`[data-user-save="${userId}"]`);
   const emailInput = document.getElementById(`user-admin-edit-email-${userId}`);
   const newEmail = (emailInput?.value || "").trim();
 
