@@ -1,14 +1,5 @@
 import { supabase } from "/js/supabase.js";
-import { getAgeLabel, formatDateOnly } from "/js/utils.js";
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { getAgeLabel, formatDateOnly, escapeHtml } from "/js/utils.js";
 
 function renderRowsOrFallback(items, renderItem, fallback) {
   if (!Array.isArray(items) || !items.length) {
@@ -31,7 +22,7 @@ function renderFamilyCard(family, idx) {
       <header class="family-header flex items-center p-4 cursor-pointer">
         <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
         <h2 class="text-2xl font-bold">${escapeHtml(family.family_name || "Unnamed family")}</h2>
-        <div class="ml-3 flex items-center text-xs space-x-2">
+        <div class="ml-auto flex items-center space-x-3 text-xs">
           <span class="text-gray-800">Joined ${escapeHtml(formatDateOnly(family.joined_date) || "N/A")}</span>
           ${family.is_admin ? `<span class="bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center">Admin</span>` : ''}
         </div>
