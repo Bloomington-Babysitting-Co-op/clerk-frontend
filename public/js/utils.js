@@ -155,7 +155,7 @@ export function setStatusText(target, message = "", isError = false) {
   const element = typeof target === "string" ? document.getElementById(target) : target;
   if (!element) return;
   element.textContent = message || "";
-  element.className = isError ? "text-sm text-red-600 whitespace-pre-line" : "text-sm text-gray-700";
+  element.className = isError ? "text-sm text-red-600 whitespace-pre-line" : "text-sm text-gray-800";
 }
 
 export function getInputValue(id) {
