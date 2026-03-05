@@ -1,4 +1,5 @@
 import { supabase } from "/js/supabase.js";
+import { escapeHtml } from "/js/utils.js";
 
 export async function mountLinks(containerId) {
   const el = document.getElementById(containerId);
@@ -36,13 +37,4 @@ export async function mountLinks(containerId) {
   } catch (err) {
     console.error('Failed to load dashboard links', err);
   }
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
