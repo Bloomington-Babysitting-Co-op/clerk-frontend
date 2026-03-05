@@ -108,18 +108,28 @@ function dashboardState() {
 
     async loadData() {
       try {
-        // Get hours balance
         const { data: balance, error: balanceError } = await supabase.rpc("rpc_get_hours_balance");
         if (balanceError) throw balanceError;
         this.hoursBalance = Number(balance ?? 0).toFixed(2);
 
-        // Get user's future requests
-        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_requests_my_family_future");
-        if (userRequestsError) throw userRequestsError;
-
-        const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_has_completed_sit_this_month");
+        const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_has_completed_request_this_month");
         if (activeError) throw activeError;
         this.activeThisMonth = !!activeThisMonth;
+
+        // Get all available requests
+        const otherRequestsContainer = document.getElementById("other-requests-list");
+        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_requests_dashboard_other");
+        const otherRequestsList = Array.isArray(otherRequests) ? otherRequests : [];
+
+        if (otherRequestsContainer) {
+          otherRequestsContainer.innerHTML = (!otherRequestsError && otherRequestsList.length)
+            ? otherRequestsList.map((r) => renderRequestListCard(r)).join("")
+            : "<p class='text-gray-600'>No available requests.</p>";
+        }
+
+        // Get user's future requests
+        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_requests_dashboard_mine");
+        if (userRequestsError) throw userRequestsError;
 
         if (userRequests) {
           const container = document.getElementById("family-requests-list");
@@ -130,25 +140,15 @@ function dashboardState() {
           }
         }
 
+        // Get user's submitted offers
         const submittedOffersContainer = document.getElementById("family-offers-list");
-        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_offers_my_submitted");
+        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_offers_dashboard_mine");
         const submittedOffersList = Array.isArray(submittedOffers) ? submittedOffers : [];
 
         if (submittedOffersContainer) {
           submittedOffersContainer.innerHTML = (!submittedOffersError && submittedOffersList.length)
             ? submittedOffersList.map((r) => renderRequestListCard(r)).join("")
-            : "<p class='text-gray-600'>No submitted offers at the moment.</p>";
-        }
-
-        // Get all open requests
-        const otherRequestsContainer = document.getElementById("other-requests-list");
-        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_requests_other_open");
-        const otherRequestsList = Array.isArray(otherRequests) ? otherRequests : [];
-
-        if (otherRequestsContainer) {
-          otherRequestsContainer.innerHTML = (!otherRequestsError && otherRequestsList.length)
-            ? otherRequestsList.map((r) => renderRequestListCard(r)).join("")
-            : "<p class='text-gray-600'>No open requests at the moment.</p>";
+            : "<p class='text-gray-600'>No submitted offers.</p>";
         }
       } catch (err) {
         console.error("Error loading dashboard data:", err);
