@@ -244,12 +244,15 @@ async function mountProfilePage() {
       const { error: parentError } = await supabase.rpc("rpc_update_my_parent_profile", {
         p_name: parentName,
         p_phone: phone,
-        p_notify_new_request: getCheckedValue("notify-new-request"),
-        p_notify_unoffered_48h: getCheckedValue("notify-unoffered-48h"),
-        p_notify_request_offered: getCheckedValue("notify-request-offered"),
-        p_notify_offer_cancelled_or_edited: getCheckedValue("notify-offer-cancelled-edited"),
-        p_notify_ledger_debtor: getCheckedValue("notify-ledger-debtor"),
-        p_notify_midmonth_inactive: getCheckedValue("notify-midmonth-inactive")
+        p_email_request_offered: getCheckedValue("email-request-offered"),
+        p_email_request_unoffered: getCheckedValue("email-request-unoffered"),
+        p_email_request_expired: getCheckedValue("email-request-expired"),
+        p_email_offer_assigned: getCheckedValue("email-offer-assigned"),
+        p_email_offer_completed: getCheckedValue("email-offer-completed"),
+        p_email_ledger_change: getCheckedValue("email-ledger-change"),
+        p_email_request_new: getCheckedValue("email-request-new"),
+        p_email_offer_change: getCheckedValue("email-offer-change"),
+        p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive")
       });
       if (parentError) {
         setStatusText("profile-save-message", parentError.message, true);
@@ -330,12 +333,15 @@ async function mountProfilePage() {
     if (parent) {
       setInputValue("profile-parent-name", parent.name || "");
       setInputValue("profile-phone", parent.phone || "");
-      setCheckedValue("notify-new-request", parent.notify_new_request);
-      setCheckedValue("notify-unoffered-48h", parent.notify_unoffered_48h);
-      setCheckedValue("notify-request-offered", parent.notify_request_offered);
-      setCheckedValue("notify-offer-cancelled-edited", parent.notify_offer_cancelled_or_edited);
-      setCheckedValue("notify-ledger-debtor", parent.notify_ledger_debtor);
-      setCheckedValue("notify-midmonth-inactive", parent.notify_midmonth_inactive);
+      setCheckedValue("email-request-offered", parent.email_request_offered);
+      setCheckedValue("email-request-unoffered", parent.email_request_unoffered);
+      setCheckedValue("email-request-expired", parent.email_request_expired);
+      setCheckedValue("email-offer-assigned", parent.email_offer_assigned);
+      setCheckedValue("email-offer-completed", parent.email_offer_completed);
+      setCheckedValue("email-ledger-change", parent.email_ledger_change);
+      setCheckedValue("email-request-new", parent.email_request_new);
+      setCheckedValue("email-offer-change", parent.email_offer_change);
+      setCheckedValue("email-midmonth-inactive", parent.email_midmonth_inactive);
     }
 
     if (profile) {
