@@ -15,7 +15,7 @@
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <div class="grid md:grid-cols-4 gap-3 items-end">
+      <div class="grid md:grid-cols-5 gap-3 items-end">
         <div>
           <label class="block text-sm font-medium mb-1">Start Date</label>
           <input id="requests-start-date" type="date" class="border p-2 w-full rounded">
@@ -23,6 +23,12 @@
         <div>
           <label class="block text-sm font-medium mb-1">End Date</label>
           <input id="requests-end-date" type="date" class="border p-2 w-full rounded">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Family</label>
+          <select id="requests-family-select" class="border p-2 w-full rounded">
+            <option value="">All Families</option>
+          </select>
         </div>
         <button id="requests-apply-filter-btn" class="bg-gray-700 text-white px-4 py-2 rounded">Apply Filters</button>
         <button id="requests-export-csv-btn" class="bg-green-600 text-white px-4 py-2 rounded">Export CSV</button>

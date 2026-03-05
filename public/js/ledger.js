@@ -5,11 +5,12 @@ import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString } from ".
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
 
-  const { startDate = null, endDate = null } = options;
+  const { startDate = null, endDate = null, familyId = null } = options;
 
   const { data, error } = await supabase.rpc("rpc_list_ledger_entries_filtered", {
     p_start_date: startDate,
-    p_end_date: endDate
+    p_end_date: endDate,
+    p_family_id: familyId
   });
 
   const el = document.getElementById(containerId);
@@ -74,9 +75,27 @@ async function mountLedgerPage() {
     endInput.value = defaultEndDate;
   }
 
+  const familySelect = document.getElementById("ledger-family-select");
+  if (familySelect) {
+    try {
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_entry");
+      if (!familiesError && Array.isArray(familiesData)) {
+        familiesData.forEach((f) => {
+          const opt = document.createElement("option");
+          opt.value = f.id;
+          opt.textContent = f.name || f.id;
+          familySelect.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
-    endDate: endInput?.value || null
+    endDate: endInput?.value || null,
+    familyId: familySelect?.value || null
   });
   await loadLedgerBalancesInto("ledger-balances");
 
@@ -86,7 +105,7 @@ async function mountLedgerPage() {
         setFormError(ledgerError, "");
         const startDate = startInput?.value || null;
         const endDate = endInput?.value || null;
-        currentRows = await listLedgerInto("ledger-list", { startDate, endDate });
+        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, familyId: familySelect?.value || null });
       } catch (error) {
         setFormError(ledgerError, error.message);
       }
