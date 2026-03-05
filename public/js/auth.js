@@ -23,6 +23,7 @@ function loginForm() {
     email: "",
     password: "",
     error: "",
+    resetting: false,
 
     async login() {
       const { error } = await supabase.auth.signInWithPassword({
@@ -41,7 +42,7 @@ function loginForm() {
         }
         window.location = "/";
       }
-    }
+    },
 
     async forgotPassword() {
       if (!this.email || !this.email.trim()) {
