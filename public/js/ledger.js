@@ -26,16 +26,16 @@ async function listLedgerInto(containerId, options = {}) {
       const fromTo = `${e.from_family_name || e.from_family_id || ''} → ${e.to_family_name || e.to_family_id || ''}`;
       const notes = e.notes || "";
       const createdBy = e.request_id
-        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-sm text-blue-600 hover:underline" rel="noopener" aria-label="View request">Created by: ${escapeHtml(e.email)}</a>`
-        : `<span class="text-sm text-red-600">Created by Admin: ${escapeHtml(e.email)}</span>`;
+        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">Created by: ${escapeHtml(e.email)}</a>`
+        : `<span class="text-red-600">Created by Admin: ${escapeHtml(e.email)}</span>`;
 
       return `
       <div class="py-3">
-        <div class="grid grid-cols-1 md:flex md:items-center md:gap-3">
-          <div class="text-sm text-gray-800 font-medium md:flex-none">${escapeHtml(dateDisplay)}</div>
+        <div class="grid grid-cols-1 md:flex md:items-center md:gap-5">
+          <div class="text-gray-800 font-medium md:flex-none">${escapeHtml(dateDisplay)}</div>
           <div class="text-lg text-blue-600 font-bold md:flex-none">${escapeHtml(String(e.hours))} hrs</div>
-          <div class="text-sm text-gray-800 md:flex-none">${escapeHtml(fromTo)}</div>
-          <div class="text-sm text-gray-800 truncate md:flex-1 md:mx-2">${escapeHtml(notes)}</div>
+          <div class="text-gray-800 md:flex-none">${escapeHtml(fromTo)}</div>
+          <div class="text-gray-800 truncate md:flex-1 md:mx-2">${escapeHtml(notes)}</div>
           <div class="text-right md:flex-none">${createdBy}</div>
         </div>
       </div>
