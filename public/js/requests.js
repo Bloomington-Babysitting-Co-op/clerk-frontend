@@ -62,7 +62,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
   const readOnly = !!options.readOnly;
   const showActions = options.showActions !== false;
   const disabledAttr = readOnly ? "disabled" : "";
-  const readOnlyFieldClass = readOnly ? "bg-gray-100 text-gray-700" : "";
+  const readOnlyFieldClass = readOnly ? "bg-gray-100 text-gray-800" : "";
 
   return `
     <div class="space-y-2">
@@ -146,7 +146,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
                     <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""} ${disabledAttr}>
                     <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}
                       ${allergiesText ? `<span class="block font-semibold text-gray-800">Allergies: ${allergiesText}</span>` : ""}
-                      ${notesText ? `<span class="block italic text-gray-700">Notes: ${notesText}</span>` : ""}
+                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${notesText}</span>` : ""}
                     </span>
                   </label>
                 `;
@@ -227,7 +227,7 @@ function initRequestFormInteractions(prefix) {
     hoursWrapper.style.display = "block";
     hoursInput.readOnly = isBabysit;
     hoursInput.classList.toggle("bg-gray-100", isBabysit);
-    hoursInput.classList.toggle("text-gray-700", isBabysit);
+    hoursInput.classList.toggle("text-gray-800", isBabysit);
     babysitFields.style.display = isBabysit ? "block" : "none";
     if (isBabysit && !mealRequired.checked) {
       mealPreparedBySitter.checked = false;
@@ -595,7 +595,7 @@ async function loadRequestInto(containerId) {
                 <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.has_used_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
-                <p class="text-gray-700"><em>${offer.notes || "No notes"}</em></p>
+                <p class="text-gray-800"><em>${offer.notes || "No notes"}</em></p>
                 ${isAssignedOffer ? `<p class="text-sm text-green-700 mt-3 font-semibold">Accepted Offer</p>` : ""}
                 ${canAssignOffer && !isAssignedOffer
                   ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700" data-offer-id="${offer.id}">Accept Offer</button>`
@@ -882,7 +882,7 @@ async function mountNewRequestForm(containerId) {
     if (error) {
       setFormError("new-request-error", error.message);
     } else {
-      window.location = "/";
+      window.location = "/requests.html";
     }
   };
 }

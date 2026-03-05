@@ -31,12 +31,12 @@ async function listLedgerInto(containerId, options = {}) {
 
       return `
       <div class="py-3">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
-          <div class="text-sm text-gray-800 font-medium">${escapeHtml(dateDisplay)}</div>
-          <div class="text-lg text-blue-600 font-bold">${escapeHtml(String(e.hours))} hrs</div>
-          <div class="text-sm text-gray-800">${escapeHtml(fromTo)}</div>
-          <div class="text-sm text-gray-800 truncate">${escapeHtml(notes)}</div>
-          <div class="text-right">${createdBy}</div>
+        <div class="grid grid-cols-1 md:flex md:items-center md:gap-3">
+          <div class="text-sm text-gray-800 font-medium md:flex-none">${escapeHtml(dateDisplay)}</div>
+          <div class="text-lg text-blue-600 font-bold md:flex-none">${escapeHtml(String(e.hours))} hrs</div>
+          <div class="text-sm text-gray-800 md:flex-none">${escapeHtml(fromTo)}</div>
+          <div class="text-sm text-gray-800 truncate md:flex-1 md:mx-2">${escapeHtml(notes)}</div>
+          <div class="text-right md:flex-none">${createdBy}</div>
         </div>
       </div>
     `}).join('<hr class="border-t border-gray-200 my-2"/>')

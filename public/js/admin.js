@@ -303,7 +303,7 @@ function renderUsers() {
           <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-700">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
         </header>
         <div class="user-admin-content hidden p-3">
-          <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
+          <div class="grid md:grid-cols-[auto_auto_auto] gap-2 items-center">
             <div>
               <label class="text-sm block mb-1">Family</label>
               <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
@@ -312,7 +312,7 @@ function renderUsers() {
               <label class="text-sm block mb-1">Email</label>
               <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
             </div>
-            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm">Reset Password</button>
+            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm self-center">Reset Password</button>
             <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
               <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
               ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}

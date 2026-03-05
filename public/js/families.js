@@ -30,7 +30,7 @@ function renderFamilyCard(family, idx) {
 
       <div class="family-content hidden p-6 space-y-4">
         <div>
-          <p class="text-sm font-semibold text-gray-700">Address</p>
+          <p class="text-sm font-semibold text-gray-800">Address</p>
           <p class="text-gray-800">${addressValue
             ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-700">${escapeHtml(addressValue)}</a>`
             : "Not provided"}</p>
@@ -87,15 +87,15 @@ function renderFamilyCard(family, idx) {
 
         <div class="grid md:grid-cols-3 gap-3">
           <div>
-            <p class="text-sm font-semibold text-gray-700">Pets</p>
+            <p class="text-sm font-semibold text-gray-800">Pets</p>
             <p class="text-gray-800">${escapeHtml(family.pets || "Not provided")}</p>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">Family Photo URL</p>
+            <p class="text-sm font-semibold text-gray-800">Family Photo URL</p>
             <p class="text-gray-800 break-all">${escapeHtml(family.family_photo_url || "Not provided")}</p>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">Notes</p>
+            <p class="text-sm font-semibold text-gray-800">Notes</p>
             <p class="text-gray-800">${escapeHtml(family.notes || "Not provided")}</p>
           </div>
         </div>
