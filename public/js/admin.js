@@ -102,9 +102,31 @@ async function mountAdminEntriesPage() {
   };
 }
 
-// --- Families admin (edit/create) ---
 let familiesCache = [];
 let usersCache = [];
+let showInactiveFamilies = false;
+let showInactiveUsers = false;
+
+function initShowInactiveToggle() {
+  const famToggle = document.querySelector('.show-inactive-families-toggle');
+  const userToggle = document.querySelector('.show-inactive-users-toggle');
+
+  if (famToggle) {
+    famToggle.checked = !!showInactiveFamilies;
+    famToggle.addEventListener('change', (ev) => {
+      showInactiveFamilies = !!ev.target.checked;
+      renderFamilies();
+    });
+  }
+
+  if (userToggle) {
+    userToggle.checked = !!showInactiveUsers;
+    userToggle.addEventListener('change', (ev) => {
+      showInactiveUsers = !!ev.target.checked;
+      renderUsers();
+    });
+  }
+}
 
 function familyOptionsHtml(selectedFamilyId = "") {
   const placeholderSelected = !selectedFamilyId;
@@ -124,7 +146,13 @@ function renderFamilies() {
     return;
   }
 
-  listEl.innerHTML = familiesCache.map((family) => `
+  const visibleFamilies = showInactiveFamilies ? familiesCache : familiesCache.filter(f => f.is_active !== false);
+  if (!visibleFamilies.length) {
+    listEl.innerHTML = "<p class='text-sm text-gray-600'>No families found.</p>";
+    return;
+  }
+
+  listEl.innerHTML = visibleFamilies.map((family) => `
     <article class="family-admin-card rounded bg-gray-50 shadow-sm" data-family-id="${family.id}">
       <header class="family-admin-header flex items-center p-3 cursor-pointer">
         <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
@@ -261,15 +289,18 @@ function renderUsers() {
     return;
   }
 
-  const family_active_color = user.family_is_active === true ? 'text-green-700' : user.family_is_active === false ? 'text-red-700' : 'text-yellow-700';
-  const family_active_label = user.family_is_active === true ? 'Family Active' : user.family_is_active === false ? 'Family Inactive' : 'Family Unassigned';
+  const visibleUsers = showInactiveUsers ? usersCache : usersCache.filter(u => u.family_is_active !== false);
+  if (!visibleUsers.length) {
+    listEl.innerHTML = "<p class='text-sm text-gray-600'>No users found.</p>";
+    return;
+  }
 
-  listEl.innerHTML = usersCache.map((user) => `
+  listEl.innerHTML = visibleUsers.map((user) => `
       <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
           <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
-          <span class="ml-auto text-xs ${family_active_color}">${family_active_label}</span>
+          <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-700">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[1fr_auto_auto] gap-2 items-center">
@@ -628,6 +659,8 @@ async function mountFamiliesAdminPage() {
 
   await wireCreateFamily();
   await wireCreateUser();
+  // initialize the Show Inactive toggle handlers before initial render
+  initShowInactiveToggle();
   await refreshAll();
 }
 
