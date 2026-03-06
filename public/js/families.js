@@ -1,5 +1,11 @@
 import { supabase } from "/js/supabase.js";
-import { getAgeLabel, formatDateOnly, escapeHtml } from "/js/utils.js";
+import {
+  escapeHtml,
+  formatDateOnly,
+  getAgeLabel,
+  downloadCsv,
+  setButtonTemporaryBusy
+} from "/js/utils.js";
 
 function renderRowsOrFallback(items, renderItem, fallback) {
   if (!Array.isArray(items) || !items.length) {
@@ -158,32 +164,77 @@ async function mountFamiliesPage(containerId) {
     if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(e); });
   });
 
-    // toggle-all button
-    const toggleAllBtn = document.getElementById('families-toggle-all');
-    function updateFamiliesToggleAll() {
-      if (!toggleAllBtn) return;
+  // toggle-all button
+  const toggleAllBtn = document.getElementById('families-toggle-all');
+  function updateFamiliesToggleAll() {
+    if (!toggleAllBtn) return;
+    const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
+    toggleAllBtn.textContent = anyHidden ? '+' : '-';
+    toggleAllBtn.setAttribute('aria-pressed', anyHidden ? 'false' : 'true');
+    toggleAllBtn.setAttribute('aria-label', anyHidden ? 'Expand all families' : 'Collapse all families');
+  }
+
+  if (toggleAllBtn) {
+    updateFamiliesToggleAll();
+    toggleAllBtn.addEventListener('click', () => {
       const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
-      toggleAllBtn.textContent = anyHidden ? '+' : '-';
-      toggleAllBtn.setAttribute('aria-pressed', anyHidden ? 'false' : 'true');
-      toggleAllBtn.setAttribute('aria-label', anyHidden ? 'Expand all families' : 'Collapse all families');
-    }
-
-    if (toggleAllBtn) {
+      articles.forEach((a) => setArticleExpanded(a, anyHidden));
       updateFamiliesToggleAll();
-      toggleAllBtn.addEventListener('click', () => {
-        const anyHidden = articles.some(a => a.querySelector('.family-content').classList.contains('hidden'));
-        articles.forEach((a) => setArticleExpanded(a, anyHidden));
-        updateFamiliesToggleAll();
-      });
-    }
-
-    // ensure per-item toggles update the toggle-all button state
-    articles.forEach((article) => {
-      const observerHeader = article.querySelector('.family-header');
-      if (observerHeader) observerHeader.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
-      const btn = article.querySelector('.family-toggle-btn');
-      if (btn) btn.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
     });
+  }
+
+  // ensure per-item toggles update the toggle-all button state
+  articles.forEach((article) => {
+    const observerHeader = article.querySelector('.family-header');
+    if (observerHeader) observerHeader.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+    const btn = article.querySelector('.family-toggle-btn');
+    if (btn) btn.addEventListener('click', () => setTimeout(updateFamiliesToggleAll, 0));
+  });
+
+  const exportBtn = document.getElementById('families-export-csv');
+  if (exportBtn) {
+    exportBtn.onclick = () => {
+      setButtonTemporaryBusy(exportBtn);
+
+      const rows = [
+        ["Family Name", "Address", "Parent Name", "Parent Email", "Parent Phone", "Emergency Contact Name", "Emergency Contact Phone", "Child Name", "Child Age", "Child Allergies", "Child Notes", "Pets", "Family Notes"]
+      ];
+
+      (Array.isArray(families) ? families : []).forEach((family) => {
+        const parents = Array.isArray(family.parents) ? family.parents : [];
+        const emergencyContacts = Array.isArray(family.emergency_contacts) ? family.emergency_contacts : [];
+        const children = Array.isArray(family.children) ? family.children : [];
+
+        const rowCount = Math.max(parents.length, emergencyContacts.length, children.length, 1);
+
+        for (let i = 0; i < rowCount; i++) {
+          const parent = parents[i] || {};
+          const contact = emergencyContacts[i] || {};
+          const child = children[i] || {};
+
+          const childAge = getAgeLabel(child?.date_of_birth) || "";
+
+          rows.push([
+            i === 0 ? (family.family_name || family.name || '') : '',
+            i === 0 ? (family.address || '') : '',
+            parent.name || '',
+            parent.email || '',
+            parent.phone || '',
+            contact.name || '',
+            contact.phone || '',
+            child.name || '',
+            childAge,
+            child.allergies || '',
+            child.notes || '',
+            i === 0 ? (family.pets || '') : '',
+            i === 0 ? (family.notes || '') : ''
+          ]);
+        }
+      });
+
+      downloadCsv("families_export.csv", rows);
+    };
+  }
 }
 
 export { mountFamiliesPage };

@@ -1,6 +1,14 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
-import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString, formatDateOnly, escapeHtml } from "./utils.js";
+import {
+  escapeHtml,
+  formatDateOnly,
+  toDateInputValue,
+  toDateOnlyString,
+  downloadCsv,
+  setButtonTemporaryBusy,
+  setFormError
+} from "./utils.js";
 // Client-side cache for ledger balances to enable fast filtering by family
 let ledgerBalancesCache = null;
 
@@ -155,16 +163,9 @@ async function mountLedgerPage() {
   const ledgerError = document.getElementById("ledger-error");
 
   const now = new Date();
-  const defaultStartDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
-  const defaultEndDate = toDateInputValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  if (startInput) {
-    startInput.value = defaultStartDate;
-  }
-
-  if (endInput) {
-    endInput.value = defaultEndDate;
-  }
+  if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
+  if (endInput) endInput.value = "";
 
   // Populate family select
   if (familySelect) {
@@ -185,12 +186,7 @@ async function mountLedgerPage() {
 
   await loadLedgerBalancesInto("ledger-balances");
 
-  // Apply initial filter (if a family is pre-selected) and wire onchange to filter client-side
-  if (familySelect) {
-    // apply initial selection
-    await filterLedgerBalancesByFamily('ledger-balances', familySelect.value || null);
-    familySelect.onchange = () => filterLedgerBalancesByFamily('ledger-balances', familySelect.value || null);
-  }
+  let appliedFamily = null;
 
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
@@ -204,7 +200,9 @@ async function mountLedgerPage() {
         setFormError(ledgerError, "");
         const startDate = startInput?.value || null;
         const endDate = endInput?.value || null;
-        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, familyId: familySelect?.value || null });
+        appliedFamily = familySelect?.value || null;
+        await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
+        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, familyId: appliedFamily });
       } catch (error) {
         setFormError(ledgerError, error.message);
       }
@@ -212,28 +210,19 @@ async function mountLedgerPage() {
   }
 
   if (exportBtn) {
-    // default to bg-green-600
-    exportBtn.classList.add("bg-green-600");
     exportBtn.onclick = async () => {
-      const prevAria = exportBtn.getAttribute("aria-label");
-      const prevDisabled = exportBtn.disabled;
-      exportBtn.setAttribute("aria-label", "Exporting...");
-      exportBtn.classList.remove("bg-green-600");
-      exportBtn.classList.add("bg-green-300");
-      exportBtn.disabled = true;
-      setTimeout(() => {
-        if (prevAria === null) exportBtn.removeAttribute("aria-label"); else exportBtn.setAttribute("aria-label", prevAria);
-        exportBtn.classList.remove("bg-green-300");
-        exportBtn.classList.add("bg-green-600");
-        exportBtn.disabled = prevDisabled;
-      }, 2000);
-      setFormError(ledgerError, "");
+      setButtonTemporaryBusy(exportBtn);
 
+      if (!currentRows || !currentRows.length) {
+        setFormError(ledgerError, "No rows to export for selected filters.");
+        return;
+      }
+      setFormError(ledgerError, "");
       // Build balances header & rows (filtered by currently-selected family)
       const balancesHeader = ["Family Name", "Active This Month", "Hours Balance", "Month Start Balance", "Prior Month Start Balance"];
       let balancesRows = [];
       try {
-        const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', familySelect?.value || null);
+        const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
         balancesRows = Array.isArray(filteredBalances) ? filteredBalances.map(b => [
           b.name || "",
           b.active_this_month ? 'Yes' : 'No',

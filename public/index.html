@@ -16,13 +16,13 @@
         <!-- Summary Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
-            <p class="text-3xl font-bold text-blue-600" x-text="hoursBalance + ' hours'"></p>
+            <h2 class="text-xl font-bold mb-2">Active This Month</h2>
+            <p class="text-3xl font-bold" :class="activeThisMonth ? 'text-green-600' : 'text-red-600'" x-text="activeThisMonth ? 'Yes' : 'No'"></p>
           </div>
 
           <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-2">Active This Month</h2>
-            <p class="text-3xl font-bold" :class="activeThisMonth ? 'text-green-600' : 'text-red-600'" x-text="activeThisMonth ? 'Yes' : 'No'"></p>
+            <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
+            <p class="text-3xl font-bold" :class="hoursBalance < 0 ? 'text-red-600' : 'text-green-600'" x-text="hoursBalance + ' hours'"></p>
           </div>
 
           <div class="bg-white p-6 rounded-lg shadow">

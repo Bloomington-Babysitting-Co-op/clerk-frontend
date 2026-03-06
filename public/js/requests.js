@@ -1,13 +1,14 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
+  formatDateTime,
+  toDateInputValue,
+  toTimeInputValue,
+  getAgeLabel,
   calculateHours,
   downloadCsv,
-  formatDateTime,
-  getAgeLabel,
-  setFormError,
-  toDateInputValue,
-  toTimeInputValue
+  setButtonTemporaryBusy,
+  setFormError
 } from "./utils.js";
 import { formatRequestStatusLabel, getRequestStatusTextClass, renderRequestListCard } from "./request-cards.js";
 
@@ -426,21 +427,8 @@ async function mountRequestsPage() {
   }
 
   if (exportBtn) {
-    // default to bg-green-600
-    exportBtn.classList.add("bg-green-600");
     exportBtn.onclick = () => {
-      const prevAria = exportBtn.getAttribute("aria-label");
-      const prevDisabled = exportBtn.disabled;
-      exportBtn.setAttribute("aria-label", "Exporting...");
-      exportBtn.classList.remove("bg-green-600");
-      exportBtn.classList.add("bg-green-300");
-      exportBtn.disabled = true;
-      setTimeout(() => {
-        if (prevAria === null) exportBtn.removeAttribute("aria-label"); else exportBtn.setAttribute("aria-label", prevAria);
-        exportBtn.classList.remove("bg-green-300");
-        exportBtn.classList.add("bg-green-600");
-        exportBtn.disabled = prevDisabled;
-      }, 2000);
+      setButtonTemporaryBusy(exportBtn);
 
       if (!currentRows || !currentRows.length) {
         setFormError(errorEl, "No rows to export for selected filters.");
@@ -448,7 +436,7 @@ async function mountRequestsPage() {
       }
       setFormError(errorEl, "");
       const rows = [
-        ["id", "date", "type", "status", "family_name", "hours", "notes"],
+        ["ID", "Date", "Type", "Status", "Family Name", "Hours", "Notes"],
         ...currentRows.map((row) => [
           row.id,
           row.date || "",
