@@ -46,14 +46,14 @@ function renderRequestListCard(request, options = {}) {
   const familyName = request.family_name || "Unknown family";
 
   const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests"))
-    ? `<div class="hidden sm:flex items-center gap-4 min-w-0">
+    ? `<div class="hidden sm:flex items-center gap-8 min-w-0">
          <div class="w-1/4 text-lg text-blue-600 font-bold">${request.hours} hrs</div>
          <div class="flex-1 text-sm text-gray-800 break-words">${request.notes}</div>
        </div>`
     : "";
 
   return `
-    <a href="${href}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-4">
+    <a href="${href}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-8">
       <div class="min-w-0">
         <p class="font-semibold mb-1">${familyName}</p>
         <p class="font-semibold flex items-center gap-2">

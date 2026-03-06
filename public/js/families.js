@@ -32,7 +32,7 @@ function renderFamilyCard(family, idx) {
         <div>
           <p class="text-sm font-semibold text-gray-800">Address</p>
           <p class="text-gray-800">${addressValue
-            ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-700">${escapeHtml(addressValue)}</a>`
+            ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-600">${escapeHtml(addressValue)}</a>`
             : "Not provided"}</p>
         </div>
 
@@ -108,7 +108,7 @@ async function mountFamiliesPage(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const { data, error } = await supabase.rpc("rpc_list_families_full");
+  const { data, error } = await supabase.rpc("rpc_list_families_active");
 
   if (error) {
     container.innerHTML = `<p class=\"text-red-600\">${escapeHtml(error.message)}</p>`;

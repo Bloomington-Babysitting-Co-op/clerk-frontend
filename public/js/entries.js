@@ -9,20 +9,8 @@ import {
   toNumberOrZero
 } from "./utils.js";
 
-function populateUserOptions(selectEl, families, selectedValue = "") {
-  selectEl.innerHTML = families
-    .map((family) => `<option value="${family.id}" ${family.id === selectedValue ? "selected" : ""}>${family.name}</option>`)
-    .join("");
-}
-
-async function loadFamiliesForEntry() {
-  const { data, error } = await supabase.rpc("rpc_list_families_for_entry");
-  if (error) throw error;
-  return data || [];
-}
-
-async function loadCompletedRequestsForEntry() {
-  const { data, error } = await supabase.rpc("rpc_list_requests_completed_for_entry");
+async function loadRequestsForEntry() {
+  const { data, error } = await supabase.rpc("rpc_list_requests_for_entry");
   if (error) throw error;
   return data || [];
 }
@@ -49,14 +37,8 @@ function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue })
 async function mountNewEntryPage() {
   try {
     await requireAuth();
-    const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_get_family_id");
-    if (currentFamilyError) throw currentFamilyError;
-    if (!currentFamilyId) throw new Error("Unable to resolve current family.");
 
-    const [families, completed] = await Promise.all([
-      loadFamiliesForEntry(),
-      loadCompletedRequestsForEntry()
-    ]);
+    const requests = await loadRequestsForEntry();
 
     const requestSelect = document.getElementById("request-select");
     const fromFamilyInput = document.getElementById("from-family");
@@ -75,11 +57,7 @@ async function mountNewEntryPage() {
       hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
     }
 
-    const familiesById = new Map(families.map((family) => [family.id, family.name || family.id]));
-
-    const requestItems = completed.filter(item => item.to_family_id === currentFamilyId);
-
-    if (!requestItems.length) {
+    if (!requests.length) {
       requestSelect.innerHTML = "<option value=''>No completed requests available</option>";
       requestSelect.disabled = true;
       createBtn.disabled = true;
@@ -106,7 +84,7 @@ async function mountNewEntryPage() {
 
     requestSelect.innerHTML = [
       "<option value='' selected>Select a completed request</option>",
-      ...requestItems.map(item => {
+      ...requests.map(item => {
         const requestDate = item.request_date || "No request date";
         const notes = item.notes || "No notes";
         return `<option value="${item.request_id}">${requestDate} — ${notes}</option>`;
@@ -114,7 +92,7 @@ async function mountNewEntryPage() {
     ].join("");
 
     requestSelect.onchange = () => {
-      const selected = requestItems.find((item) => item.request_id === requestSelect.value);
+      const selected = requests.find((item) => item.request_id === requestSelect.value);
       if (!selected) {
         fromFamilyIdInput.value = "";
         toFamilyIdInput.value = "";
@@ -125,12 +103,12 @@ async function mountNewEntryPage() {
 
       fromFamilyIdInput.value = selected.from_family_id || "";
       toFamilyIdInput.value = selected.to_family_id || "";
-      fromFamilyInput.value = familiesById.get(selected.from_family_id) || selected.from_family_id || "";
-      toFamilyInput.value = familiesById.get(selected.to_family_id) || selected.to_family_id || "";
+      fromFamilyInput.value = selected.from_family_name || "";
+      toFamilyInput.value = selected.to_family_name || "";
 
       const baseHours = selected.hours != null ? Number(selected.hours) : 0;
-      const hasDriveTime = selected.sit_location === "requester_house";
-      const hasMealServed = !!selected.meal_required;
+      const hasDriveTime = selected.drive_time;
+      const hasMealServed = selected.meal_served;
 
       if (addDriveTimeCheckbox) {
         addDriveTimeCheckbox.checked = hasDriveTime;
@@ -169,8 +147,8 @@ async function mountNewEntryPage() {
         p_request_id: requestId,
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
-        p_hours: Number(hoursInput.value),
         p_entry_date: toNullableDate(entryDateInput.value),
+        p_hours: Number(hoursInput.value),
         p_notes: notesInput ? notesInput.value : null
       });
 

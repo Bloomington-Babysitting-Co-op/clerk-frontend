@@ -268,7 +268,7 @@ async function mountProfilePage() {
         p_notes: getInputValue("profile-notes")
       };
 
-      const { error } = await supabase.rpc("rpc_upsert_my_family_details", payload);
+      const { error } = await supabase.rpc("rpc_update_my_family_details", payload);
       if (error) {
         setStatusText("profile-save-message", error.message, true);
         return;

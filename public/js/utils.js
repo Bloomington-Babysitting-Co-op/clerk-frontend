@@ -53,13 +53,13 @@ export function toDateInputValue(date = new Date()) {
 
 export function toTimeInputValue(value) {
   if (!value) return "";
-  const match = String(value).match(/^(\d{2}):(\d{2})/);
+  const match = String(value).match(/^(\d{1,2}):(\d{2})/);
   if (!match) return "";
   return `${match[1]}:${match[2]}`;
 }
 
 function toMinutes(timeValue) {
-  const match = String(timeValue || "").match(/^(\d{2}):(\d{2})/);
+  const match = String(timeValue || "").match(/^(\d{1,2}):(\d{2})/);
   if (!match) return null;
   const hours = Number(match[1]);
   const minutes = Number(match[2]);
@@ -213,7 +213,7 @@ export async function hasAdmin(forceRefresh = false) {
     return adminStatusCache;
   }
 
-  const { data, error } = await supabase.rpc("rpc_get_admin_status");
+  const { data, error } = await supabase.rpc("rpc_my_is_admin");
   if (error) {
     adminStatusCache = false;
     return false;
