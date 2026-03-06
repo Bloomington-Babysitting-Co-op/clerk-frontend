@@ -165,7 +165,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       ${showActions ? `
       <div class="mt-6 flex gap-2">
-        <button id="${prefix}-submit-btn" class="bg-blue-600 text-white px-4 py-2 ${showCancel ? "" : "w-full "}rounded hover:bg-blue-700">${submitLabel}</button>
+        <button id="${prefix}-submit-btn" class="bg-blue-600 text-white px-4 py-2 ${showCancel ? "" : "w-full "}rounded hover:bg-blue-600">${submitLabel}</button>
         ${showCancel ? `<button id="${prefix}-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>` : ""}
       </div>
       ` : ""}
@@ -390,7 +390,7 @@ async function mountRequestsPage() {
   // Populate family select
   if (familySelect) {
     try {
-      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_entry");
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_filters");
       if (!familiesError && Array.isArray(familiesData)) {
         familiesData.forEach((f) => {
           const opt = document.createElement("option");
@@ -509,22 +509,14 @@ async function loadRequestInto(containerId) {
   const offers = Array.isArray(offersData) ? offersData : [];
   const requestChildren = Array.isArray(requestChildrenData) ? requestChildrenData : [];
 
-  const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_get_family_id");
+  const { data: currentFamilyId, error: currentFamilyError } = await supabase.rpc("rpc_my_family_id");
   if (currentFamilyError || !currentFamilyId) {
     el.innerHTML = `<p class='text-red-600'>${currentFamilyError?.message || "Unable to resolve current family."}</p>`;
     return;
   }
-
-  const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_entry");
-  if (familiesError) {
-    el.innerHTML = `<p class='text-red-600'>${familiesError.message}</p>`;
-    return;
-  }
-
-  const families = Array.isArray(familiesData) ? familiesData : [];
-  const requestFamilyName = families.find((family) => family.id === r.requester_family_id)?.name || "Unknown family";
-
+  
   const requesterId = r.requester_family_id;
+  const requesterFamilyName = r.requester_family_name;
   const isRequester = requesterId === currentFamilyId;
   const canOffer = r.status === "open" && !isRequester;
   const canOfferWhenOffered = r.status === "offered" && !isRequester;
@@ -555,7 +547,7 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-4xl">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
-      <label class="font-semibold mb-1"><span class="text-gray-800">${requestFamilyName}</span></label>
+      <label class="font-semibold mb-1"><span class="text-gray-800">${requesterFamilyName}</span></label>
       <label class="font-semibold mb-4"><span class="${getRequestStatusTextClass(r.status)}">${formatRequestStatusLabel(r.status)}</span></label>
 
       <div id="view-mode">
@@ -563,17 +555,17 @@ async function loadRequestInto(containerId) {
         <div class="mt-6 flex gap-2">
           ${isRequester
             ? `
-              <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
-              ${canClearAcceptedOffer ? `<button id="clear-accepted-offer-btn" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Cancel Accepted Offer</button>` : ""}
-              <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
+              <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
+              ${canClearAcceptedOffer ? `<button id="clear-accepted-offer-btn" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600">Cancel Accepted Offer</button>` : ""}
+              <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
             `
             : ((canEditMyOffer || canCancelMyOffer)
               ? `
-                ${canEditMyOffer ? `<button id="edit-offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit Offer</button>` : ""}
-                ${canCancelMyOffer ? `<button id="cancel-offer-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancel Offer</button>` : ""}
+                ${canEditMyOffer ? `<button id="edit-offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600">Edit Offer</button>` : ""}
+                ${canCancelMyOffer ? `<button id="cancel-offer-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600">Cancel Offer</button>` : ""}
               `
               : ((canOffer || (canOfferWhenOffered && !hasAlreadyOffered))
-                ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>`
+                ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600">Offer to Help</button>`
                 : ""))}
         </div>
         ${isRequester && !canEdit ? `<p class="text-sm text-gray-600 mt-2">Only open, offered, or assigned requests can be edited or cancelled.</p>` : ""}
@@ -593,12 +585,12 @@ async function loadRequestInto(containerId) {
               <div class="${isAssignedOffer ? "bg-green-100 border-green-300" : "bg-gray-50"} p-4 rounded border">
                 <p class="font-semibold text-gray-800 mb-1">${offer.family_name || "Unknown family"}</p>
                 <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
-                <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.has_used_this_month ? "Yes" : "No"}</p>
+                <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.active_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
                 <p class="text-gray-800"><em>${offer.notes || "No notes"}</em></p>
-                ${isAssignedOffer ? `<p class="text-sm text-green-700 mt-3 font-semibold">Accepted Offer</p>` : ""}
+                ${isAssignedOffer ? `<p class="text-sm text-green-600 mt-3 font-semibold">Accepted Offer</p>` : ""}
                 ${canAssignOffer && !isAssignedOffer
-                  ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700" data-offer-id="${offer.id}">Accept Offer</button>`
+                  ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}">Accept Offer</button>`
                   : ""}
               </div>
             `;
@@ -614,7 +606,7 @@ async function loadRequestInto(containerId) {
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
         <textarea id="offer-notes" placeholder="Add Notes (Optional)" class="border p-2 w-full mb-4 h-24"></textarea>
         <div class="flex gap-2">
-          <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Submit Offer</button>
+          <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-600">Submit Offer</button>
           <button id="offer-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
         </div>
       </div>
@@ -762,7 +754,7 @@ async function loadRequestInto(containerId) {
   }
 
   async function assignOffer(requestId, offerId) {
-    const { error } = await supabase.rpc("rpc_request_set_assignee", {
+    const { error } = await supabase.rpc("rpc_assign_request", {
       p_request_id: requestId,
       p_offer_id: offerId
     });
@@ -824,7 +816,7 @@ async function loadRequestInto(containerId) {
     const confirmed = window.confirm("Are you sure you want to cancel the accepted offer?");
     if (!confirmed) return;
 
-    const { error } = await supabase.rpc("rpc_request_clear_assignee", {
+    const { error } = await supabase.rpc("rpc_unassign_request", {
       p_request_id: requestId
     });
 

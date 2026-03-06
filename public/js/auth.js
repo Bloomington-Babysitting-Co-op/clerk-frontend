@@ -34,7 +34,7 @@ function loginForm() {
       if (error) {
         this.error = error.message;
       } else {
-        const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
+        const { data: isActive, error: activeError } = await supabase.rpc("rpc_my_is_active");
         if (activeError || !isActive) {
           await supabase.auth.signOut();
           this.error = "Inactive login credentials";
@@ -108,17 +108,17 @@ function dashboardState() {
 
     async loadData() {
       try {
-        const { data: balance, error: balanceError } = await supabase.rpc("rpc_get_hours_balance");
+        const { data: balance, error: balanceError } = await supabase.rpc("rpc_my_hours_balance");
         if (balanceError) throw balanceError;
         this.hoursBalance = Number(balance ?? 0).toFixed(2);
 
-        const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_has_completed_request_this_month");
+        const { data: activeThisMonth, error: activeError } = await supabase.rpc("rpc_my_active_this_month");
         if (activeError) throw activeError;
         this.activeThisMonth = !!activeThisMonth;
 
         // Get all available requests
         const otherRequestsContainer = document.getElementById("other-requests-list");
-        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_requests_dashboard_other");
+        const { data: otherRequests, error: otherRequestsError } = await supabase.rpc("rpc_list_other_requests");
         const otherRequestsList = Array.isArray(otherRequests) ? otherRequests : [];
 
         if (otherRequestsContainer) {
@@ -128,7 +128,7 @@ function dashboardState() {
         }
 
         // Get user's future requests
-        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_requests_dashboard_mine");
+        const { data: userRequests, error: userRequestsError } = await supabase.rpc("rpc_list_my_requests");
         if (userRequestsError) throw userRequestsError;
 
         if (userRequests) {
@@ -142,7 +142,7 @@ function dashboardState() {
 
         // Get user's submitted offers
         const submittedOffersContainer = document.getElementById("family-offers-list");
-        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_offers_dashboard_mine");
+        const { data: submittedOffers, error: submittedOffersError } = await supabase.rpc("rpc_list_my_offers");
         const submittedOffersList = Array.isArray(submittedOffers) ? submittedOffers : [];
 
         if (submittedOffersContainer) {
@@ -164,7 +164,7 @@ async function requireAuth() {
     throw new Error("Not authenticated");
   }
 
-  const { data: isActive, error: activeError } = await supabase.rpc("rpc_is_current_family_active");
+  const { data: isActive, error: activeError } = await supabase.rpc("rpc_my_is_active");
   if (activeError || !isActive) {
     await supabase.auth.signOut();
     window.location.href = "/login.html";

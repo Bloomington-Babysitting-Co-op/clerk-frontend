@@ -2,6 +2,46 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString, formatDateOnly, escapeHtml } from "./utils.js";
 
+async function loadLedgerBalancesInto(containerId) {
+  const { data, error } = await supabase.rpc("rpc_list_ledger_balances");
+  const el = document.getElementById(containerId);
+
+  if (!el) return;
+
+  if (error) {
+    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
+    return;
+  }
+  el.innerHTML = data.length
+    ? `
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left">
+            <th class="px-2 py-1 font-medium">Family Name</th>
+            <th class="px-2 py-1 font-medium">Active This Month</th>
+            <th class="px-2 py-1 font-medium">Hours Balance</th>
+            <th class="px-2 py-1 font-medium">Month Start Balance</th>
+            <th class="px-2 py-1 font-medium">Prior Month Start Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(row => `
+            <tr class="border-b">
+              <td class="px-2 py-2">${escapeHtml(row.name)}</td>
+              <td class="px-2 py-2 ${row.active_this_month ? 'text-green-600' : 'text-red-600'}">${row.active_this_month ? 'Yes' : 'No'}</td>
+              <td class="px-2 py-2 font-semibold ${Number(row.hours_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.hours_balance).toFixed(2)} hrs</td>
+              <td class="px-2 py-2">${Number(row.month_start_balance).toFixed(2)} hrs</td>
+              <td class="px-2 py-2">${Number(row.prior_month_start_balance).toFixed(2)} hrs</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `
+    : "<p class='text-gray-600'>No balances available.</p>";
+}
+
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
 
@@ -23,7 +63,7 @@ async function listLedgerInto(containerId, options = {}) {
   el.innerHTML = data.length
     ? data.map(e => {
       const dateDisplay = formatDateOnly(e.entry_date) || "";
-      const fromTo = `${e.from_family_name || e.from_family_id || ''} → ${e.to_family_name || e.to_family_id || ''}`;
+      const fromTo = `${e.from_family_name || ''} → ${e.to_family_name || ''}`;
       const notes = e.notes || "";
       const createdBy = e.request_id
         ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">Created by: ${escapeHtml(e.email)}</a>`
@@ -45,32 +85,12 @@ async function listLedgerInto(containerId, options = {}) {
   return data;
 }
 
-async function loadLedgerBalancesInto(containerId) {
-  const { data, error } = await supabase.rpc("rpc_list_ledger_balances");
-  const el = document.getElementById(containerId);
-
-  if (!el) return;
-
-  if (error) {
-    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
-    return;
-  }
-
-  el.innerHTML = data.length
-    ? data.map(row => `
-      <div class="flex justify-between border-b py-2 text-sm">
-        <span class="font-medium">${row.name || row.family_id}</span>
-        <span class="font-semibold ${Number(row.hours_balance) < 0 ? "text-red-600" : "text-green-700"}">${Number(row.hours_balance).toFixed(2)} hrs</span>
-      </div>
-    `).join("")
-    : "<p class='text-gray-600'>No balances available.</p>";
-}
-
 async function mountLedgerPage() {
   await requireAuth();
 
   const startInput = document.getElementById("ledger-start-date");
   const endInput = document.getElementById("ledger-end-date");
+  const familySelect = document.getElementById("ledger-family-select");
   const applyBtn = document.getElementById("ledger-apply-filter-btn");
   const exportBtn = document.getElementById("ledger-export-csv-btn");
   const ledgerError = document.getElementById("ledger-error");
@@ -87,10 +107,10 @@ async function mountLedgerPage() {
     endInput.value = defaultEndDate;
   }
 
-  const familySelect = document.getElementById("ledger-family-select");
+  // Populate family select
   if (familySelect) {
     try {
-      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_entry");
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_filters");
       if (!familiesError && Array.isArray(familiesData)) {
         familiesData.forEach((f) => {
           const opt = document.createElement("option");
@@ -100,16 +120,17 @@ async function mountLedgerPage() {
         });
       }
     } catch (e) {
-      // ignore
+      // ignore population errors — select stays as "All Families"
     }
   }
+
+  await loadLedgerBalancesInto("ledger-balances");
 
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
     endDate: endInput?.value || null,
     familyId: familySelect?.value || null
   });
-  await loadLedgerBalancesInto("ledger-balances");
 
   if (applyBtn) {
     applyBtn.onclick = async () => {
@@ -152,8 +173,8 @@ async function mountLedgerPage() {
           row.id,
           toDateOnlyString(row.entry_date),
           row.hours,
-          row.from_family_name || row.from_family_id || "",
-          row.to_family_name || row.to_family_id || "",
+          row.from_family_name || "",
+          row.to_family_name || "",
           row.notes || "",
           row.request_id || ""
         ])
@@ -163,4 +184,4 @@ async function mountLedgerPage() {
   }
 }
 
-export { listLedgerInto, loadLedgerBalancesInto, mountLedgerPage };
+export { loadLedgerBalancesInto, listLedgerInto, mountLedgerPage };

@@ -29,7 +29,7 @@ export async function mountLinks(containerId) {
         .slice()
         .sort((a,b) => Number(a.link_order || 0) - Number(b.link_order || 0))
         .map((it, idx) => `
-          <a href="${escapeHtml(it.link_url || '#')}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-700">${escapeHtml(it.link_text || it.link_url || '')}</a>
+          <a href="${escapeHtml(it.link_url || '#')}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-600">${escapeHtml(it.link_text || it.link_url || '')}</a>
           ${idx < grouped[rk].length - 1 ? '<span class="mx-2 text-gray-400">•</span>' : ''}
         `).join('');
       return `<div class="text-blue-600">${items}</div>`;

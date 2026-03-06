@@ -166,7 +166,7 @@ function renderFamilies() {
         </div>
         <div class="flex items-center space-x-3 text-xs">
           <span class="text-gray-600">${(family.member_count ?? 0) === 1 ? "1 User" : (family.member_count ?? 0) + " Users"}</span>
-          <span class="${family.is_active ? "text-green-700" : "text-red-700"}">${family.is_active ? "Active" : "Inactive"}</span>
+          <span class="${family.is_active ? "text-green-600" : "text-red-600"}">${family.is_active ? "Active" : "Inactive"}</span>
           ${family.is_admin ? `<span class="bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center">Admin</span>` : ""}
         </div>
       </header>
@@ -305,7 +305,7 @@ function renderUsers() {
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
           <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
-          <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-700">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
+          <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-600">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
         </header>
         <div class="user-admin-content hidden p-3">
           <div class="grid md:grid-cols-[auto_auto_auto] gap-2 items-center">
