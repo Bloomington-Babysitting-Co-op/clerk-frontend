@@ -717,8 +717,8 @@ function wireAdminBannerForm() {
 // Admin links management (grid + draft cache)
 let adminLinksCache = [];
 let adminLinksDrafts = {}; // key -> {url,text,row,order} or null for cleared
-let selectedRow = 1; // 1..3
-let selectedCol = 0; // 0..4
+let selectedRow = null; // 1..3
+let selectedCol = null; // 0..4
 
 function renderAdminLinksGrid() {
   const grid = document.getElementById('admin-links-grid');
@@ -860,7 +860,7 @@ async function commitAllChanges() {
 
   const rows = Array.from(map.values());
   try {
-    const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_links', { p_links: JSON.stringify(rows) });
+    const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_links', { p_links: rows });
     if (error) {
       if (statusEl) statusEl.textContent = error.message;
       return;
