@@ -1,19 +1,19 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import { downloadCsv, setFormError, toDateInputValue, toDateOnlyString, formatDateOnly, escapeHtml } from "./utils.js";
+// Client-side cache for ledger balances to enable fast filtering by family
+let ledgerBalancesCache = null;
 
-async function loadLedgerBalancesInto(containerId) {
-  const { data, error } = await supabase.rpc("rpc_list_ledger_balances");
+function renderLedgerBalances(containerId, data) {
   const el = document.getElementById(containerId);
-
   if (!el) return;
 
-  if (error) {
-    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
+  if (!data || !data.length) {
+    el.innerHTML = "<p class='text-gray-600'>No balances available.</p>";
     return;
   }
-  el.innerHTML = data.length
-    ? `
+
+  el.innerHTML = `
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
@@ -30,16 +30,61 @@ async function loadLedgerBalancesInto(containerId) {
             <tr class="border-b">
               <td class="px-2 py-2">${escapeHtml(row.name)}</td>
               <td class="px-2 py-2 ${row.active_this_month ? 'text-green-600' : 'text-red-600'}">${row.active_this_month ? 'Yes' : 'No'}</td>
-              <td class="px-2 py-2 font-semibold ${Number(row.hours_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.hours_balance).toFixed(2)} hrs</td>
-              <td class="px-2 py-2">${Number(row.month_start_balance).toFixed(2)} hrs</td>
-              <td class="px-2 py-2">${Number(row.prior_month_start_balance).toFixed(2)} hrs</td>
+              <td class="px-2 py-2 ${Number(row.hours_balance) < 0 ? 'text-red-600' : 'text-green-600'} font-semibold">${Number(row.hours_balance).toFixed(2)} hours</td>
+              <td class="px-2 py-2 ${Number(row.month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.month_start_balance).toFixed(2)} hours</td>
+              <td class="px-2 py-2 ${Number(row.prior_month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.prior_month_start_balance).toFixed(2)} hours</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     </div>
-  `
-    : "<p class='text-gray-600'>No balances available.</p>";
+  `;
+}
+
+async function loadLedgerBalancesInto(containerId) {
+  const { data, error } = await supabase.rpc("rpc_list_ledger_balances");
+  const el = document.getElementById(containerId);
+
+  if (!el) return;
+
+  if (error) {
+    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
+    ledgerBalancesCache = [];
+    return;
+  }
+
+  ledgerBalancesCache = Array.isArray(data) ? data : [];
+  renderLedgerBalances(containerId, ledgerBalancesCache);
+  return ledgerBalancesCache;
+}
+
+async function filterLedgerBalancesByFamily(containerId, familyId) {
+  if (ledgerBalancesCache === null) {
+    await loadLedgerBalancesInto(containerId);
+  }
+
+  if (!Array.isArray(ledgerBalancesCache)) {
+    renderLedgerBalances(containerId, []);
+    return [];
+  }
+
+  if (!familyId) {
+    renderLedgerBalances(containerId, ledgerBalancesCache);
+    return ledgerBalancesCache;
+  }
+
+  const sel = document.getElementById('ledger-family-select');
+  const selectedText = sel ? sel.options[sel.selectedIndex]?.textContent : null;
+
+  const filtered = ledgerBalancesCache.filter(row => {
+    if (row.id !== undefined && row.id !== null) return String(row.id) === String(familyId);
+    if (row.family_id !== undefined && row.family_id !== null) return String(row.family_id) === String(familyId);
+    if (selectedText) return String(row.name) === String(selectedText);
+    return false;
+  });
+
+  renderLedgerBalances(containerId, filtered);
+  return filtered;
 }
 
 async function listLedgerInto(containerId, options = {}) {
@@ -61,25 +106,39 @@ async function listLedgerInto(containerId, options = {}) {
   }
 
   el.innerHTML = data.length
-    ? data.map(e => {
-      const dateDisplay = formatDateOnly(e.entry_date) || "";
-      const fromTo = `${e.from_family_name || ''} → ${e.to_family_name || ''}`;
-      const notes = e.notes || "";
-      const createdBy = e.request_id
-        ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">Created by: ${escapeHtml(e.email)}</a>`
-        : `<span class="text-red-600">Created by Admin: ${escapeHtml(e.email)}</span>`;
-
-      return `
-      <div class="py-3">
-        <div class="grid grid-cols-1 md:flex md:items-center md:gap-5">
-          <div class="text-gray-800 font-medium md:flex-none">${escapeHtml(dateDisplay)}</div>
-          <div class="text-lg text-blue-600 font-bold md:flex-none">${escapeHtml(String(e.hours))} hrs</div>
-          <div class="text-gray-800 md:flex-none">${escapeHtml(fromTo)}</div>
-          <div class="text-gray-800 truncate md:flex-1 md:mx-2">${escapeHtml(notes)}</div>
-          <div class="text-right md:flex-none">${createdBy}</div>
-        </div>
-      </div>
-    `}).join('<hr class="border-t border-gray-200 my-2"/>')
+    ? `
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left">
+            <th class="px-2 py-1 font-medium">Date</th>
+            <th class="px-2 py-1 font-medium">Hours</th>
+            <th class="px-2 py-1 font-medium">From → To</th>
+            <th class="px-2 py-1 font-medium">Notes</th>
+            <th class="px-2 py-1 font-medium">Created By</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(e => `
+            <tr class="border-b">
+              <td class="px-2 py-2">${escapeHtml(formatDateOnly(e.entry_date) || "")}</td>
+              <td class="px-2 py-2">${Number(e.hours).toFixed(2)}</td>
+              <td class="px-2 py-2">
+                <span class="${e.from_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.from_family_name || 'N/A')}</span>
+                <span class="px-1">→</span>
+                <span class="${e.to_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.to_family_name || 'N/A')}</span>
+              </td>
+              <td class="px-2 py-2 md:w-1/2">${escapeHtml(e.notes || "")}</td>
+              <td class="px-2 py-2">${e.request_id
+                ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
+                : `<span class="text-red-600">${escapeHtml(e.email)} (Admin)</span>`}
+                </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `
     : "<p class='text-gray-600'>No ledger entries yet.</p>";
 
   return data;
@@ -126,6 +185,13 @@ async function mountLedgerPage() {
 
   await loadLedgerBalancesInto("ledger-balances");
 
+  // Apply initial filter (if a family is pre-selected) and wire onchange to filter client-side
+  if (familySelect) {
+    // apply initial selection
+    await filterLedgerBalancesByFamily('ledger-balances', familySelect.value || null);
+    familySelect.onchange = () => filterLedgerBalancesByFamily('ledger-balances', familySelect.value || null);
+  }
+
   let currentRows = await listLedgerInto("ledger-list", {
     startDate: startInput?.value || null,
     endDate: endInput?.value || null,
@@ -148,7 +214,7 @@ async function mountLedgerPage() {
   if (exportBtn) {
     // default to bg-green-600
     exportBtn.classList.add("bg-green-600");
-    exportBtn.onclick = () => {
+    exportBtn.onclick = async () => {
       const prevAria = exportBtn.getAttribute("aria-label");
       const prevDisabled = exportBtn.disabled;
       exportBtn.setAttribute("aria-label", "Exporting...");
@@ -161,25 +227,61 @@ async function mountLedgerPage() {
         exportBtn.classList.add("bg-green-600");
         exportBtn.disabled = prevDisabled;
       }, 2000);
+      setFormError(ledgerError, "");
 
-      if (!currentRows || !currentRows.length) {
-        setFormError(ledgerError, "No rows to export for selected date range.");
+      // Build balances header & rows (filtered by currently-selected family)
+      const balancesHeader = ["Family Name", "Active This Month", "Hours Balance", "Month Start Balance", "Prior Month Start Balance"];
+      let balancesRows = [];
+      try {
+        const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', familySelect?.value || null);
+        balancesRows = Array.isArray(filteredBalances) ? filteredBalances.map(b => [
+          b.name || "",
+          b.active_this_month ? 'Yes' : 'No',
+          Number(b.hours_balance || 0).toFixed(2) + ' hours',
+          Number(b.month_start_balance || 0).toFixed(2) + ' hours',
+          Number(b.prior_month_start_balance || 0).toFixed(2) + ' hours'
+        ]) : [];
+      } catch (e) {
+        balancesRows = [];
+      }
+
+      // Build entries header & rows
+      const entriesHeader = ["ID", "Date", "Hours", "From Family Name", "To Family Name", "Notes", "Created By", "Request ID"];
+      const entriesRows = Array.isArray(currentRows) ? currentRows.map(row => [
+        row.id,
+        toDateOnlyString(row.entry_date),
+        row.hours,
+        row.from_family_name || "",
+        row.to_family_name || "",
+        row.notes || "",
+        row.email || "",
+        row.request_id || ""
+      ]) : [];
+
+      const hasEntries = entriesRows && entriesRows.length;
+      const hasBalances = balancesRows && balancesRows.length;
+      if (!hasEntries && !hasBalances) {
+        setFormError(ledgerError, "No rows to export for selected filters.");
         return;
       }
-      setFormError(ledgerError, "");
-      const rows = [
-        ["id", "entry_date", "hours", "from_family_name", "to_family_name", "notes", "request_id"],
-        ...currentRows.map(row => [
-          row.id,
-          toDateOnlyString(row.entry_date),
-          row.hours,
-          row.from_family_name || "",
-          row.to_family_name || "",
-          row.notes || "",
-          row.request_id || ""
-        ])
+
+      // Pad balance rows so every row has the same number of columns as entries
+      const padCount = Math.max(0, entriesHeader.length - balancesHeader.length);
+      const paddedBalancesHeader = [...balancesHeader, ...Array(padCount).fill("")];
+      const paddedBalancesRows = balancesRows.map(r => [...r, ...Array(padCount).fill("")]);
+
+      const fullColCount = entriesHeader.length;
+      const emptySeparator = Array(fullColCount).fill("");
+
+      const combinedRows = [
+        paddedBalancesHeader,
+        ...paddedBalancesRows,
+        emptySeparator,
+        entriesHeader,
+        ...entriesRows
       ];
-      downloadCsv("ledger_export.csv", rows);
+
+      downloadCsv("ledger_export.csv", combinedRows);
     };
   }
 }
