@@ -21,11 +21,21 @@
             <div class="hidden md:block"></div>
             <label for="to-families" class="order-4 md:order-none block font-semibold">To</label>
             <div class="order-2 md:order-none min-w-0">
-              <select id="from-families" class="border p-2 w-full" multiple size="6"></select>
+              <div class="relative">
+                <div id="from-families-chips" class="border p-2 w-full rounded min-h-[44px] flex flex-wrap gap-1 items-center"></div>
+                <input id="from-families-input" type="text" placeholder="Search families..." class="mt-2 md:mt-0 p-2 w-full border rounded" autocomplete="off">
+                <ul id="from-families-dropdown" class="hidden absolute left-0 right-0 bg-white border mt-1 max-h-48 overflow-auto z-20"></ul>
+                <select id="from-families" class="hidden" multiple size="6"></select>
+              </div>
             </div>
             <span class="order-3 md:order-none text-gray-600 font-bold select-none px-2 text-2xl self-center md:shrink-0">→</span>
             <div class="order-5 md:order-none min-w-0">
-              <select id="to-families" class="border p-2 w-full" multiple size="6"></select>
+              <div class="relative">
+                <div id="to-families-chips" class="border p-2 w-full rounded min-h-[44px] flex flex-wrap gap-1 items-center"></div>
+                <input id="to-families-input" type="text" placeholder="Search families..." class="mt-2 md:mt-0 p-2 w-full border rounded" autocomplete="off">
+                <ul id="to-families-dropdown" class="hidden absolute left-0 right-0 bg-white border mt-1 max-h-48 overflow-auto z-20"></ul>
+                <select id="to-families" class="hidden" multiple size="6"></select>
+              </div>
             </div>
           </div>
 

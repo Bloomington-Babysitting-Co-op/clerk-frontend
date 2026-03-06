@@ -27,6 +27,121 @@ function getSelectedValues(selectEl) {
   return Array.from(selectEl.selectedOptions).map(opt => opt.value);
 }
 
+// --- Vanilla chips multi-select helpers ---
+function initChipsForSelect(selectEl) {
+  if (!selectEl) return;
+  const id = selectEl.id;
+  const chipsEl = document.getElementById(`${id}-chips`);
+  const inputEl = document.getElementById(`${id}-input`);
+  const dropdownEl = document.getElementById(`${id}-dropdown`);
+  if (!chipsEl || !inputEl || !dropdownEl) return;
+
+  // build options list from select options
+  const allOptions = Array.from(selectEl.options).map(o => ({ id: o.value, label: o.text }));
+  const selected = new Set(Array.from(selectEl.selectedOptions).map(o => o.value));
+
+  function renderChips() {
+    chipsEl.innerHTML = '';
+    Array.from(selected).forEach((val) => {
+      const opt = allOptions.find(o => o.id === val);
+      const chip = document.createElement('span');
+      chip.className = 'inline-flex items-center bg-gray-100 text-sm px-2 py-1 rounded-full';
+      chip.setAttribute('data-id', val);
+      chip.textContent = opt ? opt.label : val;
+
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'ml-2 text-sm text-gray-800';
+      x.setAttribute('aria-label', 'Remove');
+      x.textContent = '×';
+      x.addEventListener('click', () => { removeSelected(val); });
+      chip.appendChild(x);
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  function updateHiddenSelect() {
+    Array.from(selectEl.options).forEach((o) => { o.selected = selected.has(o.value); });
+  }
+
+  function addSelected(val) {
+    if (!val) return;
+    if (selected.has(val)) return;
+    selected.add(val);
+    renderChips();
+    updateHiddenSelect();
+  }
+
+  function removeSelected(val) {
+    if (!selected.has(val)) return;
+    selected.delete(val);
+    renderChips();
+    updateHiddenSelect();
+  }
+
+  function filterOptions(query) {
+    const q = (query || '').trim().toLowerCase();
+    return allOptions.filter(o => (!q || o.label.toLowerCase().includes(q)) && !selected.has(o.id));
+  }
+
+  function renderDropdown(list) {
+    dropdownEl.innerHTML = '';
+    if (!list.length) {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-2 text-sm text-gray-500';
+      li.textContent = 'No results';
+      dropdownEl.appendChild(li);
+      return;
+    }
+    list.forEach(opt => {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer';
+      li.textContent = opt.label;
+      li.setAttribute('data-id', opt.id);
+      li.addEventListener('click', () => {
+        addSelected(opt.id);
+        dropdownEl.classList.add('hidden');
+        inputEl.value = '';
+      });
+      dropdownEl.appendChild(li);
+    });
+  }
+
+  // initial render
+  renderChips();
+
+  inputEl.addEventListener('input', () => {
+    const results = filterOptions(inputEl.value);
+    renderDropdown(results);
+    dropdownEl.classList.toggle('hidden', results.length === 0);
+  });
+
+  inputEl.addEventListener('focus', () => {
+    const results = filterOptions(inputEl.value);
+    renderDropdown(results);
+    dropdownEl.classList.toggle('hidden', results.length === 0);
+  });
+
+  inputEl.addEventListener('blur', () => {
+    // delay hiding so click handlers on dropdown can run
+    setTimeout(() => dropdownEl.classList.add('hidden'), 150);
+  });
+
+  inputEl.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const first = dropdownEl.querySelector('li[data-id]');
+      if (first) {
+        first.click();
+      }
+    } else if (ev.key === 'Backspace' && !inputEl.value) {
+      // remove last selected
+      const arr = Array.from(selected);
+      if (arr.length) removeSelected(arr[arr.length - 1]);
+    }
+  });
+}
+
 function isDivisibleByQuarter(num) {
   return Math.abs((num * 100) % 25) < 1e-6;
 }
@@ -48,6 +163,9 @@ async function mountAdminEntriesPage() {
   const families = await loadFamiliesForLedger();
   populateMultiSelect(fromSelect, families);
   populateMultiSelect(toSelect, families);
+  // initialize chips-based multi-selects (vanilla)
+  initChipsForSelect(fromSelect);
+  initChipsForSelect(toSelect);
 
   form.onsubmit = async (e) => {
     e.preventDefault();
