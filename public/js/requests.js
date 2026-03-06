@@ -571,7 +571,7 @@ async function loadRequestInto(containerId) {
               const isAssignedOffer = !!r.assignee_family_id && offer.family_id === r.assignee_family_id;
               return `
               <div class="${isAssignedOffer ? "bg-green-100 border-green-300" : "bg-gray-50"} p-4 rounded border">
-                <p class="font-semibold text-gray-800 mb-1">${offer.family_name || "Unknown family"}</p>
+                <p class="font-semibold text-gray-800 mb-1">${offer.family_name}</p>
                 <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.active_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
@@ -823,15 +823,6 @@ async function mountNewRequestForm(containerId) {
   if (!container) return;
 
   const values = getDefaultRequestFormValues();
-  const { data: familyDetailsData, error: familyDetailsError } = await supabase.rpc("rpc_get_my_family_details");
-  if (familyDetailsError) {
-    container.innerHTML = `<p class='text-red-600'>${familyDetailsError.message}</p>`;
-    return;
-  }
-
-  const familyDetails = Array.isArray(familyDetailsData) ? familyDetailsData[0] : familyDetailsData;
-  const familyName = familyDetails?.name || "Unknown family";
-
   const { data: familyChildrenData, error: familyChildrenError } = await supabase.rpc("rpc_list_my_family_children");
   if (familyChildrenError) {
     container.innerHTML = `<p class='text-red-600'>${familyChildrenError.message}</p>`;
