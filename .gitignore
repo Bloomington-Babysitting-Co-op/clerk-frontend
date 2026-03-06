@@ -12,6 +12,7 @@ build/
 .env
 .env.local
 .env.*.local
+public/_env.js
 
 # IDE and editor files
 .vscode/

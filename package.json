@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "generate-env": "node scripts/write-env.js"
+  },
   "devDependencies": {
-    "wrangler": "^4.69.0"
+    "wrangler": "^4.69.0",
+    "dotenv": "^16.1.4"
   }
 }
