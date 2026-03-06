@@ -714,35 +714,59 @@ function wireAdminBannerForm() {
   };
 }
 
-// Admin links management
-function appendAdminLinkRow(url = '', text = '', row = 1, order = 0) {
-  const listEl = document.getElementById('admin-links-list');
-  if (!listEl) return;
-  const wrapper = document.createElement('div');
-  wrapper.className = 'grid md:grid-cols-6 gap-2 items-center border rounded p-2';
-  wrapper.innerHTML = `
-    <input class="col-span-2 border p-1 rounded" data-link-url value="${escapeHtml(url)}">
-    <input class="col-span-2 border p-1 rounded" data-link-text value="${escapeHtml(text)}">
-    <input class="border p-1 rounded" type="number" min="1" data-link-row value="${escapeHtml(row)}">
-    <input class="border p-1 rounded" type="number" min="0" data-link-order value="${escapeHtml(order)}">
-    <div class="md:col-span-6 flex gap-2 mt-2">
-      <button type="button" class="bg-yellow-600 text-white px-2 py-1 rounded" data-link-move-up>Up</button>
-      <button type="button" class="bg-yellow-600 text-white px-2 py-1 rounded" data-link-move-down>Down</button>
-      <button type="button" class="bg-red-600 text-white px-2 py-1 rounded" data-link-remove>Remove</button>
-    </div>
-  `;
+// Admin links management (grid + draft cache)
+let adminLinksCache = [];
+let adminLinksDrafts = {}; // key -> {url,text,row,order} or null for cleared
+let selectedRow = 1; // 1..3
+let selectedCol = 0; // 0..4
 
-  listEl.appendChild(wrapper);
-
-  wrapper.querySelector('[data-link-remove]').onclick = () => wrapper.remove();
-  wrapper.querySelector('[data-link-move-up]').onclick = () => {
-    const prev = wrapper.previousElementSibling;
-    if (prev) listEl.insertBefore(wrapper, prev);
-  };
-  wrapper.querySelector('[data-link-move-down]').onclick = () => {
-    const next = wrapper.nextElementSibling;
-    if (next) listEl.insertBefore(next, wrapper);
-  };
+function renderAdminLinksGrid() {
+  const grid = document.getElementById('admin-links-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let r = 1; r <= 3; r++) {
+    for (let c = 0; c < 5; c++) {
+      const key = `${r}:${c}`;
+      const draft = Object.prototype.hasOwnProperty.call(adminLinksDrafts, key) ? adminLinksDrafts[key] : undefined;
+      const persisted = adminLinksCache.find(x => Number(x.row) === r && Number(x.order) === c) || {};
+      const source = draft === undefined ? persisted : draft || {};
+      const label = source.text || '';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'admin-link-tile border rounded p-3 text-sm text-center bg-white hover:bg-gray-50';
+      btn.dataset.row = String(r);
+      btn.dataset.col = String(c);
+      btn.setAttribute('aria-pressed', (r === selectedRow && c === selectedCol) ? 'true' : 'false');
+      if (label) btn.innerHTML = escapeHtml(label);
+      else btn.innerHTML = '<span class="text-gray-400">(empty)</span>';
+      if (r === selectedRow && c === selectedCol) {
+        btn.classList.add('ring-2', 'ring-blue-500');
+      }
+      // mark tile if there are unsaved changes (draft differs from persisted)
+      if (Object.prototype.hasOwnProperty.call(adminLinksDrafts, key)) {
+        btn.classList.add('bg-yellow-50');
+        const marker = document.createElement('div');
+        marker.className = 'text-xs text-yellow-600 mt-1';
+        marker.textContent = '*';
+        btn.appendChild(marker);
+      }
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        selectedRow = r;
+        selectedCol = c;
+        const statusEl = document.getElementById('admin-links-status');
+        if (statusEl) statusEl.textContent = '';
+        const key = `${r}:${c}`;
+        const draft = Object.prototype.hasOwnProperty.call(adminLinksDrafts, key) ? adminLinksDrafts[key] : undefined;
+        const persisted = adminLinksCache.find(x => Number(x.row) === r && Number(x.order) === c) || {};
+        const source = draft === undefined ? persisted : draft || {};
+        document.getElementById('admin-link-text').value = source.text || '';
+        document.getElementById('admin-link-url').value = source.url || '';
+        renderAdminLinksGrid();
+      });
+      grid.appendChild(btn);
+    }
+  }
 }
 
 async function loadAdminLinksSettings() {
@@ -750,55 +774,106 @@ async function loadAdminLinksSettings() {
     const { data, error } = await supabase.rpc('rpc_get_dashboard_links');
     if (error) throw error;
     const rows = Array.isArray(data) ? data : (data ? [data] : []);
-    const listEl = document.getElementById('admin-links-list');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    rows.sort((a,b) => (a.link_row - b.link_row) || (a.link_order - b.link_order));
-    rows.forEach((r, idx) => appendAdminLinkRow(r.link_url, r.link_text, r.link_row, r.link_order));
+    // normalize to {url,text,row,order}
+    adminLinksCache = rows.map(r => ({ url: r.link_url || '', text: r.link_text || '', row: Number(r.link_row) || 1, order: Number(r.link_order) || 0 }));
+    adminLinksDrafts = {};
+    renderAdminLinksGrid();
   } catch (err) {
     console.error('Failed to load admin links', err);
   }
 }
 
 function wireAdminLinksForm() {
-  const addBtn = document.getElementById('admin-link-add');
-  if (addBtn) {
-    addBtn.onclick = () => {
-      const url = document.getElementById('admin-link-url')?.value || '';
-      const text = document.getElementById('admin-link-text')?.value || '';
-      const row = parseInt(document.getElementById('admin-link-row')?.value || '1', 10) || 1;
-      const order = parseInt(document.getElementById('admin-link-order')?.value || '0', 10) || 0;
-      appendAdminLinkRow(url, text, row, order);
-    };
+  const saveBtn = document.getElementById('admin-link-save');
+  if (saveBtn) saveBtn.onclick = async () => { await commitAllChanges(); };
+
+  const clearBtn = document.getElementById('admin-link-clear');
+  if (clearBtn) clearBtn.onclick = async () => {
+    const key = `${selectedRow}:${selectedCol}`;
+    // mark cleared in drafts
+    adminLinksDrafts[key] = null;
+    document.getElementById('admin-link-text').value = '';
+    document.getElementById('admin-link-url').value = '';
+    const statusEl = document.getElementById('admin-links-status');
+    if (statusEl) statusEl.textContent = 'Marked for clear (unsaved).';
+    renderAdminLinksGrid();
+  };
+
+  const resetAllBtn = document.getElementById('admin-link-reset-all');
+  if (resetAllBtn) resetAllBtn.onclick = () => {
+    if (!window.confirm('Discard all unsaved link edits? This cannot be undone.')) return;
+    adminLinksDrafts = {};
+    const persisted = adminLinksCache.find(x => Number(x.row) === selectedRow && Number(x.order) === selectedCol) || {};
+    document.getElementById('admin-link-text').value = persisted.text || '';
+    document.getElementById('admin-link-url').value = persisted.url || '';
+    const statusEl = document.getElementById('admin-links-status');
+    if (statusEl) statusEl.textContent = 'All unsaved changes discarded.';
+    renderAdminLinksGrid();
+  };
+
+  // wire inputs to update drafts for current selection
+  const textInput = document.getElementById('admin-link-text');
+  const urlInput = document.getElementById('admin-link-url');
+  function updateDraftForSelection() {
+    const key = `${selectedRow}:${selectedCol}`;
+    const t = (textInput?.value || '').trim();
+    const u = (urlInput?.value || '').trim();
+    if (!t && !u) {
+      // empty -> mark as cleared
+      adminLinksDrafts[key] = null;
+    } else {
+      adminLinksDrafts[key] = { text: t, url: u, row: selectedRow, order: selectedCol };
+    }
+    renderAdminLinksGrid();
+  }
+  if (textInput) textInput.addEventListener('input', updateDraftForSelection);
+  if (urlInput) urlInput.addEventListener('input', updateDraftForSelection);
+}
+
+async function saveSelectedTile() {
+  // deprecated: saving individual tile immediately is replaced by commitAllChanges
+}
+
+async function commitAllChanges() {
+  const statusEl = document.getElementById('admin-links-status');
+  if (statusEl) statusEl.textContent = '';
+
+  // build map from persisted
+  const map = new Map();
+  for (const p of adminLinksCache) {
+    const key = `${p.row}:${p.order}`;
+    map.set(key, { url: p.url, text: p.text, row: Number(p.row), order: Number(p.order) });
   }
 
-  const saveBtn = document.getElementById('admin-links-save');
-  if (!saveBtn) return;
-  saveBtn.onclick = async () => {
-    const statusEl = document.getElementById('admin-links-status');
-    if (statusEl) statusEl.textContent = '';
-    const listEl = document.getElementById('admin-links-list');
-    if (!listEl) return;
-    const rows = Array.from(listEl.children).map((rowEl, idx) => {
-      const url = rowEl.querySelector('[data-link-url]')?.value || '';
-      const text = rowEl.querySelector('[data-link-text]')?.value || '';
-      const r = parseInt(rowEl.querySelector('[data-link-row]')?.value || '1', 10) || 1;
-      const ord = parseInt(rowEl.querySelector('[data-link-order]')?.value || '0', 10) || 0;
-      return { url, text, row: r, order: ord };
-    });
-
-    try {
-      const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_links', { p_links: JSON.stringify(rows) });
-      if (error) {
-        if (statusEl) statusEl.textContent = error.message;
-        return;
-      }
-      if (statusEl) statusEl.textContent = 'Saved.';
-    } catch (err) {
-      console.error('Failed to save links', err);
-      if (statusEl) statusEl.textContent = err.message || 'Save failed';
+  // apply drafts
+  for (const key of Object.keys(adminLinksDrafts)) {
+    const d = adminLinksDrafts[key];
+    if (d === null) {
+      // removal
+      map.delete(key);
+    } else if (d && d.text === '' && d.url === '') {
+      map.delete(key);
+    } else if (d) {
+      map.set(key, { url: d.url, text: d.text, row: Number(d.row), order: Number(d.order) });
     }
-  };
+  }
+
+  const rows = Array.from(map.values());
+  try {
+    const { error } = await supabase.rpc('rpc_admin_upsert_dashboard_links', { p_links: JSON.stringify(rows) });
+    if (error) {
+      if (statusEl) statusEl.textContent = error.message;
+      return;
+    }
+    // commit success: replace persisted cache and clear drafts
+    adminLinksCache = rows.slice();
+    adminLinksDrafts = {};
+    if (statusEl) statusEl.textContent = 'Saved.';
+    renderAdminLinksGrid();
+  } catch (err) {
+    console.error('Failed to save links', err);
+    if (statusEl) statusEl.textContent = err?.message || 'Save failed';
+  }
 }
 
 export async function mountAdminPage() {

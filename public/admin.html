@@ -107,8 +107,8 @@
                 </div>
               </div>
               <div>
-                <button id="admin-banner-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Banner</button>
                 <span id="admin-banner-status" class="ml-3 text-sm text-gray-800"></span>
+                <button id="admin-banner-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Banner</button>
               </div>
             </div>
           </div>
@@ -116,34 +116,27 @@
           <div>
             <h2 class="text-lg font-semibold mb-2">External Links</h2>
             <div id="admin-links-editor" class="space-y-3">
-              <div class="grid md:grid-cols-4 gap-3 items-end">
-                <div>
-                  <label class="block text-sm font-medium mb-1">Link</label>
-                  <input id="admin-link-url" type="url" class="border p-2 w-full rounded">
+                <div id="admin-links-grid" class="grid grid-cols-5 gap-2">
+                  <!-- 15 tiles (5 columns x 3 rows) populated by JS -->
                 </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Text</label>
-                  <input id="admin-link-text" type="text" class="border p-2 w-full rounded">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Row</label>
-                  <input id="admin-link-row" type="number" min="1" value="1" class="border p-2 w-full rounded">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Order</label>
-                  <input id="admin-link-order" type="number" min="0" value="0" class="border p-2 w-full rounded">
-                </div>
-              </div>
-              <div>
-                <button id="admin-link-add" class="bg-green-600 text-white px-3 py-1 rounded">Add Link</button>
-              </div>
 
-              <div id="admin-links-list" class="space-y-2"></div>
+                <div class="mt-3 grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Label</label>
+                    <input id="admin-link-text" type="text" class="border p-2 w-full rounded">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Link</label>
+                    <input id="admin-link-url" type="url" class="border p-2 w-full rounded">
+                  </div>
+                </div>
 
-              <div>
-                <button id="admin-links-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Links</button>
-                <span id="admin-links-status" class="ml-3 text-sm text-gray-800"></span>
-              </div>
+                <div class="mt-3">
+                  <span id="admin-links-status" class="ml-3 text-sm text-gray-800"></span>
+                  <button id="admin-link-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                  <button id="admin-link-clear" class="bg-gray-600 text-white px-4 py-2 rounded ml-2">Clear</button>
+                  <button id="admin-link-reset-all" class="bg-red-600 text-white px-4 py-2 rounded ml-2">Reset</button>
+                </div>
             </div>
           </div>
         </div>
