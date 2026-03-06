@@ -40,8 +40,8 @@ function formatRequestTimeRangeLine(request) {
 function renderRequestListCard(request, options = {}) {
   const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests"))
     ? `<div class="hidden sm:flex items-center gap-x-10">
-         <div class="font-semibold text-green-600 whitespace-nowrap">${request.hours ? `${request.hours}` : "N/A"} hours</div>
-         <div class="text-sm text-gray-800 break-words">${request.notes}</div>
+         <div class="font-semibold text-green-600 whitespace-nowrap">${request.hours ? `${request.hours}` : "TBD"} hours</div>
+         <div class="text-gray-800 break-words">${request.notes}</div>
        </div>`
     : "";
 
