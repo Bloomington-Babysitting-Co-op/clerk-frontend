@@ -120,6 +120,30 @@ export function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+export function setButtonTemporaryBusy(button, opts = {}) {
+  if (!button) return;
+  const {
+    label = 'Exporting...',
+    busyClass = 'bg-green-300',
+    idleClass = 'bg-green-600',
+    timeout = 2000
+  } = opts;
+
+  const prevAria = button.getAttribute('aria-label');
+  const prevDisabled = button.disabled;
+  button.setAttribute('aria-label', label);
+  if (idleClass) button.classList.remove(idleClass);
+  if (busyClass) button.classList.add(busyClass);
+  button.disabled = true;
+
+  setTimeout(() => {
+    if (prevAria === null) button.removeAttribute('aria-label'); else button.setAttribute('aria-label', prevAria);
+    if (busyClass) button.classList.remove(busyClass);
+    if (idleClass) button.classList.add(idleClass);
+    button.disabled = prevDisabled;
+  }, timeout);
+}
+
 export function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')

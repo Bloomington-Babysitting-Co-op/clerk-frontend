@@ -1,12 +1,12 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
-  formatValidationErrors,
-  getCheckedValue,
-  getInputValue,
   formatDateOnly,
+  formatValidationErrors,
   monthValueFromDate,
+  getCheckedValue,
   setCheckedValue,
+  getInputValue,
   setInputValue,
   setStatusText
 } from "./utils.js";
