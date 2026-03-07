@@ -319,7 +319,6 @@ async function mountProfilePage() {
         p_address: address,
         p_emergency_contacts: emergencyContacts,
         p_pets: getInputValue("profile-pets"),
-        p_family_photo_storage_path: getInputValue("profile-family-photo-storage-path"),
         p_notes: getInputValue("profile-notes")
       };
 

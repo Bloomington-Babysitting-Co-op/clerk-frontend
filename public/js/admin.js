@@ -88,7 +88,7 @@ function initChipsForSelect(selectEl) {
     dropdownEl.innerHTML = '';
     if (!list.length) {
       const li = document.createElement('li');
-      li.className = 'px-3 py-2 text-sm text-gray-500';
+      li.className = 'px-3 py-2 text-sm text-gray-600';
       li.textContent = 'No results';
       dropdownEl.appendChild(li);
       return;
@@ -436,10 +436,10 @@ function renderUsers() {
               <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
             </div>
             <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm self-center">Reset Password</button>
-            <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-              <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
-              ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}
-            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
+            <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
+            ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}
           </div>
         </div>
       </article>
@@ -858,7 +858,7 @@ function renderAdminLinksGrid() {
       if (label) btn.innerHTML = escapeHtml(label);
       else btn.innerHTML = '<span class="text-gray-400">(empty)</span>';
       if (r === selectedRow && c === selectedCol) {
-        btn.classList.add('ring-2', 'ring-blue-500');
+        btn.classList.add('ring-2', 'ring-blue-600');
       }
       // mark tile if there are unsaved changes (draft differs from persisted)
       if (Object.prototype.hasOwnProperty.call(adminLinksDrafts, key)) {
