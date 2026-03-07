@@ -552,9 +552,20 @@ async function mountProfilePage() {
         const destPath = `${currentFamilyId}.jpg`;
         const storagePath = await uploadToStorage(blob, destPath);
 
-        // set hidden input value (internal path) and request a signed URL to preview
-        const hidden = document.getElementById('profile-family-photo-storage-path');
-        if (hidden) hidden.value = storagePath;
+        // persist family_photo_storage_path to DB
+        try {
+          const { error: rpcError } = await supabase.rpc("rpc_update_my_family_photo", {
+            p_family_photo_storage_path: storagePath
+          });
+          if (rpcError) {
+            console.error('rpc_update_my_family_photo error', rpcError);
+            if (photoMsg) photoMsg.textContent = `Upload saved but DB update failed: ${rpcError.message}`;
+          }
+        } catch (e) {
+          console.error('rpc_update_my_family_photo threw', e);
+          if (photoMsg) photoMsg.textContent = 'Upload saved but DB update failed.';
+        }
+        // request signed URL for preview
         try {
           const signed = await getSignedUrl(storagePath, 60);
           if (previewImg) { previewImg.src = signed; previewImg.classList.remove('hidden'); }
