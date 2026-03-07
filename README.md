@@ -2,29 +2,28 @@
 Created for Cloudflare Pages + Supabase + Resend.
 
 ## Setup
-### Backend Configuration
-1. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/clerk-backend)
-2. Update `public/js/config.js` with:
-   * supabaseUrl
-   * supabaseKey
-
 ### Local Development
 To set up a local development environment that replicates Cloudflare Pages:
 1. Clone this repo
-2. [Install Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+2. Install dependencies
    ```
-   npm i -D wrangler@latest
+   npm install -upgrade
    ```
-3. Modify `public\js\config.js` to point at the desired backend (remote or local)
-4. Start the local development server
+3. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/clerk-backend)
+4. Create a `.env` (reference [example.env](./example.env)) with values taken from `npx supabase status`
+5. Generate the `_env.js`
+   ```
+   npm run generate-env
+   ```
+6. Start the local development server
    ```
    npx wrangler pages dev public
    ```
-5. Open a browser to http://localhost:8788 to view the application
+7. Open a browser to http://localhost:8788 to view the application
 
 ## Deploy
-1. Confirm that `public\js\config.js` is pointed to the remote backend
-2. Push this folder to GitHub.
-3. Create a Cloudflare Pages project.
-4. Set "Build output directory" to `public`.
-5. Deploy.
+1. Push this folder to GitHub
+2. Create a Cloudflare Pages project
+3. Set "Build output directory" to `public`
+4. Deploy
+5. Add [Cloudflare Pages secrets](https://developers.cloudflare.com/pages/functions/bindings/#secrets) with values taken from [Supabase Project Settings dashboard](https://supabase.com/dashboard/project/_/settings/api-keys)
