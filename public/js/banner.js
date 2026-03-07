@@ -14,7 +14,7 @@ export async function mountBanner(containerId) {
     }
 
     el.classList.remove('hidden');
-    el.innerHTML = `<div class="rounded shadow p-3 text-center">${row.text || ''}</div>`;
+    el.innerHTML = `<div class="rounded shadow p-3 text-center text-3xl font-bold">${row.text || ''}</div>`;
     const child = el.firstElementChild;
     if (child) {
       child.style.backgroundColor = row.bg_color || '#F87171';

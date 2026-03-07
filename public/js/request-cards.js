@@ -26,7 +26,7 @@ function formatRequestDateLine(request) {
   const dateLabel = requestDate
     ? new Date(`${requestDate}T00:00:00`).toLocaleDateString()
     : "No date";
-  return request.flexible_date ? `${dateLabel} (Flexible)` : dateLabel;
+  return request.flexible_date ? `${dateLabel} <span class="text-xs text-gray-400">(flex)</span>` : dateLabel;
 }
 
 function formatRequestTimeRangeLine(request) {
@@ -34,7 +34,7 @@ function formatRequestTimeRangeLine(request) {
   const end = formatTimeOnly(request.end_time) || "TBD";
   const timeFlexible = request.flexible_start_time || request.flexible_end_time;
   const timeLabel = `${start} - ${end}`;
-  return timeFlexible ? `${timeLabel} (Flexible)` : timeLabel;
+  return timeFlexible ? `${timeLabel} <span class="text-xs text-gray-400">(flex)</span>` : timeLabel;
 }
 
 function renderRequestListCard(request, options = {}) {
