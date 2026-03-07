@@ -8,8 +8,61 @@ import {
   setCheckedValue,
   getInputValue,
   setInputValue,
-  setStatusText
+  setStatusText,
+  getSignedUrl
 } from "./utils.js";
+
+// Helpers for client-side image resizing and upload
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image'));
+    };
+    img.src = url;
+  });
+}
+
+async function resizeImageFile(file, maxDim = 500, mimeType = 'image/jpeg', quality = 0.8) {
+  const img = await loadImageFromFile(file);
+  const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const width = Math.round(img.width * ratio);
+  const height = Math.round(img.height * ratio);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+
+  return new Promise((resolve) => {
+    canvas.toBlob(async (blob) => {
+      // If requested mime differs from original and we want jpeg, blob will be jpeg
+      resolve(blob);
+    }, mimeType, quality);
+  });
+}
+
+async function uploadToStorage(blob, destPath) {
+  try {
+    const bucket = 'family-photos';
+    // upload
+    const res = await supabase.storage.from(bucket).upload(destPath, blob, { upsert: true });
+    // handle different response shapes
+    if (res.error) throw res.error;
+    // Return internal storage path (do not expose public URL)
+    // Store only the object path so frontend can request a signed URL when needed.
+    return `${destPath}`;
+  } catch (err) {
+    throw err;
+  }
+}
 
 function setLinkedFamilyEmails(emails) {
   const el = document.getElementById("profile-linked-family-emails");
@@ -197,6 +250,8 @@ async function mountProfilePage() {
   const session = await requireAuth();
   const userEmail = session.user.email || "";
 
+  let currentFamilyId = null;
+
   setInputValue("profile-email", userEmail);
   setInputValue("profile-parent-name", "");
   setInputValue("profile-phone", "");
@@ -264,7 +319,7 @@ async function mountProfilePage() {
         p_address: address,
         p_emergency_contacts: emergencyContacts,
         p_pets: getInputValue("profile-pets"),
-        p_family_photo_url: getInputValue("profile-family-photo-url"),
+        p_family_photo_storage_path: getInputValue("profile-family-photo-storage-path"),
         p_notes: getInputValue("profile-notes")
       };
 
@@ -349,7 +404,21 @@ async function mountProfilePage() {
       setInputValue("profile-address", profile.address);
       renderEmergencyContacts(Array.isArray(profile.emergency_contacts) ? profile.emergency_contacts : []);
       setInputValue("profile-pets", profile.pets);
-      setInputValue("profile-family-photo-url", profile.family_photo_url);
+      // store internal link in hidden input; preview image shown if available
+      setInputValue("profile-family-photo-storage-path", profile.family_photo_storage_path);
+      currentFamilyId = profile.id;
+      const preview = document.getElementById('profile-photo-preview');
+      const placeholder = document.getElementById('profile-photo-placeholder');
+      if (profile.family_photo_storage_path) {
+        // request signed URL to preview
+        try {
+          const signed = await getSignedUrl(profile.family_photo_storage_path, 60);
+          if (preview) { preview.src = signed; preview.classList.remove('hidden'); }
+          if (placeholder) { placeholder.classList.add('hidden'); }
+        } catch (err) {
+          // fall back to hiding preview
+        }
+      }
       setInputValue("profile-notes", profile.notes);
 
       // populate admin metadata (uneditable)
@@ -408,6 +477,85 @@ async function mountProfilePage() {
       }
       setStatusText("profile-account-message", "Password updated.");
       setInputValue("profile-new-password", "");
+    };
+  }
+
+  // Photo input & upload handling
+  const photoInput = document.getElementById('profile-photo-input');
+  const uploadBtn = document.getElementById('profile-photo-upload-btn');
+  const photoMsg = document.getElementById('profile-photo-message');
+  const previewImg = document.getElementById('profile-photo-preview');
+  const placeholder = document.getElementById('profile-photo-placeholder');
+
+  if (photoInput) {
+    photoInput.onchange = () => {
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      // quick preview (not uploaded yet)
+      try {
+        const url = URL.createObjectURL(file);
+        if (previewImg) { previewImg.src = url; previewImg.classList.remove('hidden'); }
+        if (placeholder) { placeholder.classList.add('hidden'); }
+      } catch (e) {
+        // ignore
+      }
+    };
+  }
+
+  if (uploadBtn) {
+    uploadBtn.onclick = async () => {
+      if (!photoInput || !photoInput.files || !photoInput.files[0]) {
+        if (photoMsg) photoMsg.textContent = 'Select an image first.';
+        return;
+      }
+      const file = photoInput.files[0];
+      if (!file.type.startsWith('image/')) {
+        if (photoMsg) photoMsg.textContent = 'Please select an image file.';
+        return;
+      }
+
+      try {
+        if (photoMsg) { photoMsg.textContent = 'Resizing image...'; }
+        // resize to max 500x500
+        const resized = await resizeImageFile(file, 500, 'image/jpeg', 0.85);
+
+        // ensure <= 1MB by lowering quality if needed
+        let blob = resized;
+        if (blob.size > 1024 * 1024) {
+          // attempt lower quality passes
+          let q = 0.7;
+          while (blob.size > 1024 * 1024 && q >= 0.4) {
+            const tmp = await resizeImageFile(file, 500, 'image/jpeg', q);
+            blob = tmp;
+            q -= 0.15;
+          }
+        }
+
+        if (blob.size > 1024 * 1024) {
+          if (photoMsg) photoMsg.textContent = 'Could not reduce image below 1MB. Try a smaller image.';
+          return;
+        }
+
+        if (photoMsg) photoMsg.textContent = 'Uploading...';
+
+        const destPath = `${currentFamilyId}.jpg`;
+        const storagePath = await uploadToStorage(blob, destPath);
+
+        // set hidden input value (internal path) and request a signed URL to preview
+        const hidden = document.getElementById('profile-family-photo-storage-path');
+        if (hidden) hidden.value = storagePath;
+        try {
+          const signed = await getSignedUrl(storagePath, 60);
+          if (previewImg) { previewImg.src = signed; previewImg.classList.remove('hidden'); }
+          if (placeholder) { placeholder.classList.add('hidden'); }
+          if (photoMsg) photoMsg.textContent = 'Upload successful.';
+        } catch (err) {
+          if (photoMsg) photoMsg.textContent = 'Upload saved but preview failed.';
+        }
+      } catch (err) {
+        console.error(err);
+        if (photoMsg) photoMsg.textContent = err?.message || 'Upload failed.';
+      }
     };
   }
 

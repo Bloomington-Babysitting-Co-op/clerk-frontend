@@ -53,13 +53,24 @@
             <textarea id="profile-pets" class="border p-2 w-full rounded" rows="2"></textarea>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Family Photo URL</label>
-            <input id="profile-family-photo-url" type="text" class="border p-2 w-full rounded">
-          </div>
-          <div>
             <label class="block text-sm font-medium mb-1">Notes</label>
             <textarea id="profile-notes" class="border p-2 w-full rounded" rows="3"></textarea>
           </div>
+
+          <input type="hidden" id="profile-family-photo-storage-path" value="">
+          <div class="flex items-start gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Family Photo</label>
+              <input id="profile-photo-input" type="file" accept="image/*" class="block mb-2">
+              <button id="profile-photo-upload-btn" type="button" class="bg-blue-600 text-white px-2 py-1 rounded">Upload Photo</button>
+              <p id="profile-photo-message" class="text-sm text-gray-800 mt-2"></p>
+            </div>
+            <div class="w-24 h-24 border rounded overflow-hidden flex items-center justify-center">
+              <img id="profile-photo-preview" src="" alt="Photo preview" class="object-cover w-full h-full hidden">
+              <span id="profile-photo-placeholder" class="text-xs text-gray-500">No photo</span>
+            </div>
+          </div>
+
           <div id="profile-admin-metadata" class="border rounded p-3 bg-gray-50 text-sm text-gray-800">
             <p>Joined: <span id="profile-admin-joined">N/A</span></p>
             <p>Last background check: <span id="profile-admin-background">N/A</span></p>

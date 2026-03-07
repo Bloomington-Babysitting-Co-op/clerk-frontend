@@ -4,7 +4,8 @@ import {
   formatDateOnly,
   getAgeLabel,
   downloadCsv,
-  setButtonTemporaryBusy
+  setButtonTemporaryBusy,
+  getSignedUrl
 } from "/js/utils.js";
 
 function renderRowsOrFallback(items, renderItem, fallback) {
@@ -92,18 +93,21 @@ function renderFamilyCard(family, idx) {
         </div>
 
         <div class="grid md:grid-cols-3 gap-3">
-          <div>
+          <div class="md:col-span-1">
             <p class="text-sm font-semibold text-gray-800">Pets</p>
             <p class="text-gray-800">${escapeHtml(family.pets || "Not provided")}</p>
           </div>
-          <div>
-            <p class="text-sm font-semibold text-gray-800">Family Photo URL</p>
-            <p class="text-gray-800 break-all">${escapeHtml(family.family_photo_url || "Not provided")}</p>
-          </div>
-          <div>
+          <div class="md:col-span-2">
             <p class="text-sm font-semibold text-gray-800">Notes</p>
             <p class="text-gray-800">${escapeHtml(family.notes || "Not provided")}</p>
           </div>
+        </div>
+
+        <div class="mt-3">
+          <p class="text-sm font-semibold text-gray-800">Family Photo</p>
+          ${family.family_photo_storage_path ? `
+              <img data-storage-path="${escapeHtml(family.family_photo_storage_path)}" alt="Family photo" class="mt-2 w-40 h-40 object-cover rounded border" />
+            ` : `<p class="text-gray-800">Not provided</p>`}
         </div>
       </div>
     </article>
@@ -182,6 +186,15 @@ async function mountFamiliesPage(containerId) {
       updateFamiliesToggleAll();
     });
   }
+
+  // find all images with data-storage-path and replace src with signed URL
+  const imgs = Array.from(container.querySelectorAll('img[data-storage-path]'));
+  imgs.forEach(async (img) => {
+    const path = img.getAttribute('data-storage-path');
+    if (!path) return;
+    const signed = await getSignedUrl(path, 60);
+    if (signed) img.src = signed;
+  });
 
   // ensure per-item toggles update the toggle-all button state
   articles.forEach((article) => {

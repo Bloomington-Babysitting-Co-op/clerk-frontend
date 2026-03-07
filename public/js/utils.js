@@ -247,6 +247,33 @@ export async function hasAdmin(forceRefresh = false) {
   return adminStatusCache;
 }
 
+export async function getSignedUrl(path, expires = 60) {
+  try {
+    let token = null;
+    try {
+      const s = await supabase.auth.getSession();
+      token = s?.data?.session?.access_token || null;
+    } catch (e) {
+      // ignore
+    }
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch('/api/get-family-photo', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ path, expires })
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'Failed to get signed url');
+    return data.signedUrl;
+  } catch (err) {
+    console.error('getSignedUrl error', err);
+    return null;
+  }
+}
+
 export async function setupNavbar(containerId) {
   try {
     const container = document.getElementById(containerId);
