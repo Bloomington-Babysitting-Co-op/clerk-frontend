@@ -88,7 +88,7 @@ function initChipsForSelect(selectEl) {
     dropdownEl.innerHTML = '';
     if (!list.length) {
       const li = document.createElement('li');
-      li.className = 'px-3 py-2 text-sm text-gray-500';
+      li.className = 'px-3 py-2 text-sm text-gray-600';
       li.textContent = 'No results';
       dropdownEl.appendChild(li);
       return;
@@ -858,7 +858,7 @@ function renderAdminLinksGrid() {
       if (label) btn.innerHTML = escapeHtml(label);
       else btn.innerHTML = '<span class="text-gray-400">(empty)</span>';
       if (r === selectedRow && c === selectedCol) {
-        btn.classList.add('ring-2', 'ring-blue-500');
+        btn.classList.add('ring-2', 'ring-blue-600');
       }
       // mark tile if there are unsaved changes (draft differs from persisted)
       if (Object.prototype.hasOwnProperty.call(adminLinksDrafts, key)) {
