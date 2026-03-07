@@ -436,10 +436,10 @@ function renderUsers() {
               <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2 w-full" value="${user.email || ""}">
             </div>
             <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-4 py-2 rounded self-end">Reset Password</button>
-            <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-              <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-4 py-2 rounded">Save User</button>
-              ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-4 py-2 rounded">Delete User</button>` : ''}
-            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
+            <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-4 py-2 rounded">Save User</button>
+            ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-4 py-2 rounded">Delete User</button>` : ''}
           </div>
         </div>
       </article>
