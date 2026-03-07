@@ -504,6 +504,18 @@ async function mountProfilePage() {
 
   if (uploadBtn) {
     uploadBtn.onclick = async () => {
+      // Ensure we have a valid authenticated session/token before attempting upload
+      try {
+        const sess = await supabase.auth.getSession();
+        if (!sess?.data?.session) {
+          // requireAuth will redirect or prompt signin as needed
+          await requireAuth();
+        }
+      } catch (e) {
+        // fallback: try requireAuth
+        await requireAuth();
+      }
+
       if (!photoInput || !photoInput.files || !photoInput.files[0]) {
         if (photoMsg) photoMsg.textContent = 'Select an image first.';
         return;
