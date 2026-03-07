@@ -308,8 +308,8 @@ function renderFamilies() {
           <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
         </div>
         <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-          <button data-family-save="${family.id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save Family</button>
-          ${family.can_delete ? `<button data-family-delete="${family.id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete Family</button>` : ''}
+          <button data-family-save="${family.id}" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Save Family</button>
+          ${family.can_delete ? `<button data-family-delete="${family.id}" class="bg-red-600 text-white px-4 py-2 rounded text-sm">Delete Family</button>` : ''}
         </div>
       </div>
     </article>
@@ -426,19 +426,19 @@ function renderUsers() {
           <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-600">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
         </header>
         <div class="user-admin-content hidden p-3">
-          <div class="grid md:grid-cols-[auto_auto_auto] gap-2 items-center">
+          <div class="grid md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
             <div>
               <label class="text-sm block mb-1">Family</label>
-              <select id="user-family-${user.user_id}" class="border rounded p-2">${familyOptionsHtml(user.family_id)}</select>
+              <select id="user-family-${user.user_id}" class="border rounded p-2 w-full">${familyOptionsHtml(user.family_id)}</select>
             </div>
             <div>
               <label class="text-sm block mb-1">Email</label>
-              <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2" value="${user.email || ""}">
+              <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2 w-full" value="${user.email || ""}">
             </div>
-            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-3 py-2 rounded text-sm self-center">Reset Password</button>
+            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-4 py-2 rounded self-end">Reset Password</button>
             <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-              <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-3 py-2 rounded text-sm">Save User</button>
-              ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-3 py-2 rounded text-sm">Delete User</button>` : ''}
+              <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-4 py-2 rounded">Save User</button>
+              ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-4 py-2 rounded">Delete User</button>` : ''}
             </div>
           </div>
         </div>
