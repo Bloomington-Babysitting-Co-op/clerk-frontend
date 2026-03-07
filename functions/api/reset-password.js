@@ -14,7 +14,7 @@ export async function onRequest(context) {
   if (!email) return new Response(JSON.stringify({ error: 'Missing email' }), { status: 400 });
 
   const SUPABASE_URL = env.SUPABASE_URL;
-  const SERVICE_KEY = env.SUPABASE_KEY;
+  const SERVICE_KEY = env.SUPABASE_SECRET_KEY;
   if (!SUPABASE_URL || !SERVICE_KEY) return new Response(JSON.stringify({ error: 'Server not configured' }), { status: 500 });
 
   const base = SUPABASE_URL.replace(/\/+$/, '');
