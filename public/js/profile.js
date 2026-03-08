@@ -308,7 +308,8 @@ async function mountProfilePage() {
         p_email_ledger_change: getCheckedValue("email-ledger-change"),
         p_email_request_new: getCheckedValue("email-request-new"),
         p_email_offer_change: getCheckedValue("email-offer-change"),
-        p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive")
+        p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive"),
+        p_email_endmonth_summary: getCheckedValue("email-endmonth-summary")
       });
       if (parentError) {
         setStatusText("profile-save-message", parentError.message, true);
@@ -397,6 +398,7 @@ async function mountProfilePage() {
       setCheckedValue("email-request-new", parent.email_request_new);
       setCheckedValue("email-offer-change", parent.email_offer_change);
       setCheckedValue("email-midmonth-inactive", parent.email_midmonth_inactive);
+      setCheckedValue("email-endmonth-summary", parent.email_endmonth_summary);
     }
 
     if (profile) {
