@@ -391,7 +391,7 @@ async function mountRequestsPage() {
   // Populate family select
   if (familySelect) {
     try {
-      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_filters");
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
       if (!familiesError && Array.isArray(familiesData)) {
         familiesData.forEach((f) => {
           const opt = document.createElement("option");

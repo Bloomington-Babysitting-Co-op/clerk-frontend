@@ -209,7 +209,7 @@ async function mountAdminEntriesPage() {
         p_from_family_id: pair.from_family_id,
         p_to_family_id: pair.to_family_id,
         p_hours: hours,
-        p_entry_date: entryDate,
+        p_date: entryDate,
         p_notes: notes
       });
       if (error) failed++;

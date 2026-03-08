@@ -40,6 +40,17 @@ async function mountNewEntryPage() {
 
     const requests = await loadRequestsForEntry();
 
+    // Load families so we can identify the current user's family and list others
+    let families = [];
+    try {
+      const { data: famData, error: famError } = await supabase.rpc("rpc_list_families_all");
+      if (famError) throw famError;
+      families = famData || [];
+    } catch (err) {
+      // non-fatal: families may be empty which only affects Ad Hoc behavior
+      families = [];
+    }
+
     const requestSelect = document.getElementById("request-select");
     const fromFamilyInput = document.getElementById("from-family");
     const toFamilyInput = document.getElementById("to-family");
@@ -55,15 +66,6 @@ async function mountNewEntryPage() {
     if (hoursInput) {
       hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
       hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
-    }
-
-    if (!requests.length) {
-      requestSelect.innerHTML = "<option value=''>No completed requests available</option>";
-      requestSelect.disabled = true;
-      createBtn.disabled = true;
-      createBtn.classList.add("opacity-60", "cursor-not-allowed");
-      setFormError("entry-error", "No completed requests are available for selection. An entry cannot be created.");
-      return;
     }
 
     if (addDriveTimeCheckbox) {
@@ -82,8 +84,10 @@ async function mountNewEntryPage() {
       };
     }
 
+    // Build request select with an explicit Ad Hoc option (value: 'ad_hoc')
     requestSelect.innerHTML = [
-      "<option value='' selected>Select a completed request</option>",
+      "<option value='' selected>Please select...</option>",
+      "<option value='ad_hoc'>Ad Hoc</option>",
       ...requests.map(item => {
         const requestDate = item.request_date || "No request date";
         const notes = item.notes || "No notes";
@@ -91,20 +95,95 @@ async function mountNewEntryPage() {
       })
     ].join("");
 
+    // helpers to manage swapping the to-family input into a select for Ad Hoc
+    const originalToFamilyDisplay = toFamilyInput; // keep reference for restore
+    let toFamilySelect = null;
+    const myFamily = families.find(f => f.is_my_family) || null;
+
+    function buildToFamilySelect(otherFamilies) {
+      const sel = document.createElement('select');
+      sel.id = 'to-family-select';
+      sel.className = originalToFamilyDisplay.className || '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = 'Please select...';
+      sel.appendChild(defaultOpt);
+      otherFamilies.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.textContent = f.name;
+        sel.appendChild(opt);
+      });
+      sel.onchange = () => {
+        toFamilyIdInput.value = sel.value || '';
+      };
+      return sel;
+    }
+
     requestSelect.onchange = () => {
-      const selected = requests.find((item) => item.request_id === requestSelect.value);
-      if (!selected) {
+      const val = requestSelect.value;
+
+      // If Ad Hoc is selected, prefill from-family to user's family and show to-family select
+      if (val === 'ad_hoc') {
+        // set from-family to current user's family (if known)
+        if (myFamily) {
+          fromFamilyIdInput.value = myFamily.id || '';
+          fromFamilyInput.value = myFamily.name || '';
+        } else {
+          fromFamilyIdInput.value = '';
+          fromFamilyInput.value = '';
+        }
+        fromFamilyInput.readOnly = true;
+
+        // show to-family select populated with families excluding myFamily
+        const otherFamilies = families.filter(f => !f.is_my_family);
+        // hide original display input
+        originalToFamilyDisplay.style.display = 'none';
+        // remove existing select if any
+        if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
+        toFamilySelect = buildToFamilySelect(otherFamilies);
+        originalToFamilyDisplay.parentNode.insertBefore(toFamilySelect, originalToFamilyDisplay.nextSibling);
+        toFamilyIdInput.value = '';
+        return;
+      }
+
+      // If no selection (Please select...), clear fields and restore to-family display
+      if (!val) {
         fromFamilyIdInput.value = "";
         toFamilyIdInput.value = "";
         fromFamilyInput.value = "";
         toFamilyInput.value = "";
+        fromFamilyInput.readOnly = false;
+        if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
+        toFamilySelect = null;
+        originalToFamilyDisplay.style.display = '';
         return;
       }
 
+      // Otherwise a real request id is selected
+      const selected = requests.find((item) => item.request_id === val);
+      if (!selected) {
+        // fallback: clear
+        fromFamilyIdInput.value = "";
+        toFamilyIdInput.value = "";
+        fromFamilyInput.value = "";
+        toFamilyInput.value = "";
+        fromFamilyInput.readOnly = false;
+        if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
+        toFamilySelect = null;
+        originalToFamilyDisplay.style.display = '';
+        return;
+      }
+
+      // restore any replaced UI
       fromFamilyIdInput.value = selected.from_family_id || "";
       toFamilyIdInput.value = selected.to_family_id || "";
       fromFamilyInput.value = selected.from_family_name || "";
       toFamilyInput.value = selected.to_family_name || "";
+      fromFamilyInput.readOnly = false;
+      if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
+      toFamilySelect = null;
+      originalToFamilyDisplay.style.display = '';
 
       const baseHours = selected.hours != null ? Number(selected.hours) : 0;
       const hasDriveTime = selected.drive_time;
@@ -129,7 +208,6 @@ async function mountNewEntryPage() {
 
     createBtn.onclick = async () => {
       setFormError("entry-error", "");
-      const requestId = requestSelect.value || null;
       const fromFamilyId = fromFamilyIdInput.value || "";
       const toFamilyId = toFamilyIdInput.value || "";
       const validationErrors = validateEntry({
@@ -144,12 +222,13 @@ async function mountNewEntryPage() {
       }
 
       const { error } = await supabase.rpc("rpc_create_ledger_entry", {
-        p_request_id: requestId,
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
-        p_entry_date: toNullableDate(entryDateInput.value),
+        p_type: requestSelect.value === 'ad_hoc' ? "ad hoc" : "request",
+        p_date: toNullableDate(entryDateInput.value),
         p_hours: Number(hoursInput.value),
-        p_notes: notesInput ? notesInput.value : null
+        p_notes: notesInput ? notesInput.value : null,
+        p_request_id: requestSelect.value !== 'ad_hoc' ? requestSelect.value : null,
       });
 
       if (error) {
