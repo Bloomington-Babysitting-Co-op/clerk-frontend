@@ -129,7 +129,7 @@ async function listLedgerInto(containerId, options = {}) {
         <tbody>
           ${data.map(e => `
             <tr class="border-b">
-              <td class="px-2 py-2">${escapeHtml(formatDateOnly(e.entry_date) || "")}</td>
+              <td class="px-2 py-2">${escapeHtml(formatDateOnly(e.date) || "")}</td>
               <td class="px-2 py-2">${Number(e.hours).toFixed(2)}</td>
               <td class="px-2 py-2">
                 <span class="${e.from_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.from_family_name || 'N/A')}</span>
@@ -170,7 +170,7 @@ async function mountLedgerPage() {
   // Populate family select
   if (familySelect) {
     try {
-      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_for_filters");
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
       if (!familiesError && Array.isArray(familiesData)) {
         familiesData.forEach((f) => {
           const opt = document.createElement("option");
@@ -238,7 +238,7 @@ async function mountLedgerPage() {
       const entriesHeader = ["ID", "Date", "Hours", "From Family Name", "To Family Name", "Notes", "Created By", "Request ID"];
       const entriesRows = Array.isArray(currentRows) ? currentRows.map(row => [
         row.id,
-        toDateOnlyString(row.entry_date),
+        toDateOnlyString(row.date),
         row.hours,
         row.from_family_name || "",
         row.to_family_name || "",
