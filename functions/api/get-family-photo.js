@@ -60,10 +60,22 @@ export async function onRequest(context) {
     }
 
     // try common response keys
-    const signed = data?.signedURL || data?.signedUrl || data?.signed || data?.publicURL || data?.publicUrl || null;
-    if (!signed) return new Response(JSON.stringify({ error: 'No signed url returned' }), { status: 500 });
+    const signedRaw = data?.signedURL || data?.signedUrl || data?.signed || data?.publicURL || data?.publicUrl || null;
+    if (!signedRaw) return new Response(JSON.stringify({ error: 'No signed url returned' }), { status: 500 });
 
-    return new Response(JSON.stringify({ signedUrl: signed }), { status: 200 });
+    // Ensure the signed URL is absolute
+    let signedFull;
+    if (typeof signedRaw === 'string' && signedRaw.startsWith('/')) {
+      if (signedRaw.startsWith('/object/')) {
+        signedFull = `${base}/storage/v1/${signedRaw}`;
+      } else {
+        signedFull = `${base}${signedRaw}`;
+      }
+    } else {
+      signedFull = signedRaw;
+    }
+
+    return new Response(JSON.stringify({ signedUrl: signedFull }), { status: 200 });
   } catch (err) {
     return new Response(JSON.stringify({ error: err?.message || 'Server error' }), { status: 500 });
   }
