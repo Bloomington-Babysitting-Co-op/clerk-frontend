@@ -29,7 +29,7 @@ function loadImageFromFile(file) {
   });
 }
 
-async function resizeImageFile(file, maxDim = 500, mimeType = 'image/jpeg', quality = 0.8) {
+async function resizeImageFile(file, maxDim = 1000, mimeType = 'image/jpeg', quality = 0.8) {
   const img = await loadImageFromFile(file);
   const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
   const width = Math.round(img.width * ratio);
@@ -251,6 +251,7 @@ async function mountProfilePage() {
   const userEmail = session.user.email || "";
 
   let currentFamilyId = null;
+  let currentFamilyPhotoPath = null;
 
   setInputValue("profile-email", userEmail);
   setInputValue("profile-parent-name", "");
@@ -410,6 +411,7 @@ async function mountProfilePage() {
       const placeholder = document.getElementById('profile-photo-placeholder');
       if (profile.family_photo_storage_path) {
         // request signed URL to preview
+        currentFamilyPhotoPath = profile.family_photo_storage_path;
         try {
           const signed = await getSignedUrl(profile.family_photo_storage_path, 60);
           if (preview) { preview.src = signed; preview.classList.remove('hidden'); }
@@ -481,14 +483,25 @@ async function mountProfilePage() {
 
   // Photo input & upload handling
   const photoInput = document.getElementById('profile-photo-input');
-  const uploadBtn = document.getElementById('profile-photo-upload-btn');
-  const photoMsg = document.getElementById('profile-photo-message');
+  const chooseBtn = document.getElementById('profile-photo-choose-btn');
+  const filenameEl = document.getElementById('profile-photo-filename');
   const previewImg = document.getElementById('profile-photo-preview');
   const placeholder = document.getElementById('profile-photo-placeholder');
+  const uploadBtn = document.getElementById('profile-photo-upload-btn');
+  const photoMsg = document.getElementById('profile-photo-message');
+  const deleteBtn = document.getElementById('profile-photo-delete-btn');
+
 
   if (photoInput) {
+    // Wire a custom choose button to the native input click
+    if (chooseBtn) {
+      chooseBtn.onclick = () => photoInput.click();
+    }
+
     photoInput.onchange = () => {
       const file = photoInput.files && photoInput.files[0];
+      // update filename display
+      if (filenameEl) filenameEl.textContent = file ? file.name : 'No file chosen';
       if (!file) return;
       // quick preview (not uploaded yet)
       try {
@@ -515,25 +528,8 @@ async function mountProfilePage() {
 
       try {
         if (photoMsg) { photoMsg.textContent = 'Resizing image...'; }
-        // resize to max 500x500
-        const resized = await resizeImageFile(file, 500, 'image/jpeg', 0.85);
-
-        // ensure <= 1MB by lowering quality if needed
-        let blob = resized;
-        if (blob.size > 1024 * 1024) {
-          // attempt lower quality passes
-          let q = 0.7;
-          while (blob.size > 1024 * 1024 && q >= 0.4) {
-            const tmp = await resizeImageFile(file, 500, 'image/jpeg', q);
-            blob = tmp;
-            q -= 0.15;
-          }
-        }
-
-        if (blob.size > 1024 * 1024) {
-          if (photoMsg) photoMsg.textContent = 'Could not reduce image below 1MB. Try a smaller image.';
-          return;
-        }
+        // resize to max 1000x1000
+        const blob = await resizeImageFile(file, 1000, 'image/jpeg', 0.85);
 
         if (photoMsg) photoMsg.textContent = 'Uploading...';
 
@@ -569,6 +565,51 @@ async function mountProfilePage() {
     };
   }
 
+  if (deleteBtn) {
+    deleteBtn.onclick = async () => {
+      if (!currentFamilyPhotoPath) {
+        if (photoMsg) photoMsg.textContent = 'No uploaded photo to delete.';
+        return;
+      }
+
+      if (!confirm('Delete the family photo? This cannot be undone.')) return;
+
+      try {
+        if (photoMsg) photoMsg.textContent = 'Deleting photo...';
+        const bucket = 'family-photos';
+        // attempt to remove from storage
+        const { data: removeData, error: removeError } = await supabase.storage.from(bucket).remove([currentFamilyPhotoPath]);
+        if (removeError) {
+          console.error('storage remove error', removeError);
+          if (photoMsg) photoMsg.textContent = `Failed to delete storage object: ${removeError.message}`;
+          return;
+        }
+
+        // clear DB reference
+        try {
+          const { error: rpcError } = await supabase.rpc('rpc_update_my_family_photo', { p_family_photo_storage_path: null });
+          if (rpcError) {
+            console.error('rpc_update_my_family_photo error', rpcError);
+            if (photoMsg) photoMsg.textContent = `Deleted file but DB update failed: ${rpcError.message}`;
+            // still proceed to update UI
+          }
+        } catch (e) {
+          console.error('rpc_update_my_family_photo threw', e);
+          if (photoMsg) photoMsg.textContent = 'Deleted file but DB update failed.';
+        }
+
+        // update UI
+        currentFamilyPhotoPath = null;
+        if (previewImg) { previewImg.src = ''; previewImg.classList.add('hidden'); }
+        if (placeholder) { placeholder.classList.remove('hidden'); }
+        if (filenameEl) filenameEl.textContent = 'No file chosen';
+        if (photoMsg) photoMsg.textContent = 'Photo deleted.';
+      } catch (err) {
+        console.error(err);
+        if (photoMsg) photoMsg.textContent = err?.message || 'Failed to delete photo.';
+      }
+    };
+  }
 }
 
 export { mountProfilePage };
