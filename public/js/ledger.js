@@ -139,7 +139,7 @@ async function listLedgerInto(containerId, options = {}) {
               <td class="px-2 py-2 md:w-1/2">${escapeHtml(e.notes || "")}</td>
               <td class="px-2 py-2">${e.request_id
                 ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
-                : `<span class="text-red-600">${escapeHtml(e.email)} (Admin)</span>`}
+                : `<span>${escapeHtml(e.email)} (${e.type})</span>`}
                 </td>
             </tr>
           `).join('')}
@@ -172,6 +172,7 @@ async function mountLedgerPage() {
     try {
       const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
       if (!familiesError && Array.isArray(familiesData)) {
+        familiesData.sort((a, b) => (b.is_my_family ? 1 : 0) - (a.is_my_family ? 1 : 0));
         familiesData.forEach((f) => {
           const opt = document.createElement("option");
           opt.value = f.id;

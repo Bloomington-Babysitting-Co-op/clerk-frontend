@@ -393,6 +393,7 @@ async function mountRequestsPage() {
     try {
       const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
       if (!familiesError && Array.isArray(familiesData)) {
+        familiesData.sort((a, b) => (b.is_my_family ? 1 : 0) - (a.is_my_family ? 1 : 0));
         familiesData.forEach((f) => {
           const opt = document.createElement("option");
           opt.value = f.id;

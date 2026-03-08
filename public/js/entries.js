@@ -84,6 +84,16 @@ async function mountNewEntryPage() {
       };
     }
 
+    // hide and uncheck optional checkboxes by default
+    if (addDriveTimeCheckbox) {
+      addDriveTimeCheckbox.checked = false;
+      addDriveTimeCheckbox.style.display = 'none';
+    }
+    if (addMealServedCheckbox) {
+      addMealServedCheckbox.checked = false;
+      addMealServedCheckbox.style.display = 'none';
+    }
+
     // Build request select with an explicit Ad Hoc option (value: 'ad_hoc')
     requestSelect.innerHTML = [
       "<option value='' selected>Please select...</option>",
@@ -137,13 +147,23 @@ async function mountNewEntryPage() {
 
         // show to-family select populated with families excluding myFamily
         const otherFamilies = families.filter(f => !f.is_my_family);
-        // hide original display input
+        // hide original display input and remove gray background class so select won't look gray
         originalToFamilyDisplay.style.display = 'none';
+        originalToFamilyDisplay.classList.remove('bg-gray-100');
         // remove existing select if any
         if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
         toFamilySelect = buildToFamilySelect(otherFamilies);
         originalToFamilyDisplay.parentNode.insertBefore(toFamilySelect, originalToFamilyDisplay.nextSibling);
         toFamilyIdInput.value = '';
+        // hide optional checkboxes for ad-hoc
+        if (addDriveTimeCheckbox) {
+          addDriveTimeCheckbox.checked = false;
+          addDriveTimeCheckbox.style.display = 'none';
+        }
+        if (addMealServedCheckbox) {
+          addMealServedCheckbox.checked = false;
+          addMealServedCheckbox.style.display = 'none';
+        }
         return;
       }
 
@@ -157,6 +177,16 @@ async function mountNewEntryPage() {
         if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
         toFamilySelect = null;
         originalToFamilyDisplay.style.display = '';
+        originalToFamilyDisplay.classList.add('bg-gray-100');
+        // hide optional checkboxes when no request selected
+        if (addDriveTimeCheckbox) {
+          addDriveTimeCheckbox.checked = false;
+          addDriveTimeCheckbox.style.display = 'none';
+        }
+        if (addMealServedCheckbox) {
+          addMealServedCheckbox.checked = false;
+          addMealServedCheckbox.style.display = 'none';
+        }
         return;
       }
 
@@ -172,6 +202,16 @@ async function mountNewEntryPage() {
         if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
         toFamilySelect = null;
         originalToFamilyDisplay.style.display = '';
+        originalToFamilyDisplay.classList.add('bg-gray-100');
+        // hide optional checkboxes for unknown selection
+        if (addDriveTimeCheckbox) {
+          addDriveTimeCheckbox.checked = false;
+          addDriveTimeCheckbox.style.display = 'none';
+        }
+        if (addMealServedCheckbox) {
+          addMealServedCheckbox.checked = false;
+          addMealServedCheckbox.style.display = 'none';
+        }
         return;
       }
 
@@ -184,17 +224,30 @@ async function mountNewEntryPage() {
       if (toFamilySelect && toFamilySelect.parentNode) toFamilySelect.parentNode.removeChild(toFamilySelect);
       toFamilySelect = null;
       originalToFamilyDisplay.style.display = '';
+      originalToFamilyDisplay.classList.add('bg-gray-100');
 
       const baseHours = selected.hours != null ? Number(selected.hours) : 0;
       const hasDriveTime = selected.drive_time;
       const hasMealServed = selected.meal_served;
 
-      if (addDriveTimeCheckbox) {
-        addDriveTimeCheckbox.checked = hasDriveTime;
-      }
-
-      if (addMealServedCheckbox) {
-        addMealServedCheckbox.checked = hasMealServed;
+      if (selected.request_type === 'babysit') {
+        if (addDriveTimeCheckbox) {
+          addDriveTimeCheckbox.checked = hasDriveTime;
+          addDriveTimeCheckbox.style.display = '';
+        }
+        if (addMealServedCheckbox) {
+          addMealServedCheckbox.checked = hasMealServed;
+          addMealServedCheckbox.style.display = '';
+        }
+      } else {
+        if (addDriveTimeCheckbox) {
+          addDriveTimeCheckbox.checked = false;
+          addDriveTimeCheckbox.style.display = 'none';
+        }
+        if (addMealServedCheckbox) {
+          addMealServedCheckbox.checked = false;
+          addMealServedCheckbox.style.display = 'none';
+        }
       }
 
       const adjustedHours = baseHours + (hasDriveTime ? 0.5 : 0) + (hasMealServed ? 0.5 : 0);
