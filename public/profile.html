@@ -60,12 +60,16 @@
           <div class="flex items-start gap-4">
             <div>
               <label class="block text-sm font-medium mb-1">Family Photo</label>
-              <div class="flex items-center gap-2">
-                <input id="profile-photo-input" type="file" accept="image/*" class="sr-only" aria-hidden="true">
-                <button id="profile-photo-choose-btn" type="button" class="bg-gray-200 text-gray-900 px-3 py-1 rounded">Select Photo</button>
-                <span id="profile-photo-filename" class="text-sm text-gray-700">No file chosen</span>
-                <button id="profile-photo-upload-btn" type="button" class="ml-2 bg-blue-600 text-white px-2 py-1 rounded">Upload Photo</button>
-                <button id="profile-photo-delete-btn" type="button" class="ml-2 bg-red-600 text-white px-2 py-1 rounded">Delete Photo</button>
+              <div class="flex flex-col items-start gap-2">
+                <div class="flex items-center gap-2">
+                  <input id="profile-photo-input" type="file" accept="image/*" class="sr-only" aria-hidden="true">
+                  <button id="profile-photo-choose-btn" type="button" class="bg-gray-200 text-gray-900 px-3 py-1 rounded">Select Photo</button>
+                  <span id="profile-photo-filename" class="text-sm text-gray-700">No file chosen</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="profile-photo-upload-btn" type="button" class="bg-blue-600 text-white px-2 py-1 rounded">Upload Photo</button>
+                  <button id="profile-photo-delete-btn" type="button" class="bg-red-600 text-white px-2 py-1 rounded">Delete Photo</button>
+                </div>
               </div>
               <p id="profile-photo-message" class="text-sm text-gray-800 mt-2"></p>
             </div>
