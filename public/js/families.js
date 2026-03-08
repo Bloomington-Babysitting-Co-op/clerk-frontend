@@ -106,7 +106,7 @@ function renderFamilyCard(family, idx) {
         <div class="mt-3">
           <p class="text-sm font-semibold text-gray-800">Family Photo</p>
           ${family.family_photo_storage_path ? `
-              <img data-storage-path="${escapeHtml(family.family_photo_storage_path)}" alt="Family photo" class="mt-2 w-40 h-40 object-cover rounded border" />
+              <img data-storage-path="${escapeHtml(family.family_photo_storage_path)}" alt="Family photo" class="mt-2 object-cover rounded border" />
             ` : `<p class="text-gray-800">Not provided</p>`}
         </div>
       </div>

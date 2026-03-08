@@ -29,7 +29,7 @@ function loadImageFromFile(file) {
   });
 }
 
-async function resizeImageFile(file, maxDim = 1000, mimeType = 'image/jpeg', quality = 0.8) {
+async function resizeImageFile(file, maxDim = 750, mimeType = 'image/jpeg', quality = 0.9) {
   const img = await loadImageFromFile(file);
   const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
   const width = Math.round(img.width * ratio);
@@ -528,8 +528,8 @@ async function mountProfilePage() {
 
       try {
         if (photoMsg) { photoMsg.textContent = 'Resizing image...'; }
-        // resize to max 1000x1000
-        const blob = await resizeImageFile(file, 1000, 'image/jpeg', 0.85);
+        // resize to max 750x750
+        const blob = await resizeImageFile(file, 750, 'image/jpeg', .9);
 
         if (photoMsg) photoMsg.textContent = 'Uploading...';
 
