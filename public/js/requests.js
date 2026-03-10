@@ -730,7 +730,7 @@ async function loadRequestInto(containerId) {
   async function submitOffer(requestId) {
     const notes = document.getElementById("offer-notes").value;
 
-    const { error } = await supabase.rpc("rpc_offer_request", {
+    const { error } = await supabase.rpc("rpc_create_offer", {
       p_request_id: requestId,
       p_notes: notes
     });
