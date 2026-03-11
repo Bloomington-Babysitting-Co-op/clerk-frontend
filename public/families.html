@@ -2,6 +2,7 @@
 <html>
 <head>
   <script src="/_env.js"></script>
+  <script src="/js/fast-auth.js"></script>
   <title>Families – BBC Clerk</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
@@ -26,12 +27,7 @@
   </main>
 
   <script type="module">
-    import { setupNavbar } from "/js/utils.js";
-    import { requireAuth } from "/js/auth.js";
     import { mountFamiliesPage } from "/js/families.js";
-
-    await setupNavbar("navbar");
-    await requireAuth();
     await mountFamiliesPage("families-list");
   </script>
 </body>

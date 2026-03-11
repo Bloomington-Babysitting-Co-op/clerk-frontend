@@ -24,6 +24,30 @@ function loginForm() {
     password: "",
     error: "",
     resetting: false,
+    // Recovery mode state
+    recoveryMode: false,
+    recoveryPassword: '',
+    recoveryError: '',
+    recoverySuccess: '',
+    processingRecovery: false,
+
+    async init() {
+      // Parse query and hash params (Supabase may return tokens in hash)
+      const params = {};
+      const hash = (window.location.hash || '').replace(/^#/, '') || '';
+      const search = (window.location.search || '').replace(/^\?/, '') || '';
+      const combined = [search, hash].filter(Boolean).join('&');
+      new URLSearchParams(combined).forEach((v, k) => { params[k] = v; });
+      if (!params.access_token) return;
+
+      // Try to set session from tokens
+      try {
+        await supabase.auth.setSession({ access_token: params.access_token, refresh_token: params.refresh_token });
+        this.recoveryMode = true;
+      } catch (e) {
+        console.error('Failed to set session from recovery params', e);
+      }
+    },
 
     async login() {
       const { error } = await supabase.auth.signInWithPassword({
@@ -72,6 +96,32 @@ function loginForm() {
         this.resetting = false;
       }
     }
+    ,
+    async setNewPassword() {
+      this.recoveryError = '';
+      this.recoverySuccess = '';
+      if (!this.recoveryPassword || this.recoveryPassword.length < 6) {
+        this.recoveryError = 'Password must be at least 6 characters.';
+        return;
+      }
+      this.processingRecovery = true;
+      try {
+        const { data, error } = await supabase.auth.updateUser({ password: this.recoveryPassword });
+        if (error) {
+          this.recoveryError = error.message || 'Failed to update password.';
+        } else {
+          this.recoverySuccess = 'Password updated. Redirecting...';
+          // Clear hash/query tokens to avoid reuse
+          try { history.replaceState({}, document.title, location.pathname); } catch (e) {}
+          setTimeout(() => { window.location.href = '/'; }, 1200);
+        }
+      } catch (e) {
+        console.error(e);
+        this.recoveryError = e?.message || 'Error updating password.';
+      } finally {
+        this.processingRecovery = false;
+      }
+    },
   };
 }
 
