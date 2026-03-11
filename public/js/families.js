@@ -1,5 +1,7 @@
 import { supabase } from "/js/supabase.js";
+import { requireAuth } from "./auth.js";
 import {
+  setupNavbar,
   escapeHtml,
   formatDateOnly,
   getAgeLabel,
@@ -115,6 +117,8 @@ function renderFamilyCard(family, idx) {
 }
 
 async function mountFamiliesPage(containerId) {
+  await requireAuth();
+  await setupNavbar("navbar");
   const container = document.getElementById(containerId);
   if (!container) return;
 

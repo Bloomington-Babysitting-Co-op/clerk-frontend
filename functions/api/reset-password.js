@@ -19,6 +19,10 @@ export async function onRequest(context) {
 
   const base = SUPABASE_URL.replace(/\/+$/, '');
   const recoverUrl = `${base}/auth/v1/recover`;
+  // Determine a redirect URL for the recovery callback page.
+  // Prefer the request origin (frontend origin), fall back to env.FRONTEND_URL if provided.
+  const reqOrigin = request.headers.get('origin') || (request.headers.get('referer') || '').split('/').slice(0,3).join('/') || env.FRONTEND_URL || '';
+  const redirect_to = reqOrigin ? `${reqOrigin.replace(/\/+$/, '')}/login.html` : null;
 
   try {
     const resp = await fetch(recoverUrl, {
@@ -28,7 +32,7 @@ export async function onRequest(context) {
         'Authorization': `Bearer ${SERVICE_KEY}`,
         'apikey': SERVICE_KEY
       },
-      body: JSON.stringify({ email })
+      body: JSON.stringify(redirect_to ? { email, redirect_to } : { email })
     });
 
     const result = await resp.json().catch(() => null);

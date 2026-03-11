@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
+  setupNavbar,
   formatDateOnly,
   formatValidationErrors,
   monthValueFromDate,
@@ -248,6 +249,7 @@ function collectEmergencyContactsPayload() {
 
 async function mountProfilePage() {
   const session = await requireAuth();
+  await setupNavbar("navbar");
   const userEmail = session.user.email || "";
 
   let currentFamilyId = null;

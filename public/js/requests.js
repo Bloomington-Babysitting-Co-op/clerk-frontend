@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
+  setupNavbar,
   formatDateTime,
   toDateInputValue,
   toTimeInputValue,
@@ -348,6 +349,7 @@ function normalizeFormPayload(values, options = {}) {
 
 async function listRequestsInto(containerId, options = {}) {
   await requireAuth();
+  await setupNavbar("navbar");
 
   const {
     startDate = null,
@@ -377,6 +379,7 @@ async function listRequestsInto(containerId, options = {}) {
 
 async function mountRequestsPage() {
   await requireAuth();
+  await setupNavbar("navbar");
 
   const startInput = document.getElementById("requests-start-date");
   const endInput = document.getElementById("requests-end-date");
@@ -455,6 +458,7 @@ async function mountRequestsPage() {
 
 async function loadRequestInto(containerId) {
   await requireAuth();
+  await setupNavbar("navbar");
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
 
@@ -820,6 +824,7 @@ async function loadRequestInto(containerId) {
 
 async function mountNewRequestForm(containerId) {
   await requireAuth();
+  await setupNavbar("navbar");
   const container = document.getElementById(containerId);
   if (!container) return;
 

@@ -2,6 +2,7 @@
 <html>
 <head>
   <script src="/_env.js"></script>
+  <script src="/js/fast-auth.js"></script>
   <title>BBC Clerk</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
@@ -56,18 +57,17 @@
   </main>
 
   <script type="module">
-    import { setupNavbar } from "/js/utils.js";
     import { requireAuth } from "/js/auth.js";
+    import { setupNavbar } from "/js/utils.js";
     import { mountBanner } from "/js/banner.js";
     import { mountLinks } from "/js/dashboard-links.js";
 
+    await requireAuth();
     await setupNavbar("navbar");
     await mountBanner('dashboard-banner');
     await mountLinks('dashboard-external-links');
-    await requireAuth();
   </script>
 
-  <script type="module" src="/js/auth.js"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>
 </body>
 </html>
