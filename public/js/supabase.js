@@ -12,3 +12,5 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+if (typeof window !== 'undefined') window.supabase = supabase;
