@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
+  setupNavbar,
   normalizeQuarterHoursInput,
   setFormError,
   toDateInputValue,
@@ -37,6 +38,7 @@ function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue })
 async function mountNewEntryPage() {
   try {
     await requireAuth();
+    await setupNavbar("navbar");
 
     const requests = await loadRequestsForEntry();
 

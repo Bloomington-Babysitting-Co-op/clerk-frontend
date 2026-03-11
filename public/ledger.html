@@ -2,6 +2,7 @@
 <html>
 <head>
   <script src="/_env.js"></script>
+  <script src="/js/fast-auth.js"></script>
   <title>Ledger – BBC Clerk</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
@@ -47,13 +48,8 @@
   </main>
 
   <script type="module">
-    import { setupNavbar } from "/js/utils.js";
-    import { requireAuth } from "/js/auth.js";
     import { mountLedgerPage } from "/js/ledger.js";
-
-    await setupNavbar("navbar");
-    await requireAuth();
-    mountLedgerPage();
+    await mountLedgerPage();
   </script>
 
   <script src="https://unpkg.com/alpinejs" defer></script>

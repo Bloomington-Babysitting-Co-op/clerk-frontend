@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
+  setupNavbar,
   escapeHtml,
   formatDateOnly,
   toDateInputValue,
@@ -154,6 +155,7 @@ async function listLedgerInto(containerId, options = {}) {
 
 async function mountLedgerPage() {
   await requireAuth();
+  await setupNavbar("navbar");
 
   const startInput = document.getElementById("ledger-start-date");
   const endInput = document.getElementById("ledger-end-date");
