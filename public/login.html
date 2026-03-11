@@ -4,6 +4,7 @@
   <script src="/_env.js"></script>
   <title>Login – BBC Clerk</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>[x-cloak]{display:none!important;}</style>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
@@ -11,7 +12,7 @@
     <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow" x-data="loginForm" x-init="init">
       <h1 class="text-2xl font-bold mb-4">Log In</h1>
 
-      <div x-show="!recoveryMode">
+      <div x-show="!recoveryMode" x-cloak>
         <input type="email" x-model="email" placeholder="Email"
                class="border p-2 w-full mb-2" @keyup.enter="login">
         <input type="password" x-model="password" placeholder="Password"
@@ -28,7 +29,7 @@
         <p class="text-red-600 mt-2" x-text="error"></p>
       </div>
 
-      <div x-show="recoveryMode" class="space-y-2">
+      <div x-show="recoveryMode" x-cloak class="space-y-2">
         <input type="password" x-model="recoveryPassword" placeholder="New password"
                class="border p-2 w-full mb-2">
         <button @click="setNewPassword"
