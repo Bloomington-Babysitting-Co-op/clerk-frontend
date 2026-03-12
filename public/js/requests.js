@@ -153,7 +153,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
                   </label>
                 `;
               }).join("")
-            : '<p class="text-sm text-gray-600">No children available for selection.</p>'}
+            : '<p class="text-sm text-gray-600">No children selected.</p>'}
         </div>
       </div>
 
