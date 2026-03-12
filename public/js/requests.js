@@ -228,8 +228,9 @@ function initRequestFormInteractions(prefix) {
     }
     hoursWrapper.style.display = "block";
     hoursInput.readOnly = isBabysit;
-    hoursInput.classList.toggle("bg-gray-100", isBabysit);
-    hoursInput.classList.toggle("text-gray-800", isBabysit);
+    const hoursGray = isBabysit || hoursInput.disabled;
+    hoursInput.classList.toggle("bg-gray-100", hoursGray);
+    hoursInput.classList.toggle("text-gray-800", hoursGray);
     babysitFields.style.display = isBabysit ? "block" : "none";
     if (isBabysit && !mealRequired.checked) {
       mealPreparedBySitter.checked = false;
