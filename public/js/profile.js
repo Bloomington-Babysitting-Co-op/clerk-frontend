@@ -302,8 +302,8 @@ async function mountProfilePage() {
       const { error: parentError } = await supabase.rpc("rpc_update_my_parent_profile", {
         p_name: parentName,
         p_phone: phone,
-        p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive"),
         p_email_endmonth_summary: getCheckedValue("email-endmonth-summary"),
+        p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive"),
         p_email_ledger_change: getCheckedValue("email-ledger-change"),
         p_email_request_new: getCheckedValue("email-request-new"),
         p_email_request_offered: getCheckedValue("email-request-offered"),
@@ -391,8 +391,8 @@ async function mountProfilePage() {
     if (parent) {
       setInputValue("profile-parent-name", parent.name || "");
       setInputValue("profile-phone", parent.phone || "");
-      setCheckedValue("email-midmonth-inactive", parent.email_midmonth_inactive);
       setCheckedValue("email-endmonth-summary", parent.email_endmonth_summary);
+      setCheckedValue("email-midmonth-inactive", parent.email_midmonth_inactive);
       setCheckedValue("email-ledger-change", parent.email_ledger_change);
       setCheckedValue("email-request-new", parent.email_request_new);
       setCheckedValue("email-request-offered", parent.email_request_offered);
