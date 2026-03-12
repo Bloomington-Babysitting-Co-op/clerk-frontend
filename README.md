@@ -32,7 +32,7 @@ To set up a local development environment that replicates Cloudflare Pages:
    * Production branch: `main`
    * Build command: `npm run generate-env`
    * Build output directory: `public`
-   * Environment variables: add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` with remote values from `.env`
+   * Environment variables: add `FRONTEND_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY` with remote values from `.env`
    * Click "Save and Deploy"
 2. Go to the project settings and add `SUPABASE_SECRET_KEY` as a secret with remote value from `.env`
 3. Force a deploy (either by pushing another commit, or using a deploy hook)
