@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tutorial – BBC Clerk</title>
+  <script src="/js/fast-auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto p-6">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mt-1">Getting Started</h1>
+      <p class="mt-2 text-gray-700">This guide walks you through the everyday actions you will take in BBC Clerk: keeping your profile current, making and responding to requests, and logging time in the ledger.</p>
+    </header>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold">Helpful Tips</h2>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <ul class="mt-2 list-disc pl-5">
+          <li>Keep your family profile updated.</li>
+          <li>Update your request if details change.</li>
+          <li>Try to prioritize offers from families that have not been active yet this month, or who have lower balances.</li>
+          <li>After a request is assigned, coordinate outside the site as necessary.</li>
+          <li>Log ledger entries soon after requests are completed to keep the ledger accurate.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold">Dashboard</h2>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <ul class="mt-2 list-disc pl-5">
+          <li>The dashboard shows the latest notices, activities, updates, and quick links.</li>
+          <li>Check it when you sign in for reminders or time-sensitive messages.</li>
+        </ul>
+      </div>
+      <div class="mt-2">
+        <a href="/" class="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Open Dashboard</a>
+      </div>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold">Families: Consolidated member info</h2>
+      <p class="mt-2 text-gray-700">Profiles help families coordinate and get to know each other.</p>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <p class="font-semibold text-gray-900">See other families</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>Browse other families in the co-op.</li>
+          <li>Easily see important emergency contact and child allergy information.</li>
+        </ul>
+      </div>
+      <a href="/families.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Browse Families</a>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <p class="font-semibold text-gray-900">Complete Your Profile</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>Your profile helps other families coordinate with you.</li>
+          <li>Add accurate contact details, emergency contacts, child information, and any important notes.</li>
+          <li>Include a photo of your family for others to see on the families page.</li>
+          <li>Set your email notification preferences.</li>
+        </ul>
+      </div>
+      <a href="/profile.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Edit Profile</a>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold">Requests: Ask for Help</h2>
+      <p class="mt-2 text-gray-700">Requests are the way to ask for support.</p>
+      <div class="mt-2 grid gap-4 md:grid-cols-2">
+        <div class="rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+          <p class="font-semibold text-gray-900">Create a request</p>
+          <ul class="mt-2 list-disc pl-5">
+            <li>Select the appropriate type of request for your need: Babysit, Drive, or Favor,</li>
+            <li>Keep request descriptions short and specific for easier scanning.</li>
+            <li>Set the date (required) and start/end time (optional) for your request, checking the appropriate boxes if they are flexible.</li>
+            <li>Complete the rest of the fields for your selected request type.</li>
+          </ul>
+        </div>
+        <div class="rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+          <p class="font-semibold text-gray-900">Get offers to help</p>
+          <ul class="mt-2 list-disc pl-5">
+            <li>Members will see your request and can offer to help.</li>
+            <li>You can see offers to help below the request, with details on whether that family has used this month and their current balance.</li>
+            <li>Select a specific offer to assign it to your request.</li>
+            <li>Coordinate with your assigned helper outside this site as required.</li>
+          </ul>
+        </div>
+      </div>
+      <a href="/request-new.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Create Request</a>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <p class="font-semibold text-gray-900">Offer to help others</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>Browse open requests use the request details to understand the need and offer support.</li>
+          <li>Review the date, time, and location before responding.</li>
+          <li>Leave an optional message with how you can help.</li>
+          <li>Coordinate directly with the requester if your offer is accepted.</li>
+        </ul>
+      </div>
+      <a href="/requests.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Browse Requests</a>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold">Ledger: Track Time</h2>
+      <p class="mt-2 text-gray-700">The ledger records hours exchanged between members.</p>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <p class="font-semibold text-gray-900">View all entries</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>Review, filter, export any and all entries.</li>
+          <li>See current and prior month's member balances.</li>
+          <li>View the activity status for all members in the current month.</li>
+        </ul>
+      </div>
+      <a href="/ledger.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">Browse Ledger</a>
+      <div class="mt-2 rounded-lg border border-gray-200 bg-white p-4 text-gray-700">
+        <p class="font-semibold text-gray-900">Add a new entry</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>After a request is completed, record who was helped, the date and the number of hours to transfer.</li>
+          <li>Families may choose to Ad Hoc transfer hours to another family without going through the request→offer→assign→complete process.</li>
+          <li>Also there is a separate process for Admins to transfer hours for co-op maintenance (inactivity deduction, chair bonus).</li>
+        </ul>
+      </div>
+      <a href="/entry-new.html" class="mt-2 inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-100">New Entry</a>
+    </section>
+
+    <footer class="mt-8 text-sm text-gray-600">
+      Experiencing issues or have suggestions for improvement? Reach out to Alec Hedlund.
+    </footer>
+  </div>
+</body>
+</html>
