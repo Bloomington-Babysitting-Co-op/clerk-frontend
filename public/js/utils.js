@@ -1,6 +1,7 @@
 import { supabase } from "/js/supabase.js";
 
 let adminStatusCache = null;
+const _initedTextareas = new WeakSet();
 
 export function monthValueFromDate(value) {
   if (!value) return "";
@@ -122,6 +123,7 @@ export function downloadCsv(filename, rows) {
 
 export function autoResizeTextarea(textarea) {
   if (!textarea) return;
+  if (_initedTextareas.has(textarea)) return;
   try {
     textarea.style.overflow = "hidden";
     textarea.style.resize = "none";
@@ -135,16 +137,63 @@ export function autoResizeTextarea(textarea) {
   textarea.addEventListener("input", resize);
   // initial sizing
   resize();
+  _initedTextareas.add(textarea);
 }
 
-export function autoResizeAllTextareas(root = document) {
-  if (!root || !root.querySelectorAll) return;
-  const areas = Array.from(root.querySelectorAll("textarea"));
-  areas.forEach((a) => autoResizeTextarea(a));
+let _textareaObserver = null;
+let _observerDebounceTimer = null;
+const _pendingNodes = new Set();
+export function observeTextareas() {
+  if (typeof window === "undefined") return;
+  if (_textareaObserver) return;
+
+  // Initial pass: initialize any existing textareas
+  try {
+    const existing = Array.from(document.querySelectorAll("textarea"));
+    existing.forEach((a) => autoResizeTextarea(a));
+  } catch (e) {
+    // ignore
+  }
+
+  const processPending = () => {
+    const nodes = Array.from(_pendingNodes);
+    _pendingNodes.clear();
+    for (const node of nodes) {
+      try {
+        if (node.tagName === "TEXTAREA") {
+          autoResizeTextarea(node);
+        } else if (node.querySelectorAll) {
+          const areas = node.querySelectorAll("textarea");
+          areas.forEach((a) => autoResizeTextarea(a));
+        }
+      } catch (e) {
+        // ignore per-node errors
+      }
+    }
+  };
+
+  _textareaObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      for (const node of Array.from(m.addedNodes || [])) {
+        if (!node || node.nodeType !== 1) continue;
+        const el = node;
+        _pendingNodes.add(el);
+      }
+    }
+    if (_observerDebounceTimer) clearTimeout(_observerDebounceTimer);
+    _observerDebounceTimer = setTimeout(processPending, 50);
+  });
+
+  const target = document.documentElement || document.body;
+  try {
+    _textareaObserver.observe(target, { childList: true, subtree: true });
+  } catch (e) {
+    // ignore observe errors
+  }
 }
 
 if (typeof window !== "undefined") {
-  document.addEventListener("DOMContentLoaded", () => autoResizeAllTextareas());
+  document.addEventListener("DOMContentLoaded", () => observeTextareas());
 }
 
 export function setButtonTemporaryBusy(button, opts = {}) {
@@ -331,6 +380,8 @@ export async function setupNavbar(containerId) {
     `;
 
     container.innerHTML = navbarHTML;
+    // Ensure textarea observer is running when navbar is set up early
+    try { observeTextareas(); } catch (e) { /* ignore */ }
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }
