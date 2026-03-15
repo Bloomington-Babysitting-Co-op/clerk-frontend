@@ -120,6 +120,33 @@ export function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+export function autoResizeTextarea(textarea) {
+  if (!textarea) return;
+  try {
+    textarea.style.overflow = "hidden";
+    textarea.style.resize = "none";
+  } catch (e) {
+    // ignore styling failures
+  }
+  const resize = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+  textarea.addEventListener("input", resize);
+  // initial sizing
+  resize();
+}
+
+export function autoResizeAllTextareas(root = document) {
+  if (!root || !root.querySelectorAll) return;
+  const areas = Array.from(root.querySelectorAll("textarea"));
+  areas.forEach((a) => autoResizeTextarea(a));
+}
+
+if (typeof window !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => autoResizeAllTextareas());
+}
+
 export function setButtonTemporaryBusy(button, opts = {}) {
   if (!button) return;
   const {
