@@ -2,6 +2,8 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
   setupNavbar,
+  refreshAllTextareas,
+  refreshTextareaSize,
   formatDateTime,
   toDateInputValue,
   toTimeInputValue,
@@ -607,6 +609,8 @@ async function loadRequestInto(containerId) {
     </div>
   `;
 
+  refreshAllTextareas();
+
   let offerEditMode = false;
   let editingOfferId = null;
 
@@ -620,6 +624,7 @@ async function loadRequestInto(containerId) {
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Submit Offer";
       document.getElementById("offer-modal").style.display = "flex";
+      if (notesInput) refreshTextareaSize(notesInput);
     };
   }
 
@@ -632,6 +637,7 @@ async function loadRequestInto(containerId) {
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Save Offer";
       document.getElementById("offer-modal").style.display = "flex";
+      if (notesInput) refreshTextareaSize(notesInput);
     };
   }
 
@@ -692,7 +698,8 @@ async function loadRequestInto(containerId) {
       titleEl.textContent = isEditing ? "Edit Request" : "Request Details";
     }
     document.getElementById("view-mode").style.display = isEditing ? "none" : "block";
-    document.getElementById("edit-mode").style.display = isEditing ? "block" : "none";
+      document.getElementById("edit-mode").style.display = isEditing ? "block" : "none";
+      if (isEditing) { refreshAllTextareas(); }
   }
 
   async function saveRequest(requestId) {
@@ -844,6 +851,7 @@ async function mountNewRequestForm(containerId) {
   })}
   `;
 
+  refreshAllTextareas();
   initRequestFormInteractions("new-request");
 
   document.getElementById("new-request-submit-btn").onclick = async () => {
