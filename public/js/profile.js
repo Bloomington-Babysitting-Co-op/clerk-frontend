@@ -333,7 +333,7 @@ async function mountProfilePage() {
         return;
       }
 
-      const { error: childrenSaveError } = await supabase.rpc("rpc_replace_my_family_children", {
+      const { error: childrenSaveError } = await supabase.rpc("rpc_merge_my_family_children", {
         p_children: children
       });
 
