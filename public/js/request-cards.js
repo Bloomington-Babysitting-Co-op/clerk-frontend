@@ -10,31 +10,24 @@ function getRequestStatusTextClass(status) {
   return "text-gray-800";
 }
 
-function formatRequestStatusLabel(status) {
-  const normalized = String(status || "unknown").toLowerCase();
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
-function formatRequestTypeLabel(requestType) {
-  const normalized = String(requestType || "").toLowerCase();
-  if (!normalized) return "Unknown";
+function formatTitleCase(value) {
+  const normalized = String(value || "unknown").toLowerCase();
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 function formatRequestDateLine(request) {
-  const requestDate = request.date;
-  const dateLabel = requestDate
-    ? new Date(`${requestDate}T00:00:00`).toLocaleDateString()
-    : "No date";
-  return request.flexible_date ? `${dateLabel} <span class="text-xs text-gray-400">(flex)</span>` : dateLabel;
+  const dateLabel = new Date(`${request.date}T00:00:00`).toLocaleDateString();
+  const dateFlex = request.flexible_date ? ` <span class="text-xs text-gray-400">(flex)</span>` : '';
+  return `${dateLabel}${dateFlex}`;
 }
 
-function formatRequestTimeRangeLine(request) {
+function formatRequestTimeLine(request) {
   const start = formatTimeOnly(request.start_time) || "TBD";
   const end = formatTimeOnly(request.end_time) || "TBD";
-  const timeFlexible = request.flexible_start_time || request.flexible_end_time;
-  const timeLabel = `${start} - ${end}`;
-  return timeFlexible ? `${timeLabel} <span class="text-xs text-gray-400">(flex)</span>` : timeLabel;
+  let timeLabel = start;
+  if (request.type.toLowerCase() !== 'drive') timeLabel += ` - ${end}`;
+  const timeFlex = (request.flexible_start_time || request.flexible_end_time) ? ` <span class="text-xs text-gray-400">(flex)</span>` : '';
+  return `${timeLabel}${timeFlex}`;
 }
 
 function renderRequestListCard(request, options = {}) {
@@ -50,14 +43,14 @@ function renderRequestListCard(request, options = {}) {
       <div class="min-w-70">
         <p class="font-semibold">${request.family_name}</p>
         <p class="font-semibold flex items-center gap-2">
-          <span class="${getRequestStatusTextClass(request.status)}">${formatRequestStatusLabel(request.status)}</span>
-          <span class="text-gray-800">${formatRequestTypeLabel(request.type)}</span>
+          <span class="${getRequestStatusTextClass(request.status)}">${formatTitleCase(request.status)}</span>
+          <span class="text-gray-800">${formatTitleCase(request.type)}</span>
         </p>
-        <p class="text-sm text-gray-800">${formatRequestDateLine(request)} • ${formatRequestTimeRangeLine(request)}</p>
+        <p class="text-sm text-gray-800">${formatRequestDateLine(request)} • ${formatRequestTimeLine(request)}</p>
       </div>
       ${requestsExtHtml}
     </a>
   `;
 }
 
-export { getRequestStatusTextClass, formatRequestStatusLabel, renderRequestListCard };
+export { getRequestStatusTextClass, formatTitleCase, renderRequestListCard };
