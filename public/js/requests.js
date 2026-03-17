@@ -2,6 +2,7 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth.js";
 import {
   setupNavbar,
+  resizeTextarea,
   formatDateTime,
   toDateInputValue,
   toTimeInputValue,
@@ -620,6 +621,7 @@ async function loadRequestInto(containerId) {
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Submit Offer";
       document.getElementById("offer-modal").style.display = "flex";
+        try { resizeTextarea(document.getElementById("offer-modal")); } catch (e) { /* ignore */ }
     };
   }
 
@@ -632,6 +634,7 @@ async function loadRequestInto(containerId) {
       const submitBtn = document.getElementById("offer-submit-btn");
       if (submitBtn) submitBtn.textContent = "Save Offer";
       document.getElementById("offer-modal").style.display = "flex";
+      try { resizeTextarea(document.getElementById("offer-modal")); } catch (e) { /* ignore */ }
     };
   }
 
@@ -693,6 +696,9 @@ async function loadRequestInto(containerId) {
     }
     document.getElementById("view-mode").style.display = isEditing ? "none" : "block";
     document.getElementById("edit-mode").style.display = isEditing ? "block" : "none";
+      if (isEditing) {
+        try { resizeTextarea(document.getElementById("edit-mode")); } catch (e) { /* ignore */ }
+      }
   }
 
   async function saveRequest(requestId) {
