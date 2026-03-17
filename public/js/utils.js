@@ -121,6 +121,24 @@ export function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+export function resizeTextarea(root = document) {
+  if (typeof window === "undefined") return;
+  try {
+    const base = root && root.querySelectorAll ? root : document;
+    const areas = Array.from(base.querySelectorAll("textarea"));
+    areas.forEach((textarea) => {
+      try {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      } catch (e) {
+        // ignore per-textarea errors
+      }
+    });
+  } catch (e) {
+    // ignore
+  }
+}
+
 export function autoResizeTextarea(textarea) {
   if (!textarea) return;
   if (_initedTextareas.has(textarea)) return;
