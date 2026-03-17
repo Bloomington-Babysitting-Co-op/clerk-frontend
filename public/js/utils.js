@@ -121,46 +121,79 @@ export function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
-export function refreshTextareaSize(textarea) {
-  if (!textarea) return;
-  try {
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  } catch (e) { /* ignore */ }
-}
-
 export function autoResizeTextarea(textarea) {
   if (!textarea) return;
   if (_initedTextareas.has(textarea)) return;
   try {
-    textarea.style.overflow = 'hidden';
-    textarea.style.resize = 'none';
-  } catch (e) { /* ignore */ }
-
-  const resize = () => refreshTextareaSize(textarea);
-  textarea.addEventListener('input', resize);
+    textarea.style.overflow = "hidden";
+    textarea.style.resize = "none";
+  } catch (e) {
+    // ignore styling failures
+  }
+  const resize = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+  textarea.addEventListener("input", resize);
   // initial sizing
   resize();
   _initedTextareas.add(textarea);
 }
 
-export function refreshAllTextareas() {
-  if (typeof document === 'undefined') return;
-  const existing = document.querySelectorAll('textarea');
-  existing.forEach((t) => {
-    try {
-      autoResizeTextarea(t);
-    } catch (e) { /* ignore */ }
-  });
-}
-
+let _textareaObserver = null;
+let _observerDebounceTimer = null;
+const _pendingNodes = new Set();
 export function observeTextareas() {
-  if (typeof window === 'undefined') return;
-  refreshAllTextareas();
+  if (typeof window === "undefined") return;
+  if (_textareaObserver) return;
+
+  // Initial pass: initialize any existing textareas
+  try {
+    const existing = Array.from(document.querySelectorAll("textarea"));
+    existing.forEach((a) => autoResizeTextarea(a));
+  } catch (e) {
+    // ignore
+  }
+
+  const processPending = () => {
+    const nodes = Array.from(_pendingNodes);
+    _pendingNodes.clear();
+    for (const node of nodes) {
+      try {
+        if (node.tagName === "TEXTAREA") {
+          autoResizeTextarea(node);
+        } else if (node.querySelectorAll) {
+          const areas = node.querySelectorAll("textarea");
+          areas.forEach((a) => autoResizeTextarea(a));
+        }
+      } catch (e) {
+        // ignore per-node errors
+      }
+    }
+  };
+
+  _textareaObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      for (const node of Array.from(m.addedNodes || [])) {
+        if (!node || node.nodeType !== 1) continue;
+        const el = node;
+        _pendingNodes.add(el);
+      }
+    }
+    if (_observerDebounceTimer) clearTimeout(_observerDebounceTimer);
+    _observerDebounceTimer = setTimeout(processPending, 50);
+  });
+
+  const target = document.documentElement || document.body;
+  try {
+    _textareaObserver.observe(target, { childList: true, subtree: true });
+  } catch (e) {
+    // ignore observe errors
+  }
 }
 
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', observeTextareas);
+if (typeof window !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => observeTextareas());
 }
 
 export function setButtonTemporaryBusy(button, opts = {}) {
