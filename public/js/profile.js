@@ -121,7 +121,6 @@ function renderChildren(children = []) {
   list.innerHTML = "";
   const rows = children.length ? children : [{}];
   rows.forEach((child) => list.appendChild(createChildRow(child)));
-  refreshAllTextareas();
 }
 
 function addBlankChildRow() {
