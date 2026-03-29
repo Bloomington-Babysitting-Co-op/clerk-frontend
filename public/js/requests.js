@@ -29,6 +29,7 @@ function getRequestFormValuesFromRequest(request) {
     meal_required: !!request.meal_required,
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
     sitters_children_welcome: !!request.sitters_children_welcome,
+    pets_are_present: !!request.pets_are_present,
     selected_child_ids: [],
     available_children: [],
     origin: request.origin || "",
@@ -51,6 +52,7 @@ function getDefaultRequestFormValues() {
     meal_required: false,
     meal_prepared_by_sitter: false,
     sitters_children_welcome: false,
+    pets_are_present: false,
     selected_child_ids: [],
     available_children: [],
     origin: "",
@@ -121,20 +123,27 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <option value="either" ${values.sit_location === "either" ? "selected" : ""}>Either</option>
         </select>
 
-        <label class="inline-flex items-center gap-2 mb-2">
-          <input type="checkbox" id="${prefix}-meal-required" ${values.meal_required ? "checked" : ""} ${disabledAttr}>
-          <span>Meal required</span>
-        </label>
+        <div class="mb-2">
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" id="${prefix}-meal-required" ${values.meal_required ? "checked" : ""} ${disabledAttr}>
+            <span>Meal required</span>
+          </label>
+          <label id="${prefix}-meal-prepared-wrapper" class="inline-flex items-center gap-2 ml-2">
+            <input type="checkbox" id="${prefix}-meal-prepared-by-sitter" ${values.meal_prepared_by_sitter ? "checked" : ""} ${disabledAttr}>
+            <span>Meal prepared by sitter</span>
+          </label>
+        </div>
 
-        <label id="${prefix}-meal-prepared-wrapper" class="inline-flex items-center gap-2 mb-2 ml-2">
-          <input type="checkbox" id="${prefix}-meal-prepared-by-sitter" ${values.meal_prepared_by_sitter ? "checked" : ""} ${disabledAttr}>
-          <span>Meal prepared by sitter</span>
-        </label>
-
-        <label class="flex items-center gap-2 mb-4">
-          <input type="checkbox" id="${prefix}-sitters-children-welcome" ${values.sitters_children_welcome ? "checked" : ""} ${disabledAttr}>
-          <span>Sitter's children welcome</span>
-        </label>
+        <div class="mb-4">
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" id="${prefix}-sitters-children-welcome" ${values.sitters_children_welcome ? "checked" : ""} ${disabledAttr}>
+            <span>Sitter's children welcome</span>
+          </label>
+          <label id="${prefix}-pets-present-wrapper" class="inline-flex items-center gap-2 ml-2">
+            <input type="checkbox" id="${prefix}-pets-are-present" ${values.pets_are_present ? "checked" : ""} ${disabledAttr}>
+            <span>Pets are present</span>
+          </label>
+        </div>
 
         <label class="block mb-2 font-semibold">Children</label>
         <div id="${prefix}-children-select" class="border rounded p-3 mb-4 space-y-2">
@@ -192,6 +201,9 @@ function initRequestFormInteractions(prefix) {
   const mealRequired = document.getElementById(`${prefix}-meal-required`);
   const mealPreparedBySitter = document.getElementById(`${prefix}-meal-prepared-by-sitter`);
   const mealPreparedWrapper = document.getElementById(`${prefix}-meal-prepared-wrapper`);
+  const sittersChildrenWelcome = document.getElementById(`${prefix}-sitters-children-welcome`);
+  const petsArePresent = document.getElementById(`${prefix}-pets-are-present`);
+  const petsPresentWrapper = document.getElementById(`${prefix}-pets-present-wrapper`);
   const driveFields = document.getElementById(`${prefix}-drive-fields`);
   const flexibleStartInitiallyDisabled = flexibleStartTimeInput.disabled;
   const flexibleEndInitiallyDisabled = flexibleEndTimeInput.disabled;
@@ -237,6 +249,10 @@ function initRequestFormInteractions(prefix) {
       mealPreparedBySitter.checked = false;
     }
     mealPreparedWrapper.style.display = isBabysit && mealRequired.checked ? "inline-flex" : "none";
+    if (isBabysit && !sittersChildrenWelcome.checked) {
+      petsArePresent.checked = false;
+    }
+    petsPresentWrapper.style.display = isBabysit && sittersChildrenWelcome.checked ? "inline-flex" : "none";
     driveFields.style.display = isDrive ? "block" : "none";
     refreshTimeFlexControls();
     refreshCalculatedHours();
@@ -244,6 +260,7 @@ function initRequestFormInteractions(prefix) {
 
   requestType.addEventListener("change", refreshFormVisibility);
   mealRequired.addEventListener("change", refreshFormVisibility);
+  sittersChildrenWelcome.addEventListener("change", refreshFormVisibility);
   requestDateInput.addEventListener("change", refreshCalculatedHours);
   startTimeInput.addEventListener("input", refreshTimeFlexControls);
   endTimeInput.addEventListener("input", refreshTimeFlexControls);
@@ -271,6 +288,7 @@ function readRequestFormValues(prefix) {
     meal_required: document.getElementById(`${prefix}-meal-required`).checked,
     meal_prepared_by_sitter: document.getElementById(`${prefix}-meal-prepared-by-sitter`).checked,
     sitters_children_welcome: document.getElementById(`${prefix}-sitters-children-welcome`).checked,
+    pets_are_present: document.getElementById(`${prefix}-pets-are-present`).checked,
     selected_child_ids: childIds,
     origin: document.getElementById(`${prefix}-origin`).value,
     destination: document.getElementById(`${prefix}-destination`).value
@@ -308,10 +326,6 @@ function normalizeFormPayload(values, options = {}) {
     errors.push("End time must be after start time.");
   }
 
-  if (values.meal_prepared_by_sitter && !values.meal_required) {
-    errors.push("Meal cannot be prepared by sitter unless meal is required.");
-  }
-
   const autoHours = requestType === "babysit" ? calculateHours(startTimeValue, endTimeValue) : null;
   const manualHours = requestType !== "babysit" && values.hours !== "" ? Number(values.hours) : null;
   const payloadHours = autoHours ?? manualHours;
@@ -342,6 +356,7 @@ function normalizeFormPayload(values, options = {}) {
       p_meal_required: isBabysit ? !!values.meal_required : false,
       p_meal_prepared_by_sitter: isBabysit ? !!values.meal_prepared_by_sitter : false,
       p_sitters_children_welcome: isBabysit ? !!values.sitters_children_welcome : false,
+      p_pets_are_present: isBabysit ? !!values.pets_are_present : false,
       p_child_ids: isBabysit ? (values.selected_child_ids || []) : null,
       p_origin: isDrive ? (values.origin || null) : null,
       p_destination: isDrive ? (values.destination || null) : null
@@ -726,6 +741,7 @@ async function loadRequestInto(containerId) {
       p_meal_required: payload.p_meal_required,
       p_meal_prepared_by_sitter: payload.p_meal_prepared_by_sitter,
       p_sitters_children_welcome: payload.p_sitters_children_welcome,
+      p_pets_are_present: payload.p_pets_are_present,
       p_child_ids: payload.p_child_ids,
       p_origin: payload.p_origin,
       p_destination: payload.p_destination
