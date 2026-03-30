@@ -305,13 +305,16 @@ async function mountProfilePage() {
         p_email_endmonth_summary: getCheckedValue("email-endmonth-summary"),
         p_email_midmonth_inactive: getCheckedValue("email-midmonth-inactive"),
         p_email_ledger_change: getCheckedValue("email-ledger-change"),
-        p_email_request_new: getCheckedValue("email-request-new"),
-        p_email_request_offered: getCheckedValue("email-request-offered"),
-        p_email_request_unoffered: getCheckedValue("email-request-unoffered"),
-        p_email_request_expired: getCheckedValue("email-request-expired"),
-        p_email_offer_assigned: getCheckedValue("email-offer-assigned"),
-        p_email_offer_completed: getCheckedValue("email-offer-completed"),
-        p_email_offer_change: getCheckedValue("email-offer-change")
+        p_email_other_request_new: getCheckedValue("email-other-request-new"),
+        p_email_other_request_unoffered: getCheckedValue("email-other-request-unoffered"),
+        p_email_other_request_expiring: getCheckedValue("email-other-request-expiring"),
+        p_email_my_request_offered: getCheckedValue("email-my-request-offered"),
+        p_email_my_request_unoffered: getCheckedValue("email-my-request-unoffered"),
+        p_email_my_request_expiring: getCheckedValue("email-my-request-expiring"),
+        p_email_my_request_expired: getCheckedValue("email-my-request-expired"),
+        p_email_my_offer_assigned: getCheckedValue("email-my-offer-assigned"),
+        p_email_my_offer_change: getCheckedValue("email-my-offer-change"),
+        p_email_my_offer_completed: getCheckedValue("email-my-offer-completed")
       });
       if (parentError) {
         setStatusText("profile-save-message", parentError.message, true);
@@ -394,13 +397,16 @@ async function mountProfilePage() {
       setCheckedValue("email-endmonth-summary", parent.email_endmonth_summary);
       setCheckedValue("email-midmonth-inactive", parent.email_midmonth_inactive);
       setCheckedValue("email-ledger-change", parent.email_ledger_change);
-      setCheckedValue("email-request-new", parent.email_request_new);
-      setCheckedValue("email-request-offered", parent.email_request_offered);
-      setCheckedValue("email-request-unoffered", parent.email_request_unoffered);
-      setCheckedValue("email-request-expired", parent.email_request_expired);
-      setCheckedValue("email-offer-assigned", parent.email_offer_assigned);
-      setCheckedValue("email-offer-completed", parent.email_offer_completed);
-      setCheckedValue("email-offer-change", parent.email_offer_change);
+      setCheckedValue("email-other-request-new", parent.email_other_request_new);
+      setCheckedValue("email-other-request-unoffered", parent.email_other_request_unoffered);
+      setCheckedValue("email-other-request-expiring", parent.email_other_request_expiring);
+      setCheckedValue("email-my-request-offered", parent.email_my_request_offered);
+      setCheckedValue("email-my-request-unoffered", parent.email_my_request_unoffered);
+      setCheckedValue("email-my-request-expiring", parent.email_my_request_expiring);
+      setCheckedValue("email-my-request-expired", parent.email_my_request_expired);
+      setCheckedValue("email-my-offer-assigned", parent.email_my_offer_assigned);
+      setCheckedValue("email-my-offer-change", parent.email_my_offer_change);
+      setCheckedValue("email-my-offer-completed", parent.email_my_offer_completed);
     }
 
     if (profile) {
