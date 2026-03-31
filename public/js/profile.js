@@ -92,6 +92,17 @@ function createChildRow(child = {}) {
       <textarea data-child-field="allergies" class="border p-2 w-full rounded" rows="2">${child.allergies || ""}</textarea>
     </div>
     <div>
+      <label class="block text-sm font-medium mb-1">Car Seat requirements</label>
+      <select data-child-field="car_seat" class="border p-2 w-full rounded">
+        <option value="">Select a car seat</option>
+        <option value="infant" ${child.car_seat === "infant" ? "selected" : ""}>Infant</option>
+        <option value="rearfacing" ${child.car_seat === "rearfacing" ? "selected" : ""}>Rear-facing</option>
+        <option value="forwardfacing" ${child.car_seat === "forwardfacing" ? "selected" : ""}>Forward-facing</option>
+        <option value="booster" ${child.car_seat === "booster" ? "selected" : ""}>Booster</option>
+        <option value="none" ${child.car_seat === "none" ? "selected" : ""}>None</option>
+      </select>
+    </div>
+    <div>
       <label class="block text-sm font-medium mb-1">Notes</label>
       <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
@@ -142,9 +153,10 @@ function collectChildrenPayload() {
     const name = row.querySelector('[data-child-field="name"]')?.value?.trim() || "";
     const dateOfBirth = row.querySelector('[data-child-field="date_of_birth"]')?.value || "";
     const allergies = row.querySelector('[data-child-field="allergies"]')?.value?.trim() || "";
+    const carSeat = row.querySelector('[data-child-field="car_seat"]')?.value?.trim() || "";
     const notes = row.querySelector('[data-child-field="notes"]')?.value?.trim() || "";
 
-    const hasAnyValue = !!(name || dateOfBirth || allergies || notes);
+    const hasAnyValue = !!(name || dateOfBirth || allergies || carSeat || notes);
     if (!hasAnyValue) continue;
 
     if (!name || !dateOfBirth) {
@@ -156,6 +168,7 @@ function collectChildrenPayload() {
       name,
       date_of_birth: dateOfBirth,
       allergies,
+      car_seat: carSeat,
       notes
     });
   }
@@ -448,6 +461,7 @@ async function mountProfilePage() {
       name: child.name,
       date_of_birth: monthValueFromDate(child.date_of_birth),
       allergies: child.allergies,
+      car_seat: child.car_seat,
       notes: child.notes
     })));
   } catch (error) {

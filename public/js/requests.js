@@ -33,7 +33,8 @@ function getRequestFormValuesFromRequest(request) {
     selected_child_ids: [],
     available_children: [],
     origin: request.origin || "",
-    destination: request.destination || ""
+    destination: request.destination || "",
+    adult_count: request.adult_count ?? 0
   };
 }
 
@@ -56,7 +57,8 @@ function getDefaultRequestFormValues() {
     selected_child_ids: [],
     available_children: [],
     origin: "",
-    destination: ""
+    destination: "",
+    adult_count: 0
   };
 }
 
@@ -146,7 +148,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
         </div>
 
         <label class="block mb-2 font-semibold">Children</label>
-        <div id="${prefix}-children-select" class="border rounded p-3 mb-4 space-y-2">
+        <div id="${prefix}-babysit-children-select" class="border rounded p-3 mb-4 space-y-2">
           ${Array.isArray(values.available_children) && values.available_children.length
             ? values.available_children.map((child) => {
                 const selected = Array.isArray(values.selected_child_ids) && values.selected_child_ids.includes(child.id);
@@ -173,6 +175,30 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
         <label class="block mb-2 font-semibold">Destination</label>
         <input type="text" id="${prefix}-destination" value="${values.destination}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+
+        <label class="block mb-2 font-semibold">Adults</label>
+        <input type="number" step="1" min="0" id="${prefix}-adult-count" value="${values.adult_count}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+
+        <label class="block mb-2 font-semibold">Children</label>
+        <div id="${prefix}-drive-children-select" class="border rounded p-3 mb-4 space-y-2">
+          ${Array.isArray(values.available_children) && values.available_children.length
+            ? values.available_children.map((child) => {
+                const selected = Array.isArray(values.selected_child_ids) && values.selected_child_ids.includes(child.id);
+                const ageLabel = getAgeLabel(child.date_of_birth);
+                const carseatText = (child.car_seat || "").trim();
+                const notesText = (child.notes || "").trim();
+                return `
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""} ${disabledAttr}>
+                    <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}
+                      ${carseatText ? `<span class="block font-semibold text-gray-800">Car Seat: ${carseatText}</span>` : ""}
+                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${notesText}</span>` : ""}
+                    </span>
+                  </label>
+                `;
+              }).join("")
+            : '<p class="text-sm text-gray-600">No children selected.</p>'}
+        </div>
       </div>
 
       ${showActions ? `
@@ -270,7 +296,7 @@ function initRequestFormInteractions(prefix) {
 }
 
 function readRequestFormValues(prefix) {
-  const childIds = Array.from(document.querySelectorAll(`#${prefix}-children-select [data-child-id]:checked`))
+  const childIds = Array.from(document.querySelectorAll(`#${prefix}-babysit-children-select [data-child-id]:checked, #${prefix}-drive-children-select [data-child-id]:checked`))
     .map((input) => input.getAttribute("data-child-id"))
     .filter(Boolean);
 
@@ -291,7 +317,8 @@ function readRequestFormValues(prefix) {
     pets_are_present: document.getElementById(`${prefix}-pets-are-present`).checked,
     selected_child_ids: childIds,
     origin: document.getElementById(`${prefix}-origin`).value,
-    destination: document.getElementById(`${prefix}-destination`).value
+    destination: document.getElementById(`${prefix}-destination`).value,
+    adult_count: document.getElementById(`${prefix}-adult-count`).value
   };
 }
 
@@ -357,9 +384,10 @@ function normalizeFormPayload(values, options = {}) {
       p_meal_prepared_by_sitter: isBabysit ? !!values.meal_prepared_by_sitter : false,
       p_sitters_children_welcome: isBabysit ? !!values.sitters_children_welcome : false,
       p_pets_are_present: isBabysit ? !!values.pets_are_present : false,
-      p_child_ids: isBabysit ? (values.selected_child_ids || []) : null,
+      p_child_ids: isBabysit || isDrive ? (values.selected_child_ids || []) : null,
       p_origin: isDrive ? (values.origin || null) : null,
-      p_destination: isDrive ? (values.destination || null) : null
+      p_destination: isDrive ? (values.destination || null) : null,
+      p_adult_count: isDrive ? (parseInt(values.adult_count, 10) || 0) : null
     }
   };
 }
@@ -744,7 +772,8 @@ async function loadRequestInto(containerId) {
       p_pets_are_present: payload.p_pets_are_present,
       p_child_ids: payload.p_child_ids,
       p_origin: payload.p_origin,
-      p_destination: payload.p_destination
+      p_destination: payload.p_destination,
+      p_adult_count: payload.p_adult_count
     });
 
     if (error) {
