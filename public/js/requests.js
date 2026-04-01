@@ -10,7 +10,9 @@ import {
   calculateHours,
   downloadCsv,
   setButtonTemporaryBusy,
-  setFormError
+  setFormError,
+  escapeHtml,
+  normalizeQuarterHoursInput
 } from "./utils.js";
 import { getRequestStatusTextClass, formatTitleCase, renderRequestListCard } from "./request-cards.js";
 
@@ -25,6 +27,7 @@ function getRequestFormValuesFromRequest(request) {
     flexible_start_time: !!request.flexible_start_time,
     flexible_end_time: !!request.flexible_end_time,
     hours: request.hours ?? "",
+    retainer_hours: request.retainer_hours ?? 0,
     sit_location: request.sit_location || "requester_house",
     meal_required: !!request.meal_required,
     meal_prepared_by_sitter: !!request.meal_prepared_by_sitter,
@@ -49,6 +52,7 @@ function getDefaultRequestFormValues() {
     flexible_start_time: false,
     flexible_end_time: false,
     hours: "",
+    retainer_hours: 0,
     sit_location: "requester_house",
     meal_required: false,
     meal_prepared_by_sitter: false,
@@ -81,7 +85,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
       </select>
 
       <label class="block mb-2 font-semibold">Description <span class="text-red-600">*</span></label>
-      <textarea id="${prefix}-notes" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>${values.notes}</textarea>
+      <textarea id="${prefix}-notes" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>${escapeHtml(values.notes)}</textarea>
 
       <div class="flex items-center justify-between mb-2">
         <label class="font-semibold">Request Date <span class="text-red-600">*</span></label>
@@ -90,7 +94,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <span>Flexible</span>
         </label>
       </div>
-      <input type="date" id="${prefix}-request-date" value="${values.request_date}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>
+      <input type="date" id="${prefix}-request-date" value="${escapeHtml(values.request_date)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" required ${disabledAttr}>
 
       <div class="flex items-center justify-between mb-2">
           <label class="font-semibold">Start Time</label>
@@ -99,7 +103,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <span>Flexible</span>
         </label>
       </div>
-      <input type="time" id="${prefix}-start-time" value="${values.start_time}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+      <input type="time" id="${prefix}-start-time" value="${escapeHtml(values.start_time)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
 
       <div id="${prefix}-end-time-section">
         <div class="flex items-center justify-between mb-2">
@@ -109,13 +113,17 @@ function getRequestFormHtml(prefix, values, options = {}) {
             <span>Flexible</span>
           </label>
         </div>
-        <input type="time" id="${prefix}-end-time" value="${values.end_time}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        <input type="time" id="${prefix}-end-time" value="${escapeHtml(values.end_time)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
       </div>
 
       <div id="${prefix}-hours-wrapper">
         <label class="block mb-2 font-semibold">Hours</label>
-        <input type="number" step="0.25" min="0" id="${prefix}-hours" value="${values.hours}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        <input type="number" step="0.25" min="0" id="${prefix}-hours" value="${escapeHtml(values.hours)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
       </div>
+
+      <label class="block mb-2 font-semibold">Retainer Hours</label>
+      <input type="number" step="0.25" min="0" id="${prefix}-retainer-hours" value="${escapeHtml(values.retainer_hours)}" class="border p-2 w-full mb-1 ${readOnlyFieldClass}" ${disabledAttr}>
+      <p class="text-xs text-gray-500 mb-4">Hours credited to backup sitters on completion. Required for secondary/tertiary assignment.</p>
 
       <div id="${prefix}-babysit-fields">
         <label class="block mb-2 font-semibold">Sit Location</label>
@@ -158,9 +166,9 @@ function getRequestFormHtml(prefix, values, options = {}) {
                 return `
                   <label class="flex items-center gap-2">
                     <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""} ${disabledAttr}>
-                    <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}
-                      ${allergiesText ? `<span class="block font-semibold text-gray-800">Allergies: ${allergiesText}</span>` : ""}
-                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${notesText}</span>` : ""}
+                    <span>${escapeHtml(child.name || "Unnamed child")}${ageLabel ? ` (${escapeHtml(ageLabel)})` : ""}
+                      ${allergiesText ? `<span class="block font-semibold text-gray-800">Allergies: ${escapeHtml(allergiesText)}</span>` : ""}
+                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${escapeHtml(notesText)}</span>` : ""}
                     </span>
                   </label>
                 `;
@@ -171,13 +179,13 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       <div id="${prefix}-drive-fields">
         <label class="block mb-2 font-semibold">Origin</label>
-        <input type="text" id="${prefix}-origin" value="${values.origin}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        <input type="text" id="${prefix}-origin" value="${escapeHtml(values.origin)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
 
         <label class="block mb-2 font-semibold">Destination</label>
-        <input type="text" id="${prefix}-destination" value="${values.destination}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        <input type="text" id="${prefix}-destination" value="${escapeHtml(values.destination)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
 
         <label class="block mb-2 font-semibold">Adults</label>
-        <input type="number" step="1" min="0" id="${prefix}-adult-count" value="${values.adult_count}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        <input type="number" step="1" min="0" id="${prefix}-adult-count" value="${escapeHtml(values.adult_count)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
 
         <label class="block mb-2 font-semibold">Children</label>
         <div id="${prefix}-drive-children-select" class="border rounded p-3 mb-4 space-y-2">
@@ -190,9 +198,9 @@ function getRequestFormHtml(prefix, values, options = {}) {
                 return `
                   <label class="flex items-center gap-2">
                     <input type="checkbox" data-child-id="${child.id}" ${selected ? "checked" : ""} ${disabledAttr}>
-                    <span>${child.name || "Unnamed child"}${ageLabel ? ` (${ageLabel})` : ""}
-                      ${carseatText ? `<span class="block font-semibold text-gray-800">Car Seat: ${carseatText}</span>` : ""}
-                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${notesText}</span>` : ""}
+                    <span>${escapeHtml(child.name || "Unnamed child")}${ageLabel ? ` (${escapeHtml(ageLabel)})` : ""}
+                      ${carseatText ? `<span class="block font-semibold text-gray-800">Car Seat: ${escapeHtml(carseatText)}</span>` : ""}
+                      ${notesText ? `<span class="block italic text-gray-800">Notes: ${escapeHtml(notesText)}</span>` : ""}
                     </span>
                   </label>
                 `;
@@ -231,6 +239,7 @@ function initRequestFormInteractions(prefix) {
   const petsArePresent = document.getElementById(`${prefix}-pets-are-present`);
   const petsPresentWrapper = document.getElementById(`${prefix}-pets-present-wrapper`);
   const driveFields = document.getElementById(`${prefix}-drive-fields`);
+  const retainerHoursInput = document.getElementById(`${prefix}-retainer-hours`);
   const flexibleStartInitiallyDisabled = flexibleStartTimeInput.disabled;
   const flexibleEndInitiallyDisabled = flexibleEndTimeInput.disabled;
 
@@ -292,6 +301,9 @@ function initRequestFormInteractions(prefix) {
   endTimeInput.addEventListener("input", refreshTimeFlexControls);
   startTimeInput.addEventListener("change", refreshCalculatedHours);
   endTimeInput.addEventListener("change", refreshCalculatedHours);
+  if (retainerHoursInput) {
+    retainerHoursInput.addEventListener("change", () => normalizeQuarterHoursInput(retainerHoursInput));
+  }
   refreshFormVisibility();
 }
 
@@ -310,6 +322,7 @@ function readRequestFormValues(prefix) {
     flexible_start_time: document.getElementById(`${prefix}-flexible-start-time`).checked,
     flexible_end_time: document.getElementById(`${prefix}-flexible-end-time`).checked,
     hours: document.getElementById(`${prefix}-hours`).value,
+    retainer_hours: document.getElementById(`${prefix}-retainer-hours`).value,
     sit_location: document.getElementById(`${prefix}-sit-location`).value,
     meal_required: document.getElementById(`${prefix}-meal-required`).checked,
     meal_prepared_by_sitter: document.getElementById(`${prefix}-meal-prepared-by-sitter`).checked,
@@ -356,9 +369,18 @@ function normalizeFormPayload(values, options = {}) {
   const autoHours = requestType === "babysit" ? calculateHours(startTimeValue, endTimeValue) : null;
   const manualHours = requestType !== "babysit" && values.hours !== "" ? Number(values.hours) : null;
   const payloadHours = autoHours ?? manualHours;
+  const retainerHours = values.retainer_hours !== "" ? Number(values.retainer_hours) : 0;
 
   if (payloadHours !== null && (!Number.isFinite(payloadHours) || payloadHours <= 0)) {
     errors.push("Hours must be greater than zero.");
+  }
+
+  if (!Number.isFinite(retainerHours)) {
+    errors.push("Retainer hours must be a number.");
+  } else if (retainerHours < 0) {
+    errors.push("Retainer hours must be zero or greater.");
+  } else if (Math.abs((retainerHours * 4) - Math.round(retainerHours * 4)) > 1e-9) {
+    errors.push("Retainer hours must be in 0.25 hour increments.");
   }
 
   if (errors.length > 0) {
@@ -379,6 +401,7 @@ function normalizeFormPayload(values, options = {}) {
       p_flexible_start_time: !!values.flexible_start_time,
       p_flexible_end_time: !!values.flexible_end_time,
       p_hours: payloadHours,
+      p_retainer_hours: retainerHours,
       p_sit_location: isBabysit ? (values.sit_location || null) : null,
       p_meal_required: isBabysit ? !!values.meal_required : false,
       p_meal_prepared_by_sitter: isBabysit ? !!values.meal_prepared_by_sitter : false,
@@ -556,14 +579,18 @@ async function loadRequestInto(containerId) {
   const requesterId = r.requester_family_id;
   const requesterFamilyName = r.requester_family_name;
   const isRequester = requesterId === currentFamilyId;
+  const assignedOfferCount = offers.filter((offer) => offer.assign_order != null).length;
   const canOffer = r.status === "open" && !isRequester;
-  const canOfferWhenOffered = r.status === "offered" && !isRequester;
+  const canOfferWhenOffered = (
+    r.status === "offered"
+    || (r.status === "assigned" && Number(r.retainer_hours) > 0 && assignedOfferCount < 3)
+  ) && !isRequester;
   const myOffer = offers?.find((offer) => offer.family_id === currentFamilyId) || null;
   const hasAlreadyOffered = !!myOffer;
   const canEditMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canCancelMyOffer = hasAlreadyOffered && !isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
-  const canAssignOffer = isRequester && r.status === "offered";
-  const canClearAcceptedOffer = isRequester && r.status === "assigned";
+  const canAssignOffer = isRequester && (r.status === "offered" || r.status === "assigned");
+  const canUnassignOffer = isRequester && r.status === "assigned";
   const canEdit = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const canCancelRequest = isRequester && (r.status === "open" || r.status === "offered" || r.status === "assigned");
   const viewFormValues = getRequestFormValuesFromRequest(r);
@@ -585,7 +612,7 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-3xl mx-auto w-full">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
-      <label class="font-semibold mb-1"><span class="text-gray-800">${requesterFamilyName}</span></label>
+      <label class="font-semibold mb-1"><span class="text-gray-800">${escapeHtml(requesterFamilyName)}</span></label>
       <label class="font-semibold mb-4"><span class="${getRequestStatusTextClass(r.status)}">${formatTitleCase(r.status)}</span></label>
 
       <div id="view-mode">
@@ -594,7 +621,6 @@ async function loadRequestInto(containerId) {
           ${isRequester
             ? `
               <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
-              ${canClearAcceptedOffer ? `<button id="clear-accepted-offer-btn" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600">Cancel Accepted Offer</button>` : ""}
               <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
             `
             : ((canEditMyOffer || canCancelMyOffer)
@@ -618,18 +644,41 @@ async function loadRequestInto(containerId) {
           <h2 class="text-2xl font-bold mb-4">Offers (${offers.length})</h2>
           <div class="space-y-3">
             ${offers.map((offer) => {
-              const isAssignedOffer = !!r.assignee_family_id && offer.family_id === r.assignee_family_id;
+              const isAssignedOffer = offer.assign_order != null;
+              const assignLabel = offer.assign_order === 1 ? "Primary" : offer.assign_order === 2 ? "Secondary" : offer.assign_order === 3 ? "Tertiary" : null;
+              const bgClass = offer.assign_order === 1 ? "bg-green-100 border-green-300"
+                : offer.assign_order === 2 ? "bg-green-50 border-green-200"
+                : offer.assign_order === 3 ? "bg-emerald-50 border-emerald-200"
+                : "bg-gray-50";
+              const assignedCount = offers.filter(o => o.assign_order != null).length;
+              const nextAssignOrder = assignedCount + 1;
+              const canAssignThis = canAssignOffer && !isAssignedOffer && nextAssignOrder <= 3 && (nextAssignOrder === 1 || Number(r.retainer_hours) > 0);
+              const canUnassignThis = canUnassignOffer && isAssignedOffer;
+              const canReorder = canUnassignOffer && isAssignedOffer && assignedCount > 1;
+              const canMoveUp = canReorder && offer.assign_order > 1;
+              const canMoveDown = canReorder && offer.assign_order < assignedCount;
               return `
-              <div class="${isAssignedOffer ? "bg-green-100 border-green-300" : "bg-gray-50"} p-4 rounded border">
-                <p class="font-semibold text-gray-800 mb-1">${offer.family_name}</p>
+              <div class="${bgClass} p-4 rounded border">
+                <p class="font-semibold text-gray-800 mb-1">${escapeHtml(offer.family_name)}</p>
                 <p class="text-sm text-gray-600 mb-1">Hours Balance: ${offer.hours_balance ?? 0}</p>
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.active_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
-                <p class="text-gray-800"><em>${offer.notes || "No notes"}</em></p>
-                ${isAssignedOffer ? `<p class="text-sm text-green-600 mt-3 font-semibold">Accepted Offer</p>` : ""}
-                ${canAssignOffer && !isAssignedOffer
-                  ? `<button class="assign-offer-btn mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}">Accept Offer</button>`
-                  : ""}
+                <p class="text-gray-800"><em>${escapeHtml(offer.notes || "No notes")}</em></p>
+                ${isAssignedOffer ? `<p class="text-sm text-green-600 mt-3 font-semibold">${assignLabel}</p>` : ""}
+                <div class="mt-3 flex gap-2">
+                  ${canAssignThis
+                    ? `<button class="assign-offer-btn bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}" data-assign-order="${nextAssignOrder}">Assign ${nextAssignOrder === 1 ? "Primary" : nextAssignOrder === 2 ? "Secondary" : "Tertiary"}</button>`
+                    : ""}
+                  ${canMoveUp
+                    ? `<button class="reorder-offer-btn bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600" data-offer-id="${offer.id}" data-new-order="${offer.assign_order - 1}">\u25B2</button>`
+                    : ""}
+                  ${canMoveDown
+                    ? `<button class="reorder-offer-btn bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600" data-offer-id="${offer.id}" data-new-order="${offer.assign_order + 1}">\u25BC</button>`
+                    : ""}
+                  ${canUnassignThis
+                    ? `<button class="unassign-offer-btn bg-yellow-600 text-white px-3 py-2 rounded hover:bg-yellow-700" data-offer-id="${offer.id}">Unassign</button>`
+                    : ""}
+                </div>
               </div>
             `;
             }).join("")}
@@ -703,8 +752,26 @@ async function loadRequestInto(containerId) {
   document.querySelectorAll(".assign-offer-btn").forEach((button) => {
     button.onclick = async () => {
       const offerId = button.getAttribute("data-offer-id");
+      const assignOrder = parseInt(button.getAttribute("data-assign-order"), 10);
+      if (!offerId || !assignOrder) return;
+      await assignOffer(offerId, assignOrder);
+    };
+  });
+
+  document.querySelectorAll(".unassign-offer-btn").forEach((button) => {
+    button.onclick = async () => {
+      const offerId = button.getAttribute("data-offer-id");
       if (!offerId) return;
-      await assignOffer(id, offerId);
+      await unassignOffer(offerId);
+    };
+  });
+
+  document.querySelectorAll(".reorder-offer-btn").forEach((button) => {
+    button.onclick = async () => {
+      const offerId = button.getAttribute("data-offer-id");
+      const newOrder = parseInt(button.getAttribute("data-new-order"), 10);
+      if (!offerId || !newOrder) return;
+      await reorderOffer(offerId, newOrder);
     };
   });
 
@@ -716,10 +783,6 @@ async function loadRequestInto(containerId) {
 
   if (document.getElementById("cancel-request-btn")) {
     document.getElementById("cancel-request-btn").onclick = () => cancelRequest(id);
-  }
-
-  if (document.getElementById("clear-accepted-offer-btn")) {
-    document.getElementById("clear-accepted-offer-btn").onclick = () => clearAcceptedOffer(id);
   }
 
   if (document.getElementById("edit-request-cancel-btn")) {
@@ -765,6 +828,7 @@ async function loadRequestInto(containerId) {
       p_end_time: payload.p_end_time,
       p_notes: payload.p_notes,
       p_hours: payload.p_hours,
+      p_retainer_hours: payload.p_retainer_hours,
       p_sit_location: payload.p_sit_location,
       p_meal_required: payload.p_meal_required,
       p_meal_prepared_by_sitter: payload.p_meal_prepared_by_sitter,
@@ -798,10 +862,42 @@ async function loadRequestInto(containerId) {
     }
   }
 
-  async function assignOffer(requestId, offerId) {
-    const { error } = await supabase.rpc("rpc_assign_request", {
-      p_request_id: requestId,
+  async function assignOffer(offerId, assignOrder) {
+    const label = assignOrder === 1 ? "primary" : assignOrder === 2 ? "secondary" : "tertiary";
+    const confirmed = window.confirm(`Are you sure you want to assign this offer as ${label}?`);
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc("rpc_assign_offer", {
+      p_offer_id: offerId,
+      p_assign_order: assignOrder
+    });
+
+    if (error) {
+      setFormError("request-error", error.message);
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function unassignOffer(offerId) {
+    const confirmed = window.confirm("Are you sure you want to unassign this offer?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc("rpc_unassign_offer", {
       p_offer_id: offerId
+    });
+
+    if (error) {
+      setFormError("request-error", error.message);
+    } else {
+      window.location.reload();
+    }
+  }
+
+  async function reorderOffer(offerId, newOrder) {
+    const { error } = await supabase.rpc("rpc_reorder_offer", {
+      p_offer_id: offerId,
+      p_new_assign_order: newOrder
     });
 
     if (error) {
@@ -847,21 +943,6 @@ async function loadRequestInto(containerId) {
     if (!confirmed) return;
 
     const { error } = await supabase.rpc("rpc_cancel_request", {
-      p_request_id: requestId
-    });
-
-    if (error) {
-      setFormError("request-error", error.message);
-    } else {
-      window.location.reload();
-    }
-  }
-
-  async function clearAcceptedOffer(requestId) {
-    const confirmed = window.confirm("Are you sure you want to cancel the accepted offer?");
-    if (!confirmed) return;
-
-    const { error } = await supabase.rpc("rpc_unassign_request", {
       p_request_id: requestId
     });
 

@@ -1,4 +1,4 @@
-import { formatTimeOnly } from "./utils.js";
+import { formatTimeOnly, escapeHtml } from "./utils.js";
 
 function getRequestStatusTextClass(status) {
   const normalized = (status || "").toLowerCase();
@@ -34,14 +34,14 @@ function renderRequestListCard(request, options = {}) {
   const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests"))
     ? `<div class="hidden sm:flex items-center gap-x-10">
          <div class="min-w-20 font-semibold text-green-600 whitespace-nowrap">${request.hours ? `${request.hours}` : "TBD"} hours</div>
-         <div class="text-gray-800 break-words">${request.notes}</div>
+         <div class="text-gray-800 break-words">${escapeHtml(request.notes)}</div>
        </div>`
     : "";
 
   return `
     <a href="/request-view.html?id=${request.id}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-x-10">
       <div class="min-w-70">
-        <p class="font-semibold">${request.family_name}</p>
+        <p class="font-semibold">${escapeHtml(request.family_name)}</p>
         <p class="font-semibold flex items-center gap-2">
           <span class="${getRequestStatusTextClass(request.status)}">${formatTitleCase(request.status)}</span>
           <span class="text-gray-800">${formatTitleCase(request.type)}</span>
