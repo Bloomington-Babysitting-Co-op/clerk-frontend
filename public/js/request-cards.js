@@ -1,4 +1,4 @@
-import { formatTimeOnly, escapeHtml, toDateInputValue } from "./utils.js";
+import { formatTimeOnly, escapeHtml } from "./utils.js";
 
 function getRequestStatusTextClass(status) {
   const normalized = (status || "").toLowerCase();
@@ -30,27 +30,8 @@ function formatRequestTimeLine(request) {
   return `${timeLabel}${timeFlex}`;
 }
 
-function getBackgroundClass(request) {
-  if (request.has_offers) return "";
-  if (!request.date) return "";
-
-  const requestDate = String(request.date).slice(0, 10);
-  const todayDate = toDateInputValue();
-
-  if (requestDate < todayDate) return "";
-
-  const requestMs = new Date(`${requestDate}T00:00:00`).getTime();
-  const todayMs = new Date(`${todayDate}T00:00:00`).getTime();
-  const daysUntilRequest = Math.round((requestMs - todayMs) / 86400000);
-
-  if (daysUntilRequest === 5) return "bg-green-100";
-  if (daysUntilRequest === 3) return "bg-yellow-100";
-  if (daysUntilRequest === 1) return "bg-red-100";
-  return "";
-}
-
 function renderRequestListCard(request, options = {}) {
-  const backgroundClass = getBackgroundClass(request);
+  const bgColorClass = request.bg_color ? `bg-${String(request.bg_color).toLowerCase()}-100` : "";
   const requestsExtHtml = (typeof window !== "undefined" && (window.location.pathname || "").includes("requests"))
     ? `<div class="hidden sm:flex items-center gap-x-10">
          <div class="min-w-20 font-semibold text-green-600 whitespace-nowrap">${request.hours ? `${request.hours}` : "TBD"} hours</div>
@@ -59,7 +40,7 @@ function renderRequestListCard(request, options = {}) {
     : "";
 
   return `
-    <a href="/request-view.html?id=${request.id}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-x-10 ${backgroundClass}">
+    <a href="/request-view.html?id=${request.id}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-x-10 ${bgColorClass}">
       <div class="min-w-70">
         <p class="font-semibold">${escapeHtml(request.family_name)}</p>
         <p class="font-semibold flex items-center gap-2">
