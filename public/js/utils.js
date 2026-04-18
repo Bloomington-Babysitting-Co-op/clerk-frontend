@@ -368,12 +368,16 @@ export async function getSignedUrl(path, expires = 60) {
   }
 }
 
-export async function setupNavbar(containerId) {
+export function setupNavbar(containerId) {
   try {
     const container = document.getElementById(containerId);
     
     if (!container) {
       console.error(`Container with id "${containerId}" not found`);
+      return;
+    }
+
+    if (container.dataset.navbarInitialized === "true") {
       return;
     }
 
@@ -395,28 +399,34 @@ export async function setupNavbar(containerId) {
 
     // Render immediately, then upgrade with the admin button after async auth check.
     container.innerHTML = renderNavbar();
+    container.dataset.navbarInitialized = "true";
     // Ensure textarea observer is running when navbar is set up early
     try { observeTextareas(); } catch (e) { /* ignore */ }
 
-    const isAdmin = await hasAdmin();
-    if (isAdmin) {
-      const navLinks = container.querySelector("[data-nav-links]");
-      const existingAdmin = container.querySelector("a[data-nav-admin='true']");
-      if (navLinks && !existingAdmin) {
-        const adminLink = document.createElement("a");
-        adminLink.href = "/admin.html";
-        adminLink.className = "bg-red-600 text-white hover:bg-red-300 px-4 py-2 rounded";
-        adminLink.dataset.navAdmin = "true";
-        adminLink.textContent = "Admin";
+    void hasAdmin()
+      .then((isAdmin) => {
+        if (!isAdmin) return;
 
-        const adminSlot = container.querySelector("[data-admin-slot]");
-        if (adminSlot) {
-          adminSlot.replaceWith(adminLink);
-        } else {
-          navLinks.appendChild(adminLink);
+        const navLinks = container.querySelector("[data-nav-links]");
+        const existingAdmin = container.querySelector("a[data-nav-admin='true']");
+        if (navLinks && !existingAdmin) {
+          const adminLink = document.createElement("a");
+          adminLink.href = "/admin.html";
+          adminLink.className = "bg-red-600 text-white hover:bg-red-300 px-4 py-2 rounded";
+          adminLink.dataset.navAdmin = "true";
+          adminLink.textContent = "Admin";
+
+          const adminSlot = container.querySelector("[data-admin-slot]");
+          if (adminSlot) {
+            adminSlot.replaceWith(adminLink);
+          } else {
+            navLinks.appendChild(adminLink);
+          }
         }
-      }
-    }
+      })
+      .catch((error) => {
+        console.error("Error resolving admin navbar state:", error);
+      });
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }

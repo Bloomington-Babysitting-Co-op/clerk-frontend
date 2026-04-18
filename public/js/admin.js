@@ -995,7 +995,7 @@ async function commitAllChanges() {
 }
 
 export async function mountAdminPage() {
-  await setupNavbar("navbar");
+  setupNavbar("navbar");
   await requireAdmin();
   await mountAdminEntriesPage();
   await mountFamiliesAdminPage();

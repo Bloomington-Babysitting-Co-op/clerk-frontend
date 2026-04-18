@@ -75,8 +75,8 @@
     import { mountBanner } from "/js/banner.js";
     import { mountLinks } from "/js/dashboard-links.js";
 
+    setupNavbar("navbar");
     await requireAuth();
-    await setupNavbar("navbar");
     await mountBanner('dashboard-banner');
     await mountLinks('dashboard-external-links');
   </script>

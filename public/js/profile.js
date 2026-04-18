@@ -261,8 +261,8 @@ function collectEmergencyContactsPayload() {
 }
 
 async function mountProfilePage() {
+  setupNavbar("navbar");
   const session = await requireAuth();
-  await setupNavbar("navbar");
   const userEmail = session.user.email || "";
 
   let currentFamilyId = null;

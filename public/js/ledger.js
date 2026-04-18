@@ -162,8 +162,8 @@ async function listLedgerInto(containerId, options = {}) {
 }
 
 async function mountLedgerPage() {
+  setupNavbar("navbar");
   await requireAuth();
-  await setupNavbar("navbar");
 
   const startInput = document.getElementById("ledger-start-date");
   const endInput = document.getElementById("ledger-end-date");
