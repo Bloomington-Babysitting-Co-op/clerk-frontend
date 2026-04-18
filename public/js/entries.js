@@ -37,8 +37,8 @@ function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue })
 
 async function mountNewEntryPage() {
   try {
+    setupNavbar("navbar");
     await requireAuth();
-    await setupNavbar("navbar");
 
     const requests = await loadRequestsForEntry();
 

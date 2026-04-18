@@ -118,8 +118,8 @@ function renderFamilyCard(family, idx) {
 }
 
 async function mountFamiliesPage(containerId) {
+  setupNavbar("navbar");
   await requireAuth();
-  await setupNavbar("navbar");
   const container = document.getElementById(containerId);
   if (!container) return;
 

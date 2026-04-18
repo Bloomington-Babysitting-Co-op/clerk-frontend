@@ -2,6 +2,11 @@ import { supabase } from "/js/supabase.js";
 import { renderRequestListCard } from "/js/request-cards.js";
 import { hasAdmin } from "/js/utils.js";
 
+let requireAuthCache = {
+  userId: null,
+  isActive: false
+};
+
 function authState() {
   return {
     session: null,
@@ -207,19 +212,28 @@ function dashboardState() {
   };
 }
 
-async function requireAuth() {
+async function requireAuth(forceRefresh = false) {
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
+    requireAuthCache = { userId: null, isActive: false };
     window.location.href = "/login.html";
     throw new Error("Not authenticated");
   }
 
+  const userId = data.session?.user?.id || null;
+  if (!forceRefresh && requireAuthCache.isActive && requireAuthCache.userId === userId) {
+    return data.session;
+  }
+
   const { data: isActive, error: activeError } = await supabase.rpc("rpc_my_is_active");
   if (activeError || !isActive) {
+    requireAuthCache = { userId: null, isActive: false };
     await supabase.auth.signOut();
     window.location.href = "/login.html";
     throw new Error(activeError?.message || "Inactive login credentials");
   }
+
+  requireAuthCache = { userId, isActive: true };
 
   return data.session;
 }
