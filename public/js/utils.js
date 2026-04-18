@@ -377,10 +377,6 @@ export function setupNavbar(containerId) {
       return;
     }
 
-    if (container.dataset.navbarInitialized === "true") {
-      return;
-    }
-
     const renderNavbar = () => `
       <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -397,11 +393,19 @@ export function setupNavbar(containerId) {
       </nav>
     `;
 
-    // Render immediately, then upgrade with the admin button after async auth check.
-    container.innerHTML = renderNavbar();
+    // Preserve static HTML navbar if present; only render fallback markup when missing.
+    if (!container.querySelector("[data-nav-links]")) {
+      container.innerHTML = renderNavbar();
+    }
     container.dataset.navbarInitialized = "true";
+
     // Ensure textarea observer is running when navbar is set up early
     try { observeTextareas(); } catch (e) { /* ignore */ }
+
+    if (container.dataset.navbarAdminRequestStarted === "true") {
+      return;
+    }
+    container.dataset.navbarAdminRequestStarted = "true";
 
     void hasAdmin()
       .then((isAdmin) => {
