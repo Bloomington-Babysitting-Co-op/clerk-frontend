@@ -85,6 +85,7 @@ function renderFamilyCard(family, idx) {
                   <div class="text-sm text-gray-800 border rounded p-2 bg-gray-50">
                     <p><span class="font-medium">Name:</span> ${escapeHtml(child?.name || "Unnamed child")}${ageLabel ? ` (${escapeHtml(ageLabel)})` : ""}</p>
                     <p><span class="font-medium">Allergies:</span> ${escapeHtml(child?.allergies || "None")}</p>
+                    <p><span class="font-medium">Car Seat:</span> ${escapeHtml(child?.car_seat || "None")}</p>
                     <p><span class="font-medium">Notes:</span> ${escapeHtml(child?.notes || "None")}</p>
                   </div>
                 `;
@@ -214,7 +215,7 @@ async function mountFamiliesPage(containerId) {
       setButtonTemporaryBusy(exportBtn);
 
       const rows = [
-        ["Family Name", "Address", "Parent Name", "Parent Email", "Parent Phone", "Emergency Contact Name", "Emergency Contact Phone", "Child Name", "Child Age", "Child Allergies", "Child Notes", "Pets", "Family Notes"]
+        ["Family Name", "Address", "Parent Name", "Parent Email", "Parent Phone", "Emergency Contact Name", "Emergency Contact Phone", "Child Name", "Child Age", "Child Allergies", "Child Car Seat", "Child Notes", "Pets", "Family Notes"]
       ];
 
       (Array.isArray(families) ? families : []).forEach((family) => {
@@ -242,6 +243,7 @@ async function mountFamiliesPage(containerId) {
             child.name || '',
             childAge,
             child.allergies || '',
+            child.car_seat || '',
             child.notes || '',
             i === 0 ? (family.pets || '') : '',
             i === 0 ? (family.notes || '') : ''

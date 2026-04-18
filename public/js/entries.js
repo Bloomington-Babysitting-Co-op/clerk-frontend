@@ -295,7 +295,7 @@ async function mountNewEntryPage() {
       const { error } = await supabase.rpc("rpc_create_ledger_entry", {
         p_from_family_id: fromFamilyId,
         p_to_family_id: toFamilyId,
-        p_type: requestSelect.value === 'ad_hoc' ? "ad hoc" : "request",
+        p_type: requestSelect.value === 'ad_hoc' ? "ad_hoc" : "request",
         p_date: toNullableDate(entryDateInput.value),
         p_hours: Number(hoursInput.value),
         p_notes: notesInput ? notesInput.value : null,
