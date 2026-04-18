@@ -377,29 +377,46 @@ export async function setupNavbar(containerId) {
       return;
     }
 
-    const adminBtn = await hasAdmin()
-      ? `<a href="/admin.html" class="bg-red-600 text-white hover:bg-red-300 px-4 py-2 rounded">Admin</a>`
-      : "";
-
-    const navbarHTML = `
+    const renderNavbar = () => `
       <nav class="bg-indigo-600 text-white shadow">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <div class="flex items-center gap-3">
             <a href="/" class="bg-white text-indigo-600 text-2xl font-bold hover:bg-blue-300 px-4 py-1 rounded" title="Go to dashboard">BBC Clerk</a>
           </div>
-          <div class="flex gap-2 items-center">
+          <div class="flex gap-2 items-center" data-nav-links>
             <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
             <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
             <a href="/families.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Families</a>
-            ${adminBtn}
+            <span data-admin-slot></span>
           </div>
         </div>
       </nav>
     `;
 
-    container.innerHTML = navbarHTML;
+    // Render immediately, then upgrade with the admin button after async auth check.
+    container.innerHTML = renderNavbar();
     // Ensure textarea observer is running when navbar is set up early
     try { observeTextareas(); } catch (e) { /* ignore */ }
+
+    const isAdmin = await hasAdmin();
+    if (isAdmin) {
+      const navLinks = container.querySelector("[data-nav-links]");
+      const existingAdmin = container.querySelector("a[data-nav-admin='true']");
+      if (navLinks && !existingAdmin) {
+        const adminLink = document.createElement("a");
+        adminLink.href = "/admin.html";
+        adminLink.className = "bg-red-600 text-white hover:bg-red-300 px-4 py-2 rounded";
+        adminLink.dataset.navAdmin = "true";
+        adminLink.textContent = "Admin";
+
+        const adminSlot = container.querySelector("[data-admin-slot]");
+        if (adminSlot) {
+          adminSlot.replaceWith(adminLink);
+        } else {
+          navLinks.appendChild(adminLink);
+        }
+      }
+    }
   } catch (error) {
     console.error("Error setting up navbar:", error);
   }
