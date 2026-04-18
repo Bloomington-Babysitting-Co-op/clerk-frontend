@@ -9,7 +9,19 @@
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
-  <nav id="navbar"></nav>
+  <nav id="navbar" class="bg-indigo-600 text-white shadow">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <a href="/" class="bg-white text-indigo-600 text-2xl font-bold hover:bg-blue-300 px-4 py-1 rounded" title="Go to dashboard">BBC Clerk</a>
+      </div>
+      <div class="flex gap-2 items-center" data-nav-links>
+        <a href="/requests.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Requests</a>
+        <a href="/ledger.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Ledger</a>
+        <a href="/families.html" class="bg-white text-blue-600 hover:bg-blue-300 px-4 py-2 rounded">Families</a>
+        <span data-admin-slot></span>
+      </div>
+    </div>
+  </nav>
   <div id="dashboard-banner" class="hidden max-w-6xl mx-auto w-full px-6 mt-4"></div>
 
   <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
