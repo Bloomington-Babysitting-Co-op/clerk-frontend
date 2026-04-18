@@ -13,6 +13,14 @@ import {
 // Client-side cache for ledger balances to enable fast filtering by family
 let ledgerBalancesCache = null;
 
+function formatLedgerTypeLabel(type) {
+  const normalized = String(type || "").trim().toLowerCase().replace(/\s+/g, "_");
+  if (normalized === "ad_hoc") return "Ad Hoc";
+  if (normalized === "request") return "Request";
+  if (normalized === "admin") return "Admin";
+  return type || "";
+}
+
 function renderLedgerBalances(containerId, data) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -140,7 +148,7 @@ async function listLedgerInto(containerId, options = {}) {
               <td class="px-2 py-2 md:w-1/2">${escapeHtml(e.notes || "")}</td>
               <td class="px-2 py-2">${e.request_id
                 ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
-                : `<span>${escapeHtml(e.email)} (${e.type})</span>`}
+                : `<span>${escapeHtml(e.email)} (${escapeHtml(formatLedgerTypeLabel(e.type))})</span>`}
                 </td>
             </tr>
           `).join('')}

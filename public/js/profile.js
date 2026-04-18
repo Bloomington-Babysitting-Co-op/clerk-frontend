@@ -95,14 +95,14 @@ function createChildRow(child = {}) {
       <label class="block text-sm font-medium mb-1">Car Seat requirements</label>
       <select data-child-field="car_seat" class="border p-2 w-full rounded">
         <option value="">Select a car seat</option>
-        <option value="infant" ${child.car_seat === "infant" ? "selected" : ""}>Infant</option>
-        <option value="rearfacing" ${child.car_seat === "rearfacing" ? "selected" : ""}>Rear-facing</option>
-        <option value="forwardfacing" ${child.car_seat === "forwardfacing" ? "selected" : ""}>Forward-facing</option>
-        <option value="booster" ${child.car_seat === "booster" ? "selected" : ""}>Booster</option>
-        <option value="none" ${child.car_seat === "none" ? "selected" : ""}>None</option>
+        <option value="Infant" ${child.car_seat === "Infant" ? "selected" : ""}>Infant</option>
+        <option value="Rear-facing" ${child.car_seat === "Rear-facing" ? "selected" : ""}>Rear-facing</option>
+        <option value="Forward-facing" ${child.car_seat === "Forward-facing" ? "selected" : ""}>Forward-facing</option>
+        <option value="Booster" ${child.car_seat === "Booster" ? "selected" : ""}>Booster</option>
+        <option value="None" ${child.car_seat === "None" ? "selected" : ""}>None</option>
       </select>
     </div>
-    <div>
+    <div class="md:col-span-2">
       <label class="block text-sm font-medium mb-1">Notes</label>
       <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
