@@ -612,8 +612,9 @@ async function loadRequestInto(containerId) {
   el.innerHTML = `
     <div class="bg-white p-6 rounded-lg shadow max-w-3xl mx-auto w-full">
       <h1 id="request-page-title" class="text-3xl font-bold mb-4">Request Details</h1>
-      <label class="font-semibold mb-1"><span class="text-gray-800">${escapeHtml(requesterFamilyName)}</span></label>
-      <label class="font-semibold mb-4"><span class="${getRequestStatusTextClass(r.status)}">${formatTitleCase(r.status)}</span></label>
+      <div class="mb-2 text-gray-800 text-sm">Created ${formatDateTime(r.created_at)}</div>
+      <div class="mb-2 font-semibold text-gray-800">${escapeHtml(requesterFamilyName)}</div>
+      <div class="mb-4 font-semibold ${getRequestStatusTextClass(r.status)}">${formatTitleCase(r.status)}</div>
 
       <div id="view-mode">
         ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
