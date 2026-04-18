@@ -123,7 +123,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       <label class="block mb-2 font-semibold">Retainer Hours</label>
       <input type="number" step="0.25" min="0" id="${prefix}-retainer-hours" value="${escapeHtml(values.retainer_hours)}" class="border p-2 w-full mb-1 ${readOnlyFieldClass}" ${disabledAttr}>
-      <p class="text-xs text-gray-500 mb-4">Hours credited to backup sitters on completion. Required for secondary/tertiary assignment.</p>
+      <p class="text-xs text-gray-500 mb-4">Set this value if backup sitters are required. These hours will automatically be credited to the assigned backup sitters upon completion.</p>
 
       <div id="${prefix}-babysit-fields">
         <label class="block mb-2 font-semibold">Sit Location</label>
