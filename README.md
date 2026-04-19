@@ -7,7 +7,9 @@ To set up a local development environment that replicates Cloudflare Pages:
 1. Clone this repo
 2. Install dependencies
    ```
-   npm install -upgrade
+   npm install -g npm-check-updates
+   ncu -u
+   npm install
    ```
 3. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/clerk-backend)
 4. Create a `.env` (reference [example.env](./example.env))
