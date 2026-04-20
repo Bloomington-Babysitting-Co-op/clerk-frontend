@@ -579,11 +579,12 @@ async function loadRequestInto(containerId) {
   const requesterId = r.requester_family_id;
   const requesterFamilyName = r.requester_family_name;
   const isRequester = requesterId === currentFamilyId;
+  const hasRetainer = Number(r.retainer_hours) > 0;
   const assignedOfferCount = offers.filter((offer) => offer.assign_order != null).length;
   const canOffer = r.status === "open" && !isRequester;
   const canOfferWhenOffered = (
     r.status === "offered"
-    || (r.status === "assigned" && Number(r.retainer_hours) > 0 && assignedOfferCount < 3)
+    || (r.status === "assigned" && hasRetainer && assignedOfferCount < 3)
   ) && !isRequester;
   const myOffer = offers?.find((offer) => offer.family_id === currentFamilyId) || null;
   const hasAlreadyOffered = !!myOffer;
@@ -646,18 +647,50 @@ async function loadRequestInto(containerId) {
           <div class="space-y-3">
             ${offers.map((offer) => {
               const isAssignedOffer = offer.assign_order != null;
-              const assignLabel = offer.assign_order === 1 ? "Primary" : offer.assign_order === 2 ? "Secondary" : offer.assign_order === 3 ? "Tertiary" : null;
+              const label = offer.assign_order === 1 ? "Primary" : offer.assign_order === 2 ? "Secondary" : "Tertiary";
+              const assignedBadgeLabel = !isAssignedOffer
+                ? null
+                : `Assigned${hasRetainer ? " " + label : ""}`;
               const bgClass = offer.assign_order === 1 ? "bg-green-100 border-green-300"
                 : offer.assign_order === 2 ? "bg-green-50 border-green-200"
                 : offer.assign_order === 3 ? "bg-emerald-50 border-emerald-200"
                 : "bg-gray-50";
-              const assignedCount = offers.filter(o => o.assign_order != null).length;
-              const nextAssignOrder = assignedCount + 1;
-              const canAssignThis = canAssignOffer && !isAssignedOffer && nextAssignOrder <= 3 && (nextAssignOrder === 1 || Number(r.retainer_hours) > 0);
+              const canSimpleAssign = canAssignOffer && !hasRetainer && !isAssignedOffer;
+              const canSlotAssign = canAssignOffer && hasRetainer;
               const canUnassignThis = canUnassignOffer && isAssignedOffer;
-              const canReorder = canUnassignOffer && isAssignedOffer && assignedCount > 1;
-              const canMoveUp = canReorder && offer.assign_order > 1;
-              const canMoveDown = canReorder && offer.assign_order < assignedCount;
+              let assignButtonsHtml = "";
+
+              if (canSlotAssign) {
+                const maxOptionOrder = isAssignedOffer
+                  ? Math.max(1, Math.min(3, assignedOfferCount))
+                  : Math.max(1, Math.min(3, assignedOfferCount + 1));
+                const buttonRows = [];
+
+                for (let order = 1; order <= maxOptionOrder; order += 1) {
+                  const orderLabel = order === 1 ? "Primary" : order === 2 ? "Secondary" : "Tertiary";
+                  const isSelected = isAssignedOffer && offer.assign_order === order;
+                  if (isSelected) continue;
+                  buttonRows.push(`
+                    <button
+                      class="assign-offer-btn px-3 py-2 rounded text-sm bg-green-600 text-white hover:bg-green-700"
+                      data-offer-id="${offer.id}"
+                      data-assign-order="${order}"
+                    >
+                      ${orderLabel}
+                    </button>
+                  `);
+                }
+
+                if (buttonRows.length > 0) {
+                  assignButtonsHtml = `
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm font-medium text-gray-700">Assign</span>
+                      ${buttonRows.join("")}
+                    </div>
+                  `;
+                }
+              }
+
               return `
               <div class="${bgClass} p-4 rounded border">
                 <p class="font-semibold text-gray-800 mb-1">${escapeHtml(offer.family_name)}</p>
@@ -665,17 +698,12 @@ async function loadRequestInto(containerId) {
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.active_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
                 <p class="text-gray-800"><em>${escapeHtml(offer.notes || "No notes")}</em></p>
-                ${isAssignedOffer ? `<p class="text-sm text-green-600 mt-3 font-semibold">${assignLabel}</p>` : ""}
-                <div class="mt-3 flex gap-2">
-                  ${canAssignThis
-                    ? `<button class="assign-offer-btn bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}" data-assign-order="${nextAssignOrder}">Assign ${nextAssignOrder === 1 ? "Primary" : nextAssignOrder === 2 ? "Secondary" : "Tertiary"}</button>`
+                ${assignedBadgeLabel ? `<p class="text-sm text-green-600 mt-3 font-semibold">${assignedBadgeLabel}</p>` : ""}
+                <div class="mt-3 flex gap-2 items-center">
+                  ${canSimpleAssign
+                    ? `<button class="assign-offer-btn bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}" data-assign-order="1">Assign</button>`
                     : ""}
-                  ${canMoveUp
-                    ? `<button class="reorder-offer-btn bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600" data-offer-id="${offer.id}" data-new-order="${offer.assign_order - 1}">\u25B2</button>`
-                    : ""}
-                  ${canMoveDown
-                    ? `<button class="reorder-offer-btn bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600" data-offer-id="${offer.id}" data-new-order="${offer.assign_order + 1}">\u25BC</button>`
-                    : ""}
+                  ${assignButtonsHtml}
                   ${canUnassignThis
                     ? `<button class="unassign-offer-btn bg-yellow-600 text-white px-3 py-2 rounded hover:bg-yellow-700" data-offer-id="${offer.id}">Unassign</button>`
                     : ""}
@@ -767,15 +795,6 @@ async function loadRequestInto(containerId) {
     };
   });
 
-  document.querySelectorAll(".reorder-offer-btn").forEach((button) => {
-    button.onclick = async () => {
-      const offerId = button.getAttribute("data-offer-id");
-      const newOrder = parseInt(button.getAttribute("data-new-order"), 10);
-      if (!offerId || !newOrder) return;
-      await reorderOffer(offerId, newOrder);
-    };
-  });
-
   initRequestFormInteractions("view-request");
 
   if (document.getElementById("edit-btn")) {
@@ -864,9 +883,35 @@ async function loadRequestInto(containerId) {
   }
 
   async function assignOffer(offerId, assignOrder) {
-    const label = assignOrder === 1 ? "primary" : assignOrder === 2 ? "secondary" : "tertiary";
-    const confirmed = window.confirm(`Are you sure you want to assign this offer as ${label}?`);
-    if (!confirmed) return;
+    const label = assignOrder === 1 ? "Primary" : assignOrder === 2 ? "Secondary" : "Tertiary";
+    const willReorder = offers.some((offer) => offer.id !== offerId && offer.assign_order === assignOrder);
+    const isTargetOfferAssigned = offers.some((offer) => offer.id === offerId && offer.assign_order != null);
+    const isTertiaryAssigned = offers.some((offer) => offer.assign_order === 3);
+
+    let confirmMessage = "Are you sure you want to assign this offer";
+
+    if (!hasRetainer) {
+      confirmMessage += "?";
+
+      if (willReorder) {
+        confirmMessage += `\n\nThis will unassign the currently assigned family.`;
+      }
+    } else {
+      confirmMessage += ` as ${label}?`
+
+      if (willReorder) {
+        confirmMessage += "\n\nThis will change assignment order for other families";
+
+        if (!isTargetOfferAssigned && isTertiaryAssigned) {
+          confirmMessage += " and unassign the currently assigned tertiary offer.";
+        } else {
+          confirmMessage += ".";
+        }
+      }
+    }
+
+    const confirmed = window.confirm(confirmMessage);
+    if (!confirmed) return false;
 
     const { error } = await supabase.rpc("rpc_assign_offer", {
       p_offer_id: offerId,
@@ -875,8 +920,10 @@ async function loadRequestInto(containerId) {
 
     if (error) {
       setFormError("request-error", error.message);
+      return false;
     } else {
       window.location.reload();
+      return true;
     }
   }
 
@@ -886,19 +933,6 @@ async function loadRequestInto(containerId) {
 
     const { error } = await supabase.rpc("rpc_unassign_offer", {
       p_offer_id: offerId
-    });
-
-    if (error) {
-      setFormError("request-error", error.message);
-    } else {
-      window.location.reload();
-    }
-  }
-
-  async function reorderOffer(offerId, newOrder) {
-    const { error } = await supabase.rpc("rpc_reorder_offer", {
-      p_offer_id: offerId,
-      p_new_assign_order: newOrder
     });
 
     if (error) {
