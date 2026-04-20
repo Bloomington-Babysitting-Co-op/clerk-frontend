@@ -232,6 +232,7 @@ function initRequestFormInteractions(prefix) {
   const hoursWrapper = document.getElementById(`${prefix}-hours-wrapper`);
   const hoursInput = document.getElementById(`${prefix}-hours`);
   const babysitFields = document.getElementById(`${prefix}-babysit-fields`);
+  const sitLocation = document.getElementById(`${prefix}-sit-location`);
   const mealRequired = document.getElementById(`${prefix}-meal-required`);
   const mealPreparedBySitter = document.getElementById(`${prefix}-meal-prepared-by-sitter`);
   const mealPreparedWrapper = document.getElementById(`${prefix}-meal-prepared-wrapper`);
@@ -287,13 +288,14 @@ function initRequestFormInteractions(prefix) {
     if (isBabysit && !sittersChildrenWelcome.checked) {
       petsArePresent.checked = false;
     }
-    petsPresentWrapper.style.display = isBabysit && sittersChildrenWelcome.checked ? "inline-flex" : "none";
+    petsPresentWrapper.style.display = isBabysit && sitLocation.value !== "sitter_house" && sittersChildrenWelcome.checked ? "inline-flex" : "none";
     driveFields.style.display = isDrive ? "block" : "none";
     refreshTimeFlexControls();
     refreshCalculatedHours();
   }
 
   requestType.addEventListener("change", refreshFormVisibility);
+  sitLocation.addEventListener("change", refreshFormVisibility);
   mealRequired.addEventListener("change", refreshFormVisibility);
   sittersChildrenWelcome.addEventListener("change", refreshFormVisibility);
   requestDateInput.addEventListener("change", refreshCalculatedHours);
