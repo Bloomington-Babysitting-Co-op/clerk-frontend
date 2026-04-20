@@ -278,7 +278,7 @@ function renderFamilies() {
   listEl.innerHTML = visibleFamilies.map((family) => `
     <article class="family-admin-card rounded bg-gray-50 shadow-sm" data-family-id="${family.id}">
       <header class="family-admin-header flex items-center p-3 cursor-pointer">
-        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
+        <button type="button" class="family-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 hover:bg-gray-200 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand family">+</button>
         <div class="flex-1">
           <h3 class="font-semibold text-lg">${family.name || "Unnamed family"}</h3>
         </div>
@@ -308,8 +308,8 @@ function renderFamilies() {
           <label class="text-sm"><input id="family-admin-${family.id}" type="checkbox" class="mr-2" ${family.is_admin ? "checked" : ""}>Admin</label>
         </div>
         <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-          <button data-family-save="${family.id}" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Save Family</button>
-          ${family.can_delete ? `<button data-family-delete="${family.id}" class="bg-red-600 text-white px-4 py-2 rounded text-sm">Delete Family</button>` : ''}
+          <button data-family-save="${family.id}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Save Family</button>
+          ${family.can_delete ? `<button data-family-delete="${family.id}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Delete Family</button>` : ''}
         </div>
       </div>
     </article>
@@ -421,7 +421,7 @@ function renderUsers() {
   listEl.innerHTML = visibleUsers.map((user) => `
       <article class="user-admin-card rounded bg-gray-50 shadow-sm" data-user-id="${user.user_id}">
         <header class="user-admin-header flex items-center p-3 cursor-pointer">
-          <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
+          <button type="button" class="user-toggle-btn w-6 h-6 flex items-center justify-center mr-3 bg-gray-100 hover:bg-gray-200 rounded border" aria-expanded="false" aria-pressed="false" aria-label="Expand user">+</button>
           <p class="font-medium">${user.email || user.user_id}</p>
           <span class="ml-auto text-xs text-${user.family_is_active === true ? 'green' : user.family_is_active === false ? 'red' : 'yellow'}-600">Family ${user.family_is_active === true ? 'Active' : user.family_is_active === false ? 'Inactive' : 'Unassigned'}</span>
         </header>
@@ -435,11 +435,11 @@ function renderUsers() {
               <label class="text-sm block mb-1">Email</label>
               <input id="user-admin-edit-email-${user.user_id}" type="email" class="border rounded p-2 w-full" value="${user.email || ""}">
             </div>
-            <button data-user-reset="${user.user_id}" class="bg-yellow-600 text-white px-4 py-2 rounded self-end">Reset Password</button>
+            <button data-user-reset="${user.user_id}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded self-end">Reset Password</button>
           </div>
           <div class="flex flex-wrap gap-2 md:col-span-3 mt-2">
-            <button data-user-save="${user.user_id}" class="bg-blue-600 text-white px-4 py-2 rounded">Save User</button>
-            ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 text-white px-4 py-2 rounded">Delete User</button>` : ''}
+            <button data-user-save="${user.user_id}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save User</button>
+            ${user.can_delete ? `<button data-user-delete="${user.user_id}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Delete User</button>` : ''}
           </div>
         </div>
       </article>

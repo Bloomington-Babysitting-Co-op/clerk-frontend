@@ -19,12 +19,12 @@
         <input type="password" x-model="password" placeholder="Password"
                class="border p-2 w-full mb-2" @keyup.enter="login">
         <button @click="login"
-                class="bg-blue-600 text-white px-4 py-2 w-full rounded">
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 w-full rounded">
           Log In
         </button>
         <button @click="forgotPassword"
-                x-bind:disabled="resetting"
-                class="mt-2 bg-yellow-600 text-white px-4 py-2 w-full rounded">
+          x-bind:disabled="resetting"
+          class="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 w-full rounded">
           <span x-text="resetting ? 'Sending...' : 'Forgot my password'"></span>
         </button>
         <p class="text-red-600 mt-2" x-text="error"></p>
@@ -34,8 +34,8 @@
         <input type="password" x-model="recoveryPassword" placeholder="New password"
                class="border p-2 w-full mb-2">
         <button @click="setNewPassword"
-                x-bind:disabled="processingRecovery"
-                class="bg-green-600 text-white px-4 py-2 w-full rounded">
+          x-bind:disabled="processingRecovery"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 w-full rounded">
           <span x-text="processingRecovery ? 'Updating...' : 'Set new password'"></span>
         </button>
         <p class="text-red-600 mt-2" x-text="recoveryError"></p>

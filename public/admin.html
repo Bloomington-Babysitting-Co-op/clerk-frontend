@@ -63,7 +63,7 @@
           <label class="block mb-2 font-semibold">Notes <span class="text-red-600">*</span></label>
           <textarea id="mass-entry-notes" required class="border p-2 w-full mb-4" rows="2" placeholder="Required notes..."></textarea>
 
-          <button id="mass-create-btn" type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Create Entries</button>
+          <button id="mass-create-btn" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full">Create Entries</button>
           <p id="mass-entry-error" class="text-red-600 mt-3"></p>
           <p id="mass-entry-success" class="text-green-600 mt-3"></p>
         </form>
@@ -72,7 +72,7 @@
     <section class="flex-1 p-6 max-w-3xl mx-auto w-full">
       <div class="bg-white p-6 rounded-lg shadow">
         <div class="flex items-center space-x-3">
-          <button id="families-admin-toggle-all" class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded border" aria-pressed="false" aria-label="Expand all families">+</button>
+          <button id="families-admin-toggle-all" class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded border" aria-pressed="false" aria-label="Expand all families">+</button>
           <h1 class="text-3xl font-bold">Modify Families</h1>
           <div class="ml-auto flex items-center">
             <label class="flex items-center text-sm text-gray-800"><span>Show Inactive</span><input type="checkbox" class="show-inactive-families-toggle ml-2" aria-label="Show inactive families"></label>
@@ -80,7 +80,7 @@
         </div>
         <div class="grid md:grid-cols-[1fr_auto] gap-3 py-4">
           <input id="families-admin-new-family-name" type="text" class="border rounded p-2" placeholder="Family name">
-          <button id="families-admin-create-family-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Create Family</button>
+          <button id="families-admin-create-family-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Create Family</button>
         </div>
         <p id="family-admin-create-status" class="text-sm text-gray-800"></p>
         <p id="families-admin-edit-status" class="text-sm text-gray-800"></p>
@@ -91,7 +91,7 @@
     <section class="flex-1 p-6 max-w-3xl mx-auto w-full">
       <div class="bg-white p-6 rounded-lg shadow">
         <div class="flex items-center space-x-3">
-          <button id="users-admin-toggle-all" class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded border" aria-pressed="false" aria-label="Expand all users">+</button>
+          <button id="users-admin-toggle-all" class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded border" aria-pressed="false" aria-label="Expand all users">+</button>
           <h1 class="text-3xl font-bold">Modify Users</h1>
           <div class="ml-auto flex items-center">
             <label class="flex items-center text-sm text-gray-800"><span>Show Inactive</span><input type="checkbox" class="show-inactive-users-toggle ml-2" aria-label="Show inactive users"></label>
@@ -100,7 +100,7 @@
         <div class="grid md:grid-cols-[1fr_1fr_auto] gap-3 py-4 items-center">
           <input id="users-admin-new-user-email" type="email" class="border rounded p-2" placeholder="Email">
           <input id="users-admin-new-user-password" type="password" class="border rounded p-2" placeholder="Password">
-          <button id="users-admin-create-user-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Create User</button>
+          <button id="users-admin-create-user-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Create User</button>
         </div>
         <p id="user-admin-create-status" class="text-sm text-gray-800"></p>
         <p id="users-admin-edit-status" class="text-sm text-gray-800"></p>
@@ -132,7 +132,7 @@
               </div>
               <label class="flex items-center gap-2"><input id="admin-banner-enabled" type="checkbox"> Enable Banner Message</label>
               <div class="mt-2">
-                <button id="admin-banner-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Banner</button>
+                <button id="admin-banner-save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Banner</button>
                 <span id="admin-banner-status" class="text-sm text-gray-800"></span>
               </div>
             </div>
@@ -159,9 +159,9 @@
                 </div>
 
                 <div class="mt-2">
-                  <button id="admin-link-save" class="bg-blue-600 text-white px-4 py-2 rounded">Save Links</button>
-                  <button id="admin-link-clear" class="bg-gray-600 text-white px-4 py-2 rounded ml-2">Clear Tile</button>
-                  <button id="admin-link-reset-all" class="bg-red-600 text-white px-4 py-2 rounded ml-2">Reset All</button>
+                  <button id="admin-link-save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Links</button>
+                  <button id="admin-link-clear" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded ml-2">Clear Tile</button>
+                  <button id="admin-link-reset-all" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded ml-2">Reset All</button>
                   <span id="admin-links-status" class="ml-3 text-sm text-gray-800"></span>
                 </div>
             </div>
