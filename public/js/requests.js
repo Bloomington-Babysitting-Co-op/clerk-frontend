@@ -211,7 +211,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       ${showActions ? `
       <div class="mt-6 flex gap-2">
-        <button id="${prefix}-submit-btn" class="bg-blue-600 text-white px-4 py-2 ${showCancel ? "" : "w-full "}rounded hover:bg-blue-600">${submitLabel}</button>
+        <button id="${prefix}-submit-btn" class="bg-blue-600 text-white px-4 py-2 ${showCancel ? "" : "w-full "}rounded hover:bg-blue-700">${submitLabel}</button>
         ${showCancel ? `<button id="${prefix}-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>` : ""}
       </div>
       ` : ""}
@@ -622,16 +622,16 @@ async function loadRequestInto(containerId) {
         <div class="mt-6 flex gap-2">
           ${isRequester
             ? `
-              <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
-              <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
+              <button id="edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${canEdit ? "" : "opacity-60 cursor-not-allowed"}" ${canEdit ? "" : "disabled"}>Edit Request</button>
+              <button id="cancel-request-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ${canCancelRequest ? "" : "opacity-60 cursor-not-allowed"}" ${canCancelRequest ? "" : "disabled"}>Cancel Request</button>
             `
             : ((canEditMyOffer || canCancelMyOffer)
               ? `
-                ${canEditMyOffer ? `<button id="edit-offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600">Edit Offer</button>` : ""}
-                ${canCancelMyOffer ? `<button id="cancel-offer-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600">Cancel Offer</button>` : ""}
+                ${canEditMyOffer ? `<button id="edit-offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit Offer</button>` : ""}
+                ${canCancelMyOffer ? `<button id="cancel-offer-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancel Offer</button>` : ""}
               `
               : ((canOffer || (canOfferWhenOffered && !hasAlreadyOffered))
-                ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600">Offer to Help</button>`
+                ? `<button id="offer-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Offer to Help</button>`
                 : ""))}
         </div>
         ${isRequester && !canEdit ? `<p class="text-sm text-gray-600 mt-2">Only open, offered, or assigned requests can be edited or cancelled.</p>` : ""}
@@ -700,10 +700,10 @@ async function loadRequestInto(containerId) {
                 <p class="text-sm text-gray-600 mb-1">Used this month: ${offer.active_this_month ? "Yes" : "No"}</p>
                 <p class="text-sm text-gray-600 mb-1">Offered At: ${formatDateTime(offer.created_at)}</p>
                 <p class="text-gray-800"><em>${escapeHtml(offer.notes || "No notes")}</em></p>
-                ${assignedBadgeLabel ? `<p class="text-sm text-green-600 mt-3 font-semibold">${assignedBadgeLabel}</p>` : ""}
+                ${assignedBadgeLabel ? `<p class="text-green-600 mt-3 font-semibold">${assignedBadgeLabel}</p>` : ""}
                 <div class="mt-3 flex gap-2 items-center">
                   ${canSimpleAssign
-                    ? `<button class="assign-offer-btn bg-green-600 text-white px-3 py-2 rounded hover:bg-green-600" data-offer-id="${offer.id}" data-assign-order="1">Assign</button>`
+                    ? `<button class="assign-offer-btn bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700" data-offer-id="${offer.id}" data-assign-order="1">Assign</button>`
                     : ""}
                   ${assignButtonsHtml}
                   ${canUnassignThis
@@ -724,7 +724,7 @@ async function loadRequestInto(containerId) {
       <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
         <textarea id="offer-notes" placeholder="Add Notes (Optional)" class="border p-2 w-full mb-4 h-24"></textarea>
         <div class="flex gap-2">
-          <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-600">Submit Offer</button>
+          <button id="offer-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Submit Offer</button>
           <button id="offer-cancel-btn" class="bg-gray-400 text-white px-4 py-2 rounded flex-1 hover:bg-gray-500">Cancel</button>
         </div>
       </div>

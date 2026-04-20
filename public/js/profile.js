@@ -107,7 +107,7 @@ function createChildRow(child = {}) {
       <textarea data-child-field="notes" class="border p-2 w-full rounded" rows="2">${child.notes || ""}</textarea>
     </div>
     <div class="md:col-span-2 flex justify-start">
-      <button type="button" data-remove-child class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Child</button>
+      <button type="button" data-remove-child class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded">Remove Child</button>
     </div>
   `;
 
@@ -193,7 +193,7 @@ function createEmergencyContactRow(contact = {}) {
       <input data-emergency-contact-field="phone" type="text" class="border p-2 w-full rounded" value="${contact.phone || ""}" required>
     </div>
     <div class="md:col-span-2 flex justify-start">
-      <button type="button" data-remove-emergency-contact class="bg-red-600 text-white px-2 py-0.5 rounded">Remove Contact</button>
+      <button type="button" data-remove-emergency-contact class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded">Remove Contact</button>
     </div>
   `;
 
