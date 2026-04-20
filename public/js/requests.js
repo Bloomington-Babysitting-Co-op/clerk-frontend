@@ -652,8 +652,8 @@ async function loadRequestInto(containerId) {
                 ? null
                 : `Assigned${hasRetainer ? " " + label : ""}`;
               const bgClass = offer.assign_order === 1 ? "bg-green-100 border-green-300"
-                : offer.assign_order === 2 ? "bg-green-50 border-green-200"
-                : offer.assign_order === 3 ? "bg-emerald-50 border-emerald-200"
+                : offer.assign_order === 2 ? "bg-green-50 border-green-300"
+                : offer.assign_order === 3 ? "bg-green-50/25 border-green-300"
                 : "bg-gray-50";
               const canSimpleAssign = canAssignOffer && !hasRetainer && !isAssignedOffer;
               const canSlotAssign = canAssignOffer && hasRetainer;
@@ -672,7 +672,7 @@ async function loadRequestInto(containerId) {
                   if (isSelected) continue;
                   buttonRows.push(`
                     <button
-                      class="assign-offer-btn px-3 py-2 rounded text-sm bg-green-600 text-white hover:bg-green-700"
+                      class="assign-offer-btn text-sm bg-green-600 text-white px-3 py-2 hover:bg-green-700"
                       data-offer-id="${offer.id}"
                       data-assign-order="${order}"
                     >
@@ -685,7 +685,9 @@ async function loadRequestInto(containerId) {
                   assignButtonsHtml = `
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="text-sm font-medium text-gray-700">Assign</span>
-                      ${buttonRows.join("")}
+                      <div class="inline-flex overflow-hidden rounded border border-green-600 bg-green-600 divide-x divide-white">
+                        ${buttonRows.join("")}
+                      </div>
                     </div>
                   `;
                 }
