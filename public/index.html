@@ -47,7 +47,7 @@
             <p class="text-3xl font-bold" :class="hoursBalance < 0 ? 'text-red-600' : 'text-green-600'" x-text="hoursBalance + ' hours'"></p>
             <p x-show="pendingEntries > 0" class="text-sm mt-3">
               <a href="/entry-new.html" class="animate-flash underline">
-                <span x-text="pendingEntries"></span> request<span x-text="pendingEntries === 1 ? '' : 's'"></span> need entries →
+                <span x-text="pendingEntries"></span> request<span x-text="pendingEntries === 1 ? '' : 's'"></span> require<span x-text="pendingEntries === 1 ? 's' : ''"></span> an entry →
               </a>
             </p>
           </div>
