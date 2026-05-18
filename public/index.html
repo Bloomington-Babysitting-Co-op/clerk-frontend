@@ -6,6 +6,13 @@
   <script src="/js/fast-auth.js"></script>
   <title>BBC Clerk</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @keyframes flash-alert {
+      0%, 100% { color: rgb(37 99 245); }  /* blue-600 */
+      50%       { color: rgb(22 163 74); }  /* green-600 */
+    }
+    .animate-flash { animation: flash-alert 1s steps(1, end) infinite; }
+  </style>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
@@ -38,6 +45,11 @@
           <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
             <p class="text-3xl font-bold" :class="hoursBalance < 0 ? 'text-red-600' : 'text-green-600'" x-text="hoursBalance + ' hours'"></p>
+            <p x-show="pendingEntries > 0" class="text-sm mt-3">
+              <a href="/entry-new.html" class="animate-flash underline">
+                <span x-text="pendingEntries"></span> request<span x-text="pendingEntries === 1 ? '' : 's'"></span> need entries →
+              </a>
+            </p>
           </div>
 
           <div class="bg-white p-6 rounded-lg shadow">
