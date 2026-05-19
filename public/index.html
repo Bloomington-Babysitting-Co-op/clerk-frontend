@@ -12,6 +12,7 @@
       50%       { color: rgb(22 163 74); }  /* green-600 */
     }
     .animate-flash { animation: flash-alert 1s steps(1, end) infinite; }
+    [x-cloak] { display: none !important; }
   </style>
 </head>
 
@@ -45,7 +46,7 @@
           <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-xl font-bold mb-2">Hours Balance</h2>
             <p class="text-3xl font-bold" :class="hoursBalance < 0 ? 'text-red-600' : 'text-green-600'" x-text="hoursBalance + ' hours'"></p>
-            <p x-show="pendingEntries > 0" class="text-sm mt-3">
+            <p x-cloak x-show="pendingEntries > 0" class="text-sm mt-3">
               <a href="/entry-new.html" class="animate-flash underline">
                 <span x-text="pendingEntries"></span> request<span x-text="pendingEntries === 1 ? '' : 's'"></span> require<span x-text="pendingEntries === 1 ? 's' : ''"></span> an entry →
               </a>
