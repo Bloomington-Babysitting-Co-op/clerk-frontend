@@ -15,12 +15,9 @@ export function formatDateTime(dt) {
 
 export function formatDateOnly(value) {
   if (!value) return "";
-  const asString = String(value);
-  // Accept ISO-like date prefixes (YYYY-MM-DD) or full timestamps
-  const isoMatch = asString.match(/^\d{4}-\d{2}-\d{2}/);
-  const parsed = isoMatch ? new Date(isoMatch[0]) : new Date(asString);
-  if (Number.isNaN(parsed.getTime())) return asString;
-  return parsed.toLocaleDateString();
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return String(value);
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString();
 }
 
 export function formatTimeOnly(timeValue) {
