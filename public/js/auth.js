@@ -138,6 +138,7 @@ function dashboardState() {
     error: "",
     hoursBalance: 0,
     activeThisMonth: false,
+    pendingEntries: 0,
 
     async init() {
       const { data } = await supabase.auth.getSession();
@@ -205,6 +206,10 @@ function dashboardState() {
             ? submittedOffersList.map((r) => renderRequestListCard(r)).join("")
             : "<p class='text-gray-600'>No submitted offers.</p>";
         }
+
+        // Check for completed sits awaiting a ledger entry
+        const { data: pendingEntryRows } = await supabase.rpc("rpc_list_requests_for_entry");
+        this.pendingEntries = Array.isArray(pendingEntryRows) ? pendingEntryRows.length : 0;
       } catch (err) {
         console.error("Error loading dashboard data:", err);
       }
