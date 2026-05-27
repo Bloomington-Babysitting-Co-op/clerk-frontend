@@ -29,7 +29,7 @@ To set up a local development environment that replicates Cloudflare Pages:
 1. Push changes to `main` branch to GitHub
 
 ### Initial Setup
-1. Create a Cloudflare Pages project
+1. Create a [Cloudflare Pages](https://dash.cloudflare.com/f4306531b5050e87dd2882f786d5c4ad/workers-and-pages) project
    * Project name: `bbc-clerk`
    * Production branch: `main`
    * Build command: `npm run generate-env`
@@ -38,3 +38,4 @@ To set up a local development environment that replicates Cloudflare Pages:
    * Click "Save and Deploy"
 2. Go to the project settings and add `SUPABASE_SECRET_KEY` as a secret with remote value from `.env`
 3. Force a deploy (either by pushing another commit, or using a deploy hook)
+4. Set up a [Custom Domain](https://dash.cloudflare.com/f4306531b5050e87dd2882f786d5c4ad/pages/view/bbc-clerk/domains) linking `clerk.bloomingtonbabysitting.org` to the project
