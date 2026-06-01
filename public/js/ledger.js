@@ -37,6 +37,7 @@ function renderLedgerBalances(containerId, data) {
           <tr class="text-left">
             <th class="px-2 py-1 font-medium">Family Name</th>
             <th class="px-2 py-1 font-medium">Active This Month</th>
+            <th class="px-2 py-1 font-medium">Active Prior Month</th>
             <th class="px-2 py-1 font-medium">Hours Balance</th>
             <th class="px-2 py-1 font-medium">Month Start Balance</th>
             <th class="px-2 py-1 font-medium">Prior Month Start Balance</th>
@@ -47,6 +48,7 @@ function renderLedgerBalances(containerId, data) {
             <tr class="border-b">
               <td class="px-2 py-2">${escapeHtml(row.name)}</td>
               <td class="px-2 py-2 ${row.active_this_month ? 'text-green-600' : 'text-red-600'}">${row.active_this_month ? 'Yes' : 'No'}</td>
+              <td class="px-2 py-2 ${row.active_prior_month ? 'text-green-600' : 'text-red-600'}">${row.active_prior_month ? 'Yes' : 'No'}</td>
               <td class="px-2 py-2 ${Number(row.hours_balance) < 0 ? 'text-red-600' : 'text-green-600'} font-semibold">${Number(row.hours_balance).toFixed(2)} hours</td>
               <td class="px-2 py-2 ${Number(row.month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.month_start_balance).toFixed(2)} hours</td>
               <td class="px-2 py-2 ${Number(row.prior_month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.prior_month_start_balance).toFixed(2)} hours</td>
@@ -230,13 +232,14 @@ async function mountLedgerPage() {
       }
       setFormError(ledgerError, "");
       // Build balances header & rows (filtered by currently-selected family)
-      const balancesHeader = ["Family Name", "Active This Month", "Hours Balance", "Month Start Balance", "Prior Month Start Balance"];
+      const balancesHeader = ["Family Name", "Active This Month", "Active Prior Month", "Hours Balance", "Month Start Balance", "Prior Month Start Balance"];
       let balancesRows = [];
       try {
         const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
         balancesRows = Array.isArray(filteredBalances) ? filteredBalances.map(b => [
           b.name || "",
           b.active_this_month ? 'Yes' : 'No',
+          b.active_prior_month ? 'Yes' : 'No',
           Number(b.hours_balance || 0).toFixed(2) + ' hours',
           Number(b.month_start_balance || 0).toFixed(2) + ' hours',
           Number(b.prior_month_start_balance || 0).toFixed(2) + ' hours'
