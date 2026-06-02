@@ -29,7 +29,7 @@
 
       <select id="request-select" class="border p-2 w-full mb-4" required></select>
 
-      <div class="w-full flex flex-col gap-3 md:grid md:gap-x-4 md:gap-y-2 md:grid-cols-[1fr_auto_1fr]">
+      <div class="w-full flex flex-col gap-3 mb-4 md:grid md:gap-x-4 md:gap-y-2 md:grid-cols-[1fr_auto_1fr]">
         <label for="from-family" class="order-1 md:order-none block font-semibold md:justify-self-end">From</label>
         <div class="hidden md:block"></div>
         <label for="to-family" class="order-4 md:order-none block font-semibold">To</label>
@@ -50,7 +50,7 @@
       <label class="block mb-2 font-semibold">Hours <span class="text-red-600">*</span></label>
       <input id="entry-hours" type="number" step="0.25" min="0.25" required class="border p-2 w-full mb-4">
 
-      <div class="flex flex-wrap items-center gap-4 mb-4">
+      <div id="entry-checkboxes-row" class="flex flex-wrap items-center gap-4" style="display:none">
         <label id="entry-add-drive-time-label" class="inline-flex items-center gap-2 text-sm">
           <input id="entry-add-drive-time" type="checkbox">
           <span>Add 30min Drive Time</span>
