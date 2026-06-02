@@ -13,6 +13,14 @@ import {
 // Client-side cache for ledger balances to enable fast filtering by family
 let ledgerBalancesCache = null;
 
+function getMonthNames() {
+  const now = new Date();
+  const thisMonthName = now.toLocaleString('en-US', { month: 'long' });
+  const priorDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const priorMonthName = priorDate.toLocaleString('en-US', { month: 'long' });
+  return { thisMonthName, priorMonthName };
+}
+
 function formatLedgerTypeLabel(type) {
   const normalized = String(type || "").trim().toLowerCase().replace(/\s+/g, "_");
   if (normalized === "ad_hoc") return "Ad Hoc";
@@ -22,6 +30,7 @@ function formatLedgerTypeLabel(type) {
 }
 
 function renderLedgerBalances(containerId, data) {
+  const { thisMonthName, priorMonthName } = getMonthNames();
   const el = document.getElementById(containerId);
   if (!el) return;
 
@@ -35,25 +44,39 @@ function renderLedgerBalances(containerId, data) {
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left">
-            <th class="px-2 py-1 font-medium">Family Name</th>
-            <th class="px-2 py-1 font-medium">Active This Month</th>
-            <th class="px-2 py-1 font-medium">Active Prior Month</th>
-            <th class="px-2 py-1 font-medium">Hours Balance</th>
-            <th class="px-2 py-1 font-medium">Month Start Balance</th>
-            <th class="px-2 py-1 font-medium">Prior Month Start Balance</th>
+            <th class="px-2 py-1 font-medium" rowspan="2">Family Name</th>
+            <th class="px-2 py-1 font-medium border-l" rowspan="2">Hours Balance</th>
+            <th class="px-2 py-1 font-medium border-l text-center" colspan="4">${escapeHtml(thisMonthName)}</th>
+            <th class="px-2 py-1 font-medium border-l text-center" colspan="4">${escapeHtml(priorMonthName)}</th>
+          </tr>
+          <tr class="text-left">
+            <th class="px-2 py-1 font-medium border-l">Credits</th>
+            <th class="px-2 py-1 font-medium">Debits</th>
+            <th class="px-2 py-1 font-medium">Admin</th>
+            <th class="px-2 py-1 font-medium">Start Balance</th>
+            <th class="px-2 py-1 font-medium border-l">Credits</th>
+            <th class="px-2 py-1 font-medium">Debits</th>
+            <th class="px-2 py-1 font-medium">Admin</th>
+            <th class="px-2 py-1 font-medium">Start Balance</th>
           </tr>
         </thead>
         <tbody>
-          ${data.map(row => `
+          ${data.map(row => {
+            const fmt = (v) => { const n = Number(v); return `<span class="${n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-gray-400'}">${n.toFixed(2)}</span>`; };
+            return `
             <tr class="border-b">
               <td class="px-2 py-2">${escapeHtml(row.name)}</td>
-              <td class="px-2 py-2 ${row.active_this_month ? 'text-green-600' : 'text-red-600'}">${row.active_this_month ? 'Yes' : 'No'}</td>
-              <td class="px-2 py-2 ${row.active_prior_month ? 'text-green-600' : 'text-red-600'}">${row.active_prior_month ? 'Yes' : 'No'}</td>
-              <td class="px-2 py-2 ${Number(row.hours_balance) < 0 ? 'text-red-600' : 'text-green-600'} font-semibold">${Number(row.hours_balance).toFixed(2)} hours</td>
-              <td class="px-2 py-2 ${Number(row.month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.month_start_balance).toFixed(2)} hours</td>
-              <td class="px-2 py-2 ${Number(row.prior_month_start_balance) < 0 ? 'text-red-600' : 'text-green-600'}">${Number(row.prior_month_start_balance).toFixed(2)} hours</td>
+              <td class="px-2 py-2 border-l font-semibold">${fmt(row.hours_balance)}</td>
+              <td class="px-2 py-2 border-l">${fmt(row.this_month_credits)}</td>
+              <td class="px-2 py-2">${fmt(row.this_month_debits)}</td>
+              <td class="px-2 py-2">${fmt(row.this_month_admin)}</td>
+              <td class="px-2 py-2">${fmt(row.month_start_balance)}</td>
+              <td class="px-2 py-2 border-l">${fmt(row.prior_month_credits)}</td>
+              <td class="px-2 py-2">${fmt(row.prior_month_debits)}</td>
+              <td class="px-2 py-2">${fmt(row.prior_month_admin)}</td>
+              <td class="px-2 py-2">${fmt(row.prior_month_start_balance)}</td>
             </tr>
-          `).join('')}
+          `;}).join('')}
         </tbody>
       </table>
     </div>
@@ -232,17 +255,27 @@ async function mountLedgerPage() {
       }
       setFormError(ledgerError, "");
       // Build balances header & rows (filtered by currently-selected family)
-      const balancesHeader = ["Family Name", "Active This Month", "Active Prior Month", "Hours Balance", "Month Start Balance", "Prior Month Start Balance"];
+      const { thisMonthName: csvThisMonth, priorMonthName: csvPriorMonth } = getMonthNames();
+      const balancesHeader = [
+        "Family Name",
+        "Hours Balance",
+        `${csvThisMonth} Credits`, `${csvThisMonth} Debits`, `${csvThisMonth} Admin`, `${csvThisMonth} Start Balance`,
+        `${csvPriorMonth} Credits`, `${csvPriorMonth} Debits`, `${csvPriorMonth} Admin`, `${csvPriorMonth} Start Balance`
+      ];
       let balancesRows = [];
       try {
         const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
         balancesRows = Array.isArray(filteredBalances) ? filteredBalances.map(b => [
           b.name || "",
-          b.active_this_month ? 'Yes' : 'No',
-          b.active_prior_month ? 'Yes' : 'No',
-          Number(b.hours_balance || 0).toFixed(2) + ' hours',
-          Number(b.month_start_balance || 0).toFixed(2) + ' hours',
-          Number(b.prior_month_start_balance || 0).toFixed(2) + ' hours'
+          Number(b.hours_balance || 0).toFixed(2),
+          Number(b.this_month_credits || 0).toFixed(2),
+          Number(b.this_month_debits || 0).toFixed(2),
+          Number(b.this_month_admin || 0).toFixed(2),
+          Number(b.month_start_balance || 0).toFixed(2),
+          Number(b.prior_month_credits || 0).toFixed(2),
+          Number(b.prior_month_debits || 0).toFixed(2),
+          Number(b.prior_month_admin || 0).toFixed(2),
+          Number(b.prior_month_start_balance || 0).toFixed(2)
         ]) : [];
       } catch (e) {
         balancesRows = [];
