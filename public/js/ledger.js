@@ -39,15 +39,22 @@ function renderLedgerBalances(containerId, data) {
     return;
   }
 
+  const fmt = (v, pair) => {
+    const n = Number(v);
+    const color = n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-gray-600';
+    return pair !== undefined && n === 0 && Number(pair) === 0 ? color + ' bg-gray-100' : color;
+  };
+  const nbr = (v) => Number(v).toFixed(2);
+
   el.innerHTML = `
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left">
-            <th class="px-2 py-1 font-medium" rowspan="2">Family Name</th>
-            <th class="px-2 py-1 font-medium border-l" rowspan="2">Hours Balance</th>
-            <th class="px-2 py-1 font-medium border-l text-center" colspan="4">${escapeHtml(thisMonthName)}</th>
-            <th class="px-2 py-1 font-medium border-l text-center" colspan="4">${escapeHtml(priorMonthName)}</th>
+            <th class="px-2 py-1 font-medium align-bottom" rowspan="2">Family Name</th>
+            <th class="px-2 py-1 font-medium align-bottom" rowspan="2">Hours Balance</th>
+            <th class="px-2 py-1 font-medium text-center border-l" colspan="4"><span class="block w-full bg-blue-50 rounded-full px-4 py-0.5" style="letter-spacing: 0.3em">${escapeHtml(thisMonthName)}</span></th>
+            <th class="px-2 py-1 font-medium text-center border-l" colspan="4"><span class="block w-full bg-blue-50 rounded-full px-4 py-0.5" style="letter-spacing: 0.3em">${escapeHtml(priorMonthName)}</span></th>
           </tr>
           <tr class="text-left">
             <th class="px-2 py-1 font-medium border-l">Credits</th>
@@ -61,22 +68,20 @@ function renderLedgerBalances(containerId, data) {
           </tr>
         </thead>
         <tbody>
-          ${data.map(row => {
-            const fmt = (v) => { const n = Number(v); return `<span class="${n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-gray-400'}">${n.toFixed(2)}</span>`; };
-            return `
-            <tr class="border-b">
+          ${data.map(row => `
+            <tr class="border-t">
               <td class="px-2 py-2">${escapeHtml(row.name)}</td>
-              <td class="px-2 py-2 border-l font-semibold">${fmt(row.hours_balance)}</td>
-              <td class="px-2 py-2 border-l">${fmt(row.this_month_credits)}</td>
-              <td class="px-2 py-2">${fmt(row.this_month_debits)}</td>
-              <td class="px-2 py-2">${fmt(row.this_month_admin)}</td>
-              <td class="px-2 py-2">${fmt(row.month_start_balance)}</td>
-              <td class="px-2 py-2 border-l">${fmt(row.prior_month_credits)}</td>
-              <td class="px-2 py-2">${fmt(row.prior_month_debits)}</td>
-              <td class="px-2 py-2">${fmt(row.prior_month_admin)}</td>
-              <td class="px-2 py-2">${fmt(row.prior_month_start_balance)}</td>
+              <td class="px-2 py-2 font-semibold ${fmt(row.hours_balance)}">${nbr(row.hours_balance)}</td>
+              <td class="px-2 py-2 ${fmt(row.this_month_credits, row.this_month_debits)}">${nbr(row.this_month_credits)}</td>
+              <td class="px-2 py-2 ${fmt(row.this_month_debits, row.this_month_credits)}">${nbr(row.this_month_debits)}</td>
+              <td class="px-2 py-2 ${fmt(row.this_month_admin)}">${nbr(row.this_month_admin)}</td>
+              <td class="px-2 py-2 ${fmt(row.month_start_balance)}">${nbr(row.month_start_balance)}</td>
+              <td class="px-2 py-2 ${fmt(row.prior_month_credits, row.prior_month_debits)}">${nbr(row.prior_month_credits)}</td>
+              <td class="px-2 py-2 ${fmt(row.prior_month_debits, row.prior_month_credits)}">${nbr(row.prior_month_debits)}</td>
+              <td class="px-2 py-2 ${fmt(row.prior_month_admin)}">${nbr(row.prior_month_admin)}</td>
+              <td class="px-2 py-2 ${fmt(row.prior_month_start_balance)}">${nbr(row.prior_month_start_balance)}</td>
             </tr>
-          `;}).join('')}
+          `).join('')}
         </tbody>
       </table>
     </div>
@@ -162,7 +167,7 @@ async function listLedgerInto(containerId, options = {}) {
         </thead>
         <tbody>
           ${data.map(e => `
-            <tr class="border-b">
+            <tr class="border-t">
               <td class="px-2 py-2">${escapeHtml(formatDateOnly(e.date) || "")}</td>
               <td class="px-2 py-2">${Number(e.hours).toFixed(2)}</td>
               <td class="px-2 py-2">
