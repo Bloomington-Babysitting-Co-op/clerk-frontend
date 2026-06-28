@@ -94,16 +94,13 @@ async function mountNewEntryPage() {
     }
 
     if (startTimeInput) {
-      startTimeInput.addEventListener("input", refreshCalculatedHours);
       startTimeInput.addEventListener("change", refreshCalculatedHours);
     }
     if (endTimeInput) {
-      endTimeInput.addEventListener("input", refreshCalculatedHours);
       endTimeInput.addEventListener("change", refreshCalculatedHours);
     }
 
     if (hoursInput) {
-      hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
       hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
     }
 

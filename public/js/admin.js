@@ -9,7 +9,8 @@ import {
   setInputValue,
   setStatusText,
   toDateOnlyString,
-  escapeHtml
+  escapeHtml,
+  normalizeQuarterHoursInput
 } from "/js/utils.js";
 
 // --- Ledger admin (mass entries) ---
@@ -166,6 +167,10 @@ async function mountAdminEntriesPage() {
   // initialize chips-based multi-selects (vanilla)
   initChipsForSelect(fromSelect);
   initChipsForSelect(toSelect);
+
+  if (hoursInput) {
+    hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
+  }
 
   form.onsubmit = async (e) => {
     e.preventDefault();
