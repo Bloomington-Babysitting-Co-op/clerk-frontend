@@ -7,7 +7,9 @@ import {
   toDateInputValue,
   toDateOnlyString,
   toNullableDate,
-  toNumberOrZero
+  toNumberOrZero,
+  toTimeInputValue,
+  calculateHours
 } from "./utils.js";
 
 async function loadRequestsForEntry() {
@@ -16,7 +18,7 @@ async function loadRequestsForEntry() {
   return data || [];
 }
 
-function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue }) {
+function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue, startTimeValue, endTimeValue }) {
   const errors = [];
   if (!fromFamilyId) errors.push("From Family is required.");
   if (!toFamilyId) errors.push("To Family is required.");
@@ -31,6 +33,9 @@ function validateEntry({ fromFamilyId, toFamilyId, hoursValue, entryDateValue })
     if (entryDateValue > today) {
       errors.push("Entry date cannot be in the future.");
     }
+  }
+  if (startTimeValue && endTimeValue && calculateHours(startTimeValue, endTimeValue) === null) {
+    errors.push("End time must be after start time.");
   }
   return errors;
 }
@@ -59,6 +64,8 @@ async function mountNewEntryPage() {
     const fromFamilyIdInput = document.getElementById("from-family-id");
     const toFamilyIdInput = document.getElementById("to-family-id");
     const entryDateInput = document.getElementById("entry-date");
+    const startTimeInput = document.getElementById("entry-start-time");
+    const endTimeInput = document.getElementById("entry-end-time");
     const hoursInput = document.getElementById("entry-hours");
     const addDriveTimeCheckbox = document.getElementById("entry-add-drive-time");
     const addMealServedCheckbox = document.getElementById("entry-add-meal-served");
@@ -67,6 +74,33 @@ async function mountNewEntryPage() {
     const checkboxesRow = document.getElementById("entry-checkboxes-row");
     const notesInput = document.getElementById("entry-notes");
     const createBtn = document.getElementById("create-entry-btn");
+
+    function refreshCalculatedHours() {
+      if (!startTimeInput || !endTimeInput || !hoursInput) return;
+      const autoHours = calculateHours(startTimeInput.value, endTimeInput.value);
+      if (autoHours !== null) {
+        let adjustedHours = autoHours;
+        if (addDriveTimeCheckbox && addDriveTimeCheckbox.checked) {
+          adjustedHours += 0.5;
+        }
+        if (addMealServedCheckbox && addMealServedCheckbox.checked) {
+          adjustedHours += 0.5;
+        }
+        hoursInput.value = adjustedHours.toFixed(2);
+        normalizeQuarterHoursInput(hoursInput);
+      } else {
+        hoursInput.value = "";
+      }
+    }
+
+    if (startTimeInput) {
+      startTimeInput.addEventListener("input", refreshCalculatedHours);
+      startTimeInput.addEventListener("change", refreshCalculatedHours);
+    }
+    if (endTimeInput) {
+      endTimeInput.addEventListener("input", refreshCalculatedHours);
+      endTimeInput.addEventListener("change", refreshCalculatedHours);
+    }
 
     if (hoursInput) {
       hoursInput.addEventListener("input", () => normalizeQuarterHoursInput(hoursInput));
@@ -157,6 +191,8 @@ async function mountNewEntryPage() {
         toFamilySelect = buildToFamilySelect(otherFamilies);
         originalToFamilyDisplay.parentNode.insertBefore(toFamilySelect, originalToFamilyDisplay.nextSibling);
         toFamilyIdInput.value = '';
+        if (startTimeInput) startTimeInput.value = "";
+        if (endTimeInput) endTimeInput.value = "";
         // hide optional checkboxes for ad-hoc
         if (addDriveTimeCheckbox) addDriveTimeCheckbox.checked = false;
         if (addMealServedCheckbox) addMealServedCheckbox.checked = false;
@@ -175,6 +211,8 @@ async function mountNewEntryPage() {
         toFamilySelect = null;
         originalToFamilyDisplay.style.display = '';
         originalToFamilyDisplay.classList.add('bg-gray-100');
+        if (startTimeInput) startTimeInput.value = "";
+        if (endTimeInput) endTimeInput.value = "";
         // hide optional checkboxes when no request selected
         if (addDriveTimeCheckbox) addDriveTimeCheckbox.checked = false;
         if (addMealServedCheckbox) addMealServedCheckbox.checked = false;
@@ -195,6 +233,8 @@ async function mountNewEntryPage() {
         toFamilySelect = null;
         originalToFamilyDisplay.style.display = '';
         originalToFamilyDisplay.classList.add('bg-gray-100');
+        if (startTimeInput) startTimeInput.value = "";
+        if (endTimeInput) endTimeInput.value = "";
         // hide optional checkboxes for unknown selection
         if (addDriveTimeCheckbox) addDriveTimeCheckbox.checked = false;
         if (addMealServedCheckbox) addMealServedCheckbox.checked = false;
@@ -212,6 +252,13 @@ async function mountNewEntryPage() {
       toFamilySelect = null;
       originalToFamilyDisplay.style.display = '';
       originalToFamilyDisplay.classList.add('bg-gray-100');
+
+      if (startTimeInput) {
+        startTimeInput.value = toTimeInputValue(selected.start_time);
+      }
+      if (endTimeInput) {
+        endTimeInput.value = toTimeInputValue(selected.end_time);
+      }
 
       const baseHours = selected.hours != null ? Number(selected.hours) : 0;
       const hasDriveTime = selected.drive_time;
@@ -244,7 +291,9 @@ async function mountNewEntryPage() {
         fromFamilyId,
         toFamilyId,
         hoursValue: hoursInput.value,
-        entryDateValue: entryDateInput.value
+        entryDateValue: entryDateInput.value,
+        startTimeValue: startTimeInput ? startTimeInput.value : "",
+        endTimeValue: endTimeInput ? endTimeInput.value : ""
       });
       if (validationErrors.length) {
         setFormError("entry-error", validationErrors);
