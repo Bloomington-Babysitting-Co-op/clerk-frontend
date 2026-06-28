@@ -5,23 +5,23 @@ Created for Cloudflare Pages + Supabase + Resend.
 ### Local Development
 To set up a local development environment that replicates Cloudflare Pages:
 1. Clone this repo
-2. Install dependencies
+2. Install dependencies, with optional update to latest versions
    ```
-   npm install -g npm-check-updates
-   ncu -u
-   npm install
+   # pnpm add -g npm-check-updates
+   # ncu -u
+   pnpm install
    ```
 3. [Setup the Supabase backend](https://github.com/Bloomington-Babysitting-Co-op/clerk-backend)
 4. Create a `.env` (reference [example.env](./example.env))
-   * Local values taken from running `npx supabase status`
+   * Local values taken from running `pnpm supabase status`
    * Remote values taken from [Supabase Project Settings dashboard](https://supabase.com/dashboard/project/_/settings/api-keys)
 5. Generate the `_env.js`
    ```
-   npm run generate-env
+   pnpm run generate-env
    ```
 6. Start the local development server
    ```
-   npx wrangler pages dev public
+   pnpm wrangler pages dev public
    ```
 7. Open a browser to http://localhost:8788 to view the application
 
@@ -32,7 +32,7 @@ To set up a local development environment that replicates Cloudflare Pages:
 1. Create a [Cloudflare Pages](https://dash.cloudflare.com/f4306531b5050e87dd2882f786d5c4ad/workers-and-pages) project
    * Project name: `bbc-clerk`
    * Production branch: `main`
-   * Build command: `npm run generate-env`
+   * Build command: `pnpm run generate-env`
    * Build output directory: `public`
    * Environment variables: add `FRONTEND_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY` with remote values from `.env`
    * Click "Save and Deploy"

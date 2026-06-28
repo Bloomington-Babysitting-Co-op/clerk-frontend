@@ -4,6 +4,7 @@
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
-    "wrangler": "^4.83.0"
+    "npm-check-updates": "^22.2.8",
+    "wrangler": "^4.105.0"
   }
 }

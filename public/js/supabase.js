@@ -7,7 +7,7 @@ const SUPABASE_KEY = env?.SUPABASE_KEY || null;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
 	console.error(
-		'Supabase config missing: ensure public/_env.js is generated and loaded (run `npm run generate-env` locally, set Cloudflare Pages secrets for build).'
+		'Supabase config missing: ensure public/_env.js is generated and loaded (run `pnpm run generate-env` locally, set Cloudflare Pages secrets for build).'
 	);
 }
 
