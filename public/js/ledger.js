@@ -8,7 +8,8 @@ import {
   toDateOnlyString,
   downloadCsv,
   setButtonTemporaryBusy,
-  setFormError
+  setFormError,
+  hasAdmin
 } from "./utils.js";
 // Client-side cache for ledger balances to enable fast filtering by family
 let ledgerBalancesCache = null;
@@ -27,6 +28,39 @@ function formatLedgerTypeLabel(type) {
   if (normalized === "request") return "Request";
   if (normalized === "admin") return "Admin";
   return type || "";
+}
+
+function renderLedgerDeleteIcon(entry, isAdmin, myFamilyId) {
+  const ownFamilyEntry = entry.created_by_family_id != null && myFamilyId != null
+    && String(entry.created_by_family_id) === String(myFamilyId);
+  if (!isAdmin && !ownFamilyEntry) return "";
+
+  const canDelete = !!entry.can_delete;
+  const colorClass = canDelete
+    ? "text-red-600 hover:text-red-800"
+    : "text-gray-300";
+  const icon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
+
+  if (!canDelete) {
+    return `<span class="${colorClass} inline-flex" title="No longer eligible for deletion">${icon}</span>`;
+  }
+
+  return `<button type="button" class="${colorClass} inline-flex" data-delete-ledger-id="${escapeHtml(String(entry.id))}" title="Delete this ledger entry">${icon}</button>`;
+}
+
+async function deleteLedgerEntry(entry) {
+  const message = `Delete this ledger entry?\n\nDate: ${formatDateOnly(entry.date) || ""}\nHours: ${Number(entry.hours).toFixed(2)}\nFrom \u2192 To: ${entry.from_family_name || "N/A"} \u2192 ${entry.to_family_name || "N/A"}\nNotes: ${entry.notes || "(none)"}`;
+
+  if (!window.confirm(message)) return;
+
+  const { error } = await supabase.rpc("rpc_delete_ledger_entry", { p_entry_id: entry.id });
+
+  if (error) {
+    setFormError("ledger-error", error.message);
+    return;
+  }
+
+  window.location.reload();
 }
 
 function renderLedgerBalances(containerId, data) {
@@ -139,11 +173,15 @@ async function listLedgerInto(containerId, options = {}) {
 
   const { startDate = null, endDate = null, familyId = null } = options;
 
-  const { data, error } = await supabase.rpc("rpc_list_ledger_entries_filtered", {
-    p_start_date: startDate,
-    p_end_date: endDate,
-    p_family_id: familyId
-  });
+  const [{ data, error }, isAdmin, { data: myFamilyId }] = await Promise.all([
+    supabase.rpc("rpc_list_ledger_entries_filtered", {
+      p_start_date: startDate,
+      p_end_date: endDate,
+      p_family_id: familyId
+    }),
+    hasAdmin(),
+    supabase.rpc("rpc_my_family_id")
+  ]);
 
   const el = document.getElementById(containerId);
 
@@ -163,6 +201,7 @@ async function listLedgerInto(containerId, options = {}) {
             <th class="px-2 py-1 font-medium">From → To</th>
             <th class="px-2 py-1 font-medium">Notes</th>
             <th class="px-2 py-1 font-medium">Created By</th>
+            <th class="px-2 py-1 font-medium text-center"><span class="sr-only">Delete</span></th>
           </tr>
         </thead>
         <tbody>
@@ -180,6 +219,7 @@ async function listLedgerInto(containerId, options = {}) {
                 ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
                 : `<span>${escapeHtml(e.email)} (${escapeHtml(formatLedgerTypeLabel(e.type))})</span>`}
                 </td>
+              <td class="px-2 py-2 text-center">${renderLedgerDeleteIcon(e, isAdmin, myFamilyId)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -187,6 +227,13 @@ async function listLedgerInto(containerId, options = {}) {
     </div>
   `
     : "<p class='text-gray-600'>No ledger entries yet.</p>";
+
+  el.querySelectorAll('[data-delete-ledger-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const entry = data.find((e) => String(e.id) === btn.getAttribute('data-delete-ledger-id'));
+      if (entry) deleteLedgerEntry(entry);
+    });
+  });
 
   return data;
 }
