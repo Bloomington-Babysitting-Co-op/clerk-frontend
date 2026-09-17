@@ -4,3 +4,5 @@ allowBuilds:
   workerd: true
 minimumReleaseAgeExclude:
   - npm-check-updates@22.2.8
+  - miniflare@5.20260916.0-alpha
+  - wrangler@4.133.0
