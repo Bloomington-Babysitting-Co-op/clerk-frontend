@@ -867,6 +867,19 @@ async function loadRequestInto(containerId) {
     if (error) {
       setFormError("edit-request-error", error.message);
     } else {
+      const shouldBroadcast = window.confirm("Request updated. Send a fresh email broadcast to families who receive new request emails?");
+
+      if (shouldBroadcast) {
+        const { error: broadcastError } = await supabase.rpc("rpc_rebroadcast_request", {
+          p_request_id: requestId
+        });
+
+        if (broadcastError) {
+          setFormError("edit-request-error", `Request updated, but email broadcast failed: ${broadcastError.message}`);
+          return;
+        }
+      }
+
       window.location.reload();
     }
   }
