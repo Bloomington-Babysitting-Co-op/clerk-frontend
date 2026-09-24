@@ -7,7 +7,7 @@ import {
   toDateInputValue,
   toDateOnlyString,
   downloadCsv,
-  setButtonTemporaryBusy,
+  withButtonBusy,
   setFormError,
   hasAdmin
 } from "./utils.js";
@@ -298,9 +298,7 @@ async function mountLedgerPage() {
   }
 
   if (exportBtn) {
-    exportBtn.onclick = async () => {
-      setButtonTemporaryBusy(exportBtn);
-
+    exportBtn.onclick = () => withButtonBusy(exportBtn, "Exporting...", async () => {
       if (!currentRows || !currentRows.length) {
         setFormError(ledgerError, "No rows to export for selected filters.");
         return;
@@ -370,7 +368,12 @@ async function mountLedgerPage() {
       ];
 
       downloadCsv("ledger_export.csv", combinedRows);
-    };
+    }, {
+      ariaLabel: "Exporting...",
+      busyClass: "bg-green-300",
+      idleClass: "bg-green-600",
+      minDurationMs: 2000
+    });
   }
 }
 

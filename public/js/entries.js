@@ -9,7 +9,8 @@ import {
   toNullableDate,
   toNumberOrZero,
   toTimeInputValue,
-  calculateHours
+  calculateHours,
+  withButtonBusy
 } from "./utils.js";
 
 async function loadRequestsForEntry() {
@@ -280,7 +281,7 @@ async function mountNewEntryPage() {
       }
     };
 
-    createBtn.onclick = async () => {
+    createBtn.onclick = () => withButtonBusy(createBtn, "Creating...", async () => {
       setFormError("entry-error", "");
       const fromFamilyId = fromFamilyIdInput.value || "";
       const toFamilyId = toFamilyIdInput.value || "";
@@ -304,7 +305,7 @@ async function mountNewEntryPage() {
         p_date: toNullableDate(entryDateInput.value),
         p_hours: Number(hoursInput.value),
         p_notes: notesInput ? notesInput.value : null,
-        p_request_id: requestSelect.value !== 'ad_hoc' ? requestSelect.value : null,
+        p_request_id: requestSelect.value !== 'ad_hoc' ? requestSelect.value : null
       });
 
       if (error) {
@@ -312,7 +313,7 @@ async function mountNewEntryPage() {
       } else {
         window.location = "/ledger.html";
       }
-    };
+    });
   } catch (error) {
     setFormError("entry-error", error.message || "Unable to load page.");
   }

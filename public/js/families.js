@@ -6,7 +6,7 @@ import {
   formatDateOnly,
   getAgeLabel,
   downloadCsv,
-  setButtonTemporaryBusy,
+  withButtonBusy,
   getSignedUrl
 } from "/js/utils.js";
 
@@ -211,9 +211,7 @@ async function mountFamiliesPage(containerId) {
 
   const exportBtn = document.getElementById('families-export-csv');
   if (exportBtn) {
-    exportBtn.onclick = () => {
-      setButtonTemporaryBusy(exportBtn);
-
+    exportBtn.onclick = () => withButtonBusy(exportBtn, "Exporting...", async () => {
       const rows = [
         ["Family Name", "Address", "Parent Name", "Parent Email", "Parent Phone", "Emergency Contact Name", "Emergency Contact Phone", "Child Name", "Child Age", "Child Allergies", "Child Car Seat", "Child Notes", "Pets", "Family Notes"]
       ];
@@ -252,7 +250,12 @@ async function mountFamiliesPage(containerId) {
       });
 
       downloadCsv("families_export.csv", rows);
-    };
+    }, {
+      ariaLabel: "Exporting...",
+      busyClass: "bg-green-300",
+      idleClass: "bg-green-600",
+      minDurationMs: 2000
+    });
   }
 }
 

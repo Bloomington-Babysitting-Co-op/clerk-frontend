@@ -10,7 +10,8 @@ import {
   setStatusText,
   toDateOnlyString,
   escapeHtml,
-  normalizeQuarterHoursInput
+  normalizeQuarterHoursInput,
+  withButtonBusy
 } from "/js/utils.js";
 
 // --- Ledger admin (mass entries) ---
@@ -172,8 +173,10 @@ async function mountAdminEntriesPage() {
     hoursInput.addEventListener("change", () => normalizeQuarterHoursInput(hoursInput));
   }
 
-  form.onsubmit = async (e) => {
+  form.onsubmit = (e) => {
     e.preventDefault();
+    const submitButton = form.querySelector('[type="submit"]');
+    return withButtonBusy(submitButton, "Creating...", async () => {
     errorEl.textContent = "";
     successEl.textContent = "";
     const fromFamilies = getSelectedValues(fromSelect);
@@ -227,6 +230,7 @@ async function mountAdminEntriesPage() {
       Array.from(toSelect.options).forEach((o) => (o.selected = false));
     }
     if (failed) setFormError(errorEl, `Failed to create ${failed} entr${failed === 1 ? 'y' : 'ies'}.`);
+    });
   };
 }
 
@@ -321,19 +325,19 @@ function renderFamilies() {
   `).join("");
 
   listEl.querySelectorAll("[data-family-save]").forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => withButtonBusy(button, "Saving...", async () => {
       const familyId = button.getAttribute("data-family-save");
       await saveFamily(familyId);
-    });
+    }));
   });
 
   listEl.querySelectorAll("[data-family-delete]").forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => withButtonBusy(button, "Deleting...", async () => {
       const familyId = button.getAttribute("data-family-delete");
       if (!familyId) return;
       if (!window.confirm("Delete this family?")) return;
       await deleteFamily(familyId);
-    });
+    }));
   });
 
   // attach collapse/expand behavior similar to public families page
@@ -458,12 +462,12 @@ function renderUsers() {
   });
 
   listEl.querySelectorAll("[data-user-delete]").forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => withButtonBusy(button, "Deleting...", async () => {
       const userId = button.getAttribute("data-user-delete");
       if (!userId) return;
       if (!window.confirm("Delete this user? This only works when their family is eligible for deletion.")) return;
       await deleteUser(userId);
-    });
+    }));
   });
 
   listEl.querySelectorAll("[data-user-reset]").forEach((button) => {
@@ -726,7 +730,7 @@ async function wireCreateFamily() {
   const createFamilyBtn = document.getElementById("families-admin-create-family-btn");
   if (!createFamilyBtn) return;
 
-  createFamilyBtn.onclick = async () => {
+  createFamilyBtn.onclick = () => withButtonBusy(createFamilyBtn, "Creating...", async () => {
     const name = getInputValue("families-admin-new-family-name").trim();
     if (!name) {
       setStatusText("family-admin-create-status", "Family name is required.", true);
@@ -742,14 +746,14 @@ async function wireCreateFamily() {
     setInputValue("families-admin-new-family-name", "");
     setStatusText("family-admin-create-status", "Family created.");
     await refreshAll();
-  };
+  });
 }
 
 async function wireCreateUser() {
   const createUserBtn = document.getElementById("users-admin-create-user-btn");
   if (!createUserBtn) return;
 
-  createUserBtn.onclick = async () => {
+  createUserBtn.onclick = () => withButtonBusy(createUserBtn, "Creating...", async () => {
     const email = getInputValue("users-admin-new-user-email").trim();
     const password = getInputValue("users-admin-new-user-password");
 
@@ -774,7 +778,7 @@ async function wireCreateUser() {
     setInputValue("users-admin-new-user-password", "");
     setStatusText("user-admin-create-status", "User created.");
     await refreshAll();
-  };
+  });
 }
 
 async function mountFamiliesAdminPage() {
@@ -815,7 +819,7 @@ async function loadAdminBannerSettings() {
 function wireAdminBannerForm() {
   const saveBtn = document.getElementById('admin-banner-save');
   if (!saveBtn) return;
-  saveBtn.onclick = async () => {
+  saveBtn.onclick = () => withButtonBusy(saveBtn, "Saving...", async () => {
     const enabled = !!document.getElementById('admin-banner-enabled')?.checked;
     const text = document.getElementById('admin-banner-text')?.value || '';
     const bg = document.getElementById('admin-banner-bg')?.value || '#F87171';
@@ -834,7 +838,7 @@ function wireAdminBannerForm() {
       return;
     }
     if (statusEl) statusEl.textContent = 'Saved.';
-  };
+  });
 }
 
 // Admin links management (grid + draft cache)
@@ -908,7 +912,7 @@ async function loadAdminLinksSettings() {
 
 function wireAdminLinksForm() {
   const saveBtn = document.getElementById('admin-link-save');
-  if (saveBtn) saveBtn.onclick = async () => { await commitAllChanges(); };
+  if (saveBtn) saveBtn.onclick = () => withButtonBusy(saveBtn, "Saving...", commitAllChanges);
 
   const clearBtn = document.getElementById('admin-link-clear');
   if (clearBtn) clearBtn.onclick = async () => {

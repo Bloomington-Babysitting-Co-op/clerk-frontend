@@ -211,28 +211,63 @@ if (typeof window !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => observeTextareas());
 }
 
-export function setButtonTemporaryBusy(button, opts = {}) {
-  if (!button) return;
+export async function withButtonBusy(button, label, action, options = {}) {
+  if (!button) return action();
+  if (button.disabled) return;
+
   const {
-    label = 'Exporting...',
-    busyClass = 'bg-green-300',
-    idleClass = 'bg-green-600',
-    timeout = 2000
-  } = opts;
+    busyClass = null,
+    idleClass = null,
+    ariaLabel = null,
+    minDurationMs = 0
+  } = options;
 
-  const prevAria = button.getAttribute('aria-label');
-  const prevDisabled = button.disabled;
-  button.setAttribute('aria-label', label);
-  if (idleClass) button.classList.remove(idleClass);
-  if (busyClass) button.classList.add(busyClass);
+  const startedAt = Date.now();
+
+  const previousState = beginButtonBusyState(button, () => {
+    if (label) button.textContent = label;
+    if (ariaLabel) button.setAttribute('aria-label', ariaLabel);
+    if (idleClass) button.classList.remove(idleClass);
+    if (busyClass) button.classList.add(busyClass);
+  });
+
+  try {
+    const result = await action();
+    const minDuration = Math.max(0, Number(minDurationMs) || 0);
+    const elapsed = Date.now() - startedAt;
+    if (minDuration > elapsed) {
+      await waitForMs(minDuration - elapsed);
+    }
+    return result;
+  } finally {
+    endButtonBusyState(button, previousState, () => {
+      button.textContent = previousState.textContent;
+      if (previousState.ariaLabel === null) button.removeAttribute('aria-label'); else button.setAttribute('aria-label', previousState.ariaLabel);
+      if (busyClass) button.classList.remove(busyClass);
+      if (idleClass) button.classList.add(idleClass);
+    });
+  }
+}
+
+function beginButtonBusyState(button, applyBusyState) {
+  const previousState = {
+    disabled: button.disabled,
+    textContent: button.textContent,
+    ariaLabel: button.getAttribute('aria-label')
+  };
+
+  if (typeof applyBusyState === 'function') applyBusyState();
   button.disabled = true;
+  return previousState;
+}
 
-  setTimeout(() => {
-    if (prevAria === null) button.removeAttribute('aria-label'); else button.setAttribute('aria-label', prevAria);
-    if (busyClass) button.classList.remove(busyClass);
-    if (idleClass) button.classList.add(idleClass);
-    button.disabled = prevDisabled;
-  }, timeout);
+function endButtonBusyState(button, previousState, applyRestoreState) {
+  if (typeof applyRestoreState === 'function') applyRestoreState();
+  button.disabled = previousState?.disabled ?? false;
+}
+
+function waitForMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function escapeHtml(value) {

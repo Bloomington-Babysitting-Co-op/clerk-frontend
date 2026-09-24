@@ -10,7 +10,8 @@ import {
   getInputValue,
   setInputValue,
   setStatusText,
-  getSignedUrl
+  getSignedUrl,
+  withButtonBusy
 } from "./utils.js";
 
 // Helpers for client-side image resizing and upload
@@ -274,7 +275,7 @@ async function mountProfilePage() {
 
   const saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) {
-    saveBtn.onclick = async () => {
+    saveBtn.onclick = () => withButtonBusy(saveBtn, "Saving...", async () => {
       const parentName = getInputValue("profile-parent-name").trim();
       const phone = getInputValue("profile-phone").trim();
       const familyName = getInputValue("profile-family-name").trim();
@@ -358,7 +359,7 @@ async function mountProfilePage() {
       }
 
       setStatusText("profile-save-message", "Profile saved.");
-    };
+    });
   }
 
   const addChildBtn = document.getElementById("profile-add-child-btn");
@@ -373,10 +374,10 @@ async function mountProfilePage() {
 
   const logoutBtn = document.getElementById("profile-logout-btn");
   if (logoutBtn) {
-    logoutBtn.onclick = async () => {
+    logoutBtn.onclick = () => withButtonBusy(logoutBtn, "Logging out...", async () => {
       await supabase.auth.signOut();
       window.location = "/";
-    };
+    });
   }
 
   const refreshLinkedFamilyEmails = async () => {
@@ -472,7 +473,7 @@ async function mountProfilePage() {
 
   const updateEmailBtn = document.getElementById("profile-update-email-btn");
   if (updateEmailBtn) {
-    updateEmailBtn.onclick = async () => {
+    updateEmailBtn.onclick = () => withButtonBusy(updateEmailBtn, "Updating...", async () => {
       const newEmail = getInputValue("profile-new-email").trim();
       if (!newEmail) {
         setStatusText("profile-account-message", "Enter a new email first.", true);
@@ -484,12 +485,12 @@ async function mountProfilePage() {
         return;
       }
       setStatusText("profile-account-message", "Email update requested. Check inbox for confirmation.");
-    };
+    });
   }
 
   const updatePasswordBtn = document.getElementById("profile-update-password-btn");
   if (updatePasswordBtn) {
-    updatePasswordBtn.onclick = async () => {
+    updatePasswordBtn.onclick = () => withButtonBusy(updatePasswordBtn, "Updating...", async () => {
       const newPassword = getInputValue("profile-new-password");
       if (!newPassword || newPassword.length < 6) {
         setStatusText("profile-account-message", "Password must be at least 6 characters.", true);
@@ -502,7 +503,7 @@ async function mountProfilePage() {
       }
       setStatusText("profile-account-message", "Password updated.");
       setInputValue("profile-new-password", "");
-    };
+    });
   }
 
   // Photo input & upload handling
@@ -539,7 +540,7 @@ async function mountProfilePage() {
   }
 
   if (uploadBtn) {
-    uploadBtn.onclick = async () => {
+    uploadBtn.onclick = () => withButtonBusy(uploadBtn, "Uploading...", async () => {
       if (!photoInput || !photoInput.files || !photoInput.files[0]) {
         if (photoMsg) photoMsg.textContent = 'Select an image first.';
         return;
@@ -586,11 +587,11 @@ async function mountProfilePage() {
         console.error(err);
         if (photoMsg) photoMsg.textContent = err?.message || 'Upload failed.';
       }
-    };
+    });
   }
 
   if (deleteBtn) {
-    deleteBtn.onclick = async () => {
+    deleteBtn.onclick = () => withButtonBusy(deleteBtn, "Deleting...", async () => {
       if (!currentFamilyPhotoPath) {
         if (photoMsg) photoMsg.textContent = 'No uploaded photo to delete.';
         return;
@@ -632,7 +633,7 @@ async function mountProfilePage() {
         console.error(err);
         if (photoMsg) photoMsg.textContent = err?.message || 'Failed to delete photo.';
       }
-    };
+    });
   }
 }
 

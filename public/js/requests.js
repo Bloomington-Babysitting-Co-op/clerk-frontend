@@ -9,7 +9,7 @@ import {
   getAgeLabel,
   calculateHours,
   downloadCsv,
-  setButtonTemporaryBusy,
+  withButtonBusy,
   setFormError,
   escapeHtml,
   normalizeQuarterHoursInput
@@ -501,9 +501,7 @@ async function mountRequestsPage() {
   }
 
   if (exportBtn) {
-    exportBtn.onclick = () => {
-      setButtonTemporaryBusy(exportBtn);
-
+    exportBtn.onclick = () => withButtonBusy(exportBtn, "Exporting...", async () => {
       if (!currentRows || !currentRows.length) {
         setFormError(errorEl, "No rows to export for selected filters.");
         return;
@@ -522,7 +520,12 @@ async function mountRequestsPage() {
         ])
       ];
       downloadCsv("requests_export.csv", rows);
-    };
+    }, {
+      ariaLabel: "Exporting...",
+      busyClass: "bg-green-300",
+      idleClass: "bg-green-600",
+      minDurationMs: 2000
+    });
   }
 }
 
@@ -764,16 +767,18 @@ async function loadRequestInto(containerId) {
   }
 
   if (document.getElementById("cancel-offer-btn")) {
-    document.getElementById("cancel-offer-btn").onclick = () => cancelOffer(myOffer?.id || null);
+    const cancelOfferButton = document.getElementById("cancel-offer-btn");
+    cancelOfferButton.onclick = () => withButtonBusy(cancelOfferButton, "Cancelling...", () => cancelOffer(myOffer?.id || null));
   }
 
   if (document.getElementById("offer-submit-btn")) {
-    document.getElementById("offer-submit-btn").onclick = () => {
+    const offerSubmitButton = document.getElementById("offer-submit-btn");
+    offerSubmitButton.onclick = () => withButtonBusy(offerSubmitButton, "Saving...", () => {
       if (offerEditMode && editingOfferId) {
         return updateOffer(editingOfferId);
       }
       return submitOffer(id);
-    };
+    });
   }
 
   if (document.getElementById("offer-cancel-btn")) {
@@ -783,20 +788,20 @@ async function loadRequestInto(containerId) {
   }
 
   document.querySelectorAll(".assign-offer-btn").forEach((button) => {
-    button.onclick = async () => {
+    button.onclick = () => withButtonBusy(button, "Assigning...", async () => {
       const offerId = button.getAttribute("data-offer-id");
       const assignOrder = parseInt(button.getAttribute("data-assign-order"), 10);
       if (!offerId || !assignOrder) return;
       await assignOffer(offerId, assignOrder);
-    };
+    });
   });
 
   document.querySelectorAll(".unassign-offer-btn").forEach((button) => {
-    button.onclick = async () => {
+    button.onclick = () => withButtonBusy(button, "Unassigning...", async () => {
       const offerId = button.getAttribute("data-offer-id");
       if (!offerId) return;
       await unassignOffer(offerId);
-    };
+    });
   });
 
   initRequestFormInteractions("view-request");
@@ -806,7 +811,8 @@ async function loadRequestInto(containerId) {
   }
 
   if (document.getElementById("cancel-request-btn")) {
-    document.getElementById("cancel-request-btn").onclick = () => cancelRequest(id);
+    const cancelRequestButton = document.getElementById("cancel-request-btn");
+    cancelRequestButton.onclick = () => withButtonBusy(cancelRequestButton, "Cancelling...", () => cancelRequest(id));
   }
 
   if (document.getElementById("edit-request-cancel-btn")) {
@@ -816,7 +822,8 @@ async function loadRequestInto(containerId) {
   initRequestFormInteractions("edit-request");
 
   if (document.getElementById("edit-request-submit-btn")) {
-    document.getElementById("edit-request-submit-btn").onclick = () => saveRequest(id);
+    const editRequestSubmitButton = document.getElementById("edit-request-submit-btn");
+    editRequestSubmitButton.onclick = () => withButtonBusy(editRequestSubmitButton, "Saving...", () => saveRequest(id));
   }
 
   function toggleEditMode(isEditing) {
@@ -1030,7 +1037,8 @@ async function mountNewRequestForm(containerId) {
 
   initRequestFormInteractions("new-request");
 
-  document.getElementById("new-request-submit-btn").onclick = async () => {
+  const submitButton = document.getElementById("new-request-submit-btn");
+  submitButton.onclick = () => withButtonBusy(submitButton, "Creating...", async () => {
     const formValues = readRequestFormValues("new-request");
     const { payload, errors } = normalizeFormPayload(formValues);
 
@@ -1039,6 +1047,8 @@ async function mountNewRequestForm(containerId) {
       return;
     }
 
+    setFormError("new-request-error", "");
+
     const { error } = await supabase.rpc("rpc_create_request", payload);
 
     if (error) {
@@ -1046,7 +1056,7 @@ async function mountNewRequestForm(containerId) {
     } else {
       window.location = "/requests.html";
     }
-  };
+  });
 }
 
 export { listRequestsInto, loadRequestInto, mountNewRequestForm, mountRequestsPage };
