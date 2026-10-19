@@ -75,6 +75,7 @@ function getRequestFormHtml(prefix, values, options = {}) {
   const showActions = options.showActions !== false;
   const disabledAttr = readOnly ? "disabled" : "";
   const readOnlyFieldClass = readOnly ? "bg-gray-100 text-gray-800" : "";
+  const readOnlyLinkClass = readOnly ? "bg-gray-100" : "";
   const sitAddressLinks = readOnly && Array.isArray(options.sitAddressLinks)
     ? options.sitAddressLinks
     : [];
@@ -204,12 +205,12 @@ function getRequestFormHtml(prefix, values, options = {}) {
       <div id="${prefix}-drive-fields">
         <label class="block mb-2 font-semibold">Origin</label>
         ${readOnly && getMapLink(values.origin)
-          ? renderMapLink("", values.origin, `border p-2 w-full mb-4 ${readOnlyFieldClass}`)
+          ? renderMapLink("", values.origin, `border p-2 w-full mb-4 ${readOnlyLinkClass}`)
           : `<input type="text" id="${prefix}-origin" value="${escapeHtml(values.origin)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>`}
 
         <label class="block mb-2 font-semibold">Destination</label>
         ${readOnly && getMapLink(values.destination)
-          ? renderMapLink("", values.destination, `border p-2 w-full mb-4 ${readOnlyFieldClass}`)
+          ? renderMapLink("", values.destination, `border p-2 w-full mb-4 ${readOnlyLinkClass}`)
           : `<input type="text" id="${prefix}-destination" value="${escapeHtml(values.destination)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>`}
 
         <label class="block mb-2 font-semibold">Adults</label>
