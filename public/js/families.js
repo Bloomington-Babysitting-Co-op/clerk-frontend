@@ -7,7 +7,8 @@ import {
   getAgeLabel,
   downloadCsv,
   withButtonBusy,
-  getSignedUrl
+  getSignedUrl,
+  getMapLink
 } from "/js/utils.js";
 
 function renderRowsOrFallback(items, renderItem, fallback) {
@@ -22,7 +23,7 @@ function renderFamilyCard(family, idx) {
   const emergencyContacts = Array.isArray(family.emergency_contacts) ? family.emergency_contacts : [];
   const children = Array.isArray(family.children) ? family.children : [];
   const addressValue = (family.address || "").trim();
-  const mapsUrl = addressValue ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressValue)}` : "";
+  const mapLink = getMapLink(addressValue);
 
   // article starts collapsed; content placed inside .family-content
   const idAttr = escapeHtml(String(family.id ?? family.family_id ?? idx));
@@ -41,7 +42,7 @@ function renderFamilyCard(family, idx) {
         <div>
           <p class="text-sm font-semibold text-gray-800">Address</p>
           <p class="text-gray-800">${addressValue
-            ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-600">${escapeHtml(addressValue)}</a>`
+            ? `<a href="${mapLink.href}"${mapLink.target ? ` target="${mapLink.target}"` : ""}${mapLink.rel ? ` rel="${mapLink.rel}"` : ""} class="text-blue-600 underline hover:text-blue-600">${escapeHtml(addressValue)}</a>`
             : "Not provided"}</p>
         </div>
 

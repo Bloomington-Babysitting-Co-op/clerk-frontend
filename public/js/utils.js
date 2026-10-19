@@ -358,6 +358,41 @@ export function getAgeLabel(dateOfBirthValue) {
   return `${years}y ${months}m`;
 }
 
+export function getMapLink(location) {
+  const value = String(location || "").trim();
+  if (!value) return null;
+
+  const encodedLocation = encodeURIComponent(value);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+  const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
+  const platform = typeof navigator === "undefined" ? "" : navigator.platform;
+  const maxTouchPoints = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints;
+  const isAppleMobile = /iPad|iPhone|iPod/i.test(userAgent)
+    || (platform === "MacIntel" && maxTouchPoints > 1);
+
+  if (isAppleMobile) {
+    return {
+      href: `https://maps.apple.com/?q=${encodedLocation}`,
+      target: "",
+      rel: ""
+    };
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return {
+      href: `intent://www.google.com/maps/search/?api=1&query=${encodedLocation}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(googleMapsUrl)};end`,
+      target: "",
+      rel: ""
+    };
+  }
+
+  return {
+    href: googleMapsUrl,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  };
+}
+
 export async function hasAdmin(forceRefresh = false) {
   if (!forceRefresh && adminStatusCache != null) {
     return adminStatusCache;
