@@ -363,6 +363,7 @@ export function getMapLink(location) {
   if (!value) return null;
 
   const encodedLocation = encodeURIComponent(value);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const platform = typeof navigator === "undefined" ? "" : navigator.platform;
   const maxTouchPoints = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints;
@@ -379,14 +380,14 @@ export function getMapLink(location) {
 
   if (/Android/i.test(userAgent)) {
     return {
-      href: `geo:0,0?q=${encodedLocation}`,
+      href: `intent://www.google.com/maps/search/?api=1&query=${encodedLocation}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(googleMapsUrl)};end`,
       target: "",
       rel: ""
     };
   }
 
   return {
-    href: `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+    href: googleMapsUrl,
     target: "_blank",
     rel: "noopener noreferrer"
   };
