@@ -12,7 +12,8 @@ import {
   withButtonBusy,
   setFormError,
   escapeHtml,
-  normalizeQuarterHoursInput
+  normalizeQuarterHoursInput,
+  getMapLink
 } from "./utils.js";
 import { getRequestStatusTextClass, formatTitleCase, renderRequestListCard } from "./request-cards.js";
 
@@ -74,6 +75,19 @@ function getRequestFormHtml(prefix, values, options = {}) {
   const showActions = options.showActions !== false;
   const disabledAttr = readOnly ? "disabled" : "";
   const readOnlyFieldClass = readOnly ? "bg-gray-100 text-gray-800" : "";
+  const sitAddressLinks = readOnly && Array.isArray(options.sitAddressLinks)
+    ? options.sitAddressLinks
+    : [];
+
+  function renderMapLink(label, location, className = "") {
+    const mapLink = getMapLink(location);
+    if (!mapLink) return "";
+    return `
+      <a href="${mapLink.href}"${mapLink.target ? ` target="${mapLink.target}"` : ""}${mapLink.rel ? ` rel="${mapLink.rel}"` : ""} class="block text-blue-600 underline hover:text-blue-600 ${className}">
+        ${label ? `<span class="font-medium">${escapeHtml(label)}:</span> ` : ""}${escapeHtml(String(location).trim())}
+      </a>
+    `;
+  }
 
   return `
     <div class="space-y-2">
@@ -132,6 +146,11 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <option value="sitter_house" ${values.sit_location === "sitter_house" ? "selected" : ""}>Sitter's House</option>
           <option value="either" ${values.sit_location === "either" ? "selected" : ""}>Either</option>
         </select>
+        ${sitAddressLinks.length
+          ? `<div class="-mt-2 mb-4 space-y-1 text-sm">
+              ${sitAddressLinks.map(({ label, address }) => renderMapLink(label, address)).join("")}
+            </div>`
+          : ""}
 
         <div class="mb-2">
           <label class="inline-flex items-center gap-2">
@@ -179,10 +198,14 @@ function getRequestFormHtml(prefix, values, options = {}) {
 
       <div id="${prefix}-drive-fields">
         <label class="block mb-2 font-semibold">Origin</label>
-        <input type="text" id="${prefix}-origin" value="${escapeHtml(values.origin)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        ${readOnly && getMapLink(values.origin)
+          ? renderMapLink("", values.origin, `border p-2 w-full mb-4 ${readOnlyFieldClass}`)
+          : `<input type="text" id="${prefix}-origin" value="${escapeHtml(values.origin)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>`}
 
         <label class="block mb-2 font-semibold">Destination</label>
-        <input type="text" id="${prefix}-destination" value="${escapeHtml(values.destination)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
+        ${readOnly && getMapLink(values.destination)
+          ? renderMapLink("", values.destination, `border p-2 w-full mb-4 ${readOnlyFieldClass}`)
+          : `<input type="text" id="${prefix}-destination" value="${escapeHtml(values.destination)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>`}
 
         <label class="block mb-2 font-semibold">Adults</label>
         <input type="number" step="1" min="0" id="${prefix}-adult-count" value="${escapeHtml(values.adult_count)}" class="border p-2 w-full mb-4 ${readOnlyFieldClass}" ${disabledAttr}>
@@ -586,6 +609,30 @@ async function loadRequestInto(containerId) {
   const isRequester = requesterId === currentFamilyId;
   const hasRetainer = Number(r.retainer_hours) > 0;
   const assignedOfferCount = offers.filter((offer) => offer.assign_order != null).length;
+  const assignedSitterAddresses = offers
+    .filter((offer) => offer.assign_order != null && String(offer.family_address || "").trim())
+    .sort((a, b) => a.assign_order - b.assign_order)
+    .map((offer) => ({
+      label: offer.assign_order === 1
+        ? "Primary"
+        : offer.assign_order === 2
+          ? "Secondary"
+          : "Tertiary",
+      address: offer.family_address
+    }));
+  const sitAddressLinks = [];
+  if (
+    (r.sit_location === "requester_house" || r.sit_location === "either")
+    && String(r.requester_family_address || "").trim()
+  ) {
+    sitAddressLinks.push({
+      label: "Requester",
+      address: r.requester_family_address
+    });
+  }
+  if (r.sit_location === "sitter_house" || r.sit_location === "either") {
+    sitAddressLinks.push(...assignedSitterAddresses);
+  }
   const canOffer = r.status === "open" && !isRequester;
   const canOfferWhenOffered = (
     r.status === "offered"
@@ -623,7 +670,12 @@ async function loadRequestInto(containerId) {
       <div class="mb-4 font-semibold ${getRequestStatusTextClass(r.status)}">${formatTitleCase(r.status)}</div>
 
       <div id="view-mode">
-        ${getRequestFormHtml("view-request", viewFormValues, { disableType: true, readOnly: true, showActions: false })}
+        ${getRequestFormHtml("view-request", viewFormValues, {
+          disableType: true,
+          readOnly: true,
+          showActions: false,
+          sitAddressLinks
+        })}
         <div class="mt-6 flex gap-2">
           ${isRequester
             ? `

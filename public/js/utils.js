@@ -358,6 +358,40 @@ export function getAgeLabel(dateOfBirthValue) {
   return `${years}y ${months}m`;
 }
 
+export function getMapLink(location) {
+  const value = String(location || "").trim();
+  if (!value) return null;
+
+  const encodedLocation = encodeURIComponent(value);
+  const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
+  const platform = typeof navigator === "undefined" ? "" : navigator.platform;
+  const maxTouchPoints = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints;
+  const isAppleMobile = /iPad|iPhone|iPod/i.test(userAgent)
+    || (platform === "MacIntel" && maxTouchPoints > 1);
+
+  if (isAppleMobile) {
+    return {
+      href: `https://maps.apple.com/?q=${encodedLocation}`,
+      target: "",
+      rel: ""
+    };
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return {
+      href: `geo:0,0?q=${encodedLocation}`,
+      target: "",
+      rel: ""
+    };
+  }
+
+  return {
+    href: `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  };
+}
+
 export async function hasAdmin(forceRefresh = false) {
   if (!forceRefresh && adminStatusCache != null) {
     return adminStatusCache;
