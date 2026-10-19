@@ -83,8 +83,9 @@ function getRequestFormHtml(prefix, values, options = {}) {
     const mapLink = getMapLink(location);
     if (!mapLink) return "";
     return `
-      <a href="${mapLink.href}"${mapLink.target ? ` target="${mapLink.target}"` : ""}${mapLink.rel ? ` rel="${mapLink.rel}"` : ""} class="block text-blue-600 underline hover:text-blue-600 ${className}">
-        ${label ? `<span class="font-medium">${escapeHtml(label)}:</span> ` : ""}${escapeHtml(String(location).trim())}
+      <a href="${mapLink.href}"${mapLink.target ? ` target="${mapLink.target}"` : ""}${mapLink.rel ? ` rel="${mapLink.rel}"` : ""} class="block text-blue-600 hover:text-blue-700 ${className}">
+        ${label ? `<span class="font-semibold text-gray-700">${escapeHtml(label)}:</span>` : ""}
+        <span class="underline">${escapeHtml(String(location).trim())}</span>
       </a>
     `;
   }
@@ -147,8 +148,12 @@ function getRequestFormHtml(prefix, values, options = {}) {
           <option value="either" ${values.sit_location === "either" ? "selected" : ""}>Either</option>
         </select>
         ${sitAddressLinks.length
-          ? `<div class="-mt-2 mb-4 space-y-1 text-sm">
-              ${sitAddressLinks.map(({ label, address }) => renderMapLink(label, address)).join("")}
+          ? `<div class="-mt-2 mb-4 overflow-hidden rounded border border-gray-200 bg-gray-50 divide-y divide-gray-200">
+              ${sitAddressLinks.map(({ label, address }) => renderMapLink(
+                label,
+                address,
+                "grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-1 sm:gap-3 px-3 py-2 hover:bg-blue-50"
+              )).join("")}
             </div>`
           : ""}
 
@@ -613,11 +618,13 @@ async function loadRequestInto(containerId) {
     .filter((offer) => offer.assign_order != null && String(offer.family_address || "").trim())
     .sort((a, b) => a.assign_order - b.assign_order)
     .map((offer) => ({
-      label: offer.assign_order === 1
-        ? "Primary"
-        : offer.assign_order === 2
-          ? "Secondary"
-          : "Tertiary",
+      label: assignedOfferCount === 1
+        ? "Sitter"
+        : offer.assign_order === 1
+          ? "Primary"
+          : offer.assign_order === 2
+            ? "Secondary"
+            : "Tertiary",
       address: offer.family_address
     }));
   const sitAddressLinks = [];
