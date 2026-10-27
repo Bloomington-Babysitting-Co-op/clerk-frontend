@@ -199,26 +199,26 @@ async function listLedgerInto(containerId, options = {}) {
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left">
-            <th class="px-2 py-1 font-medium">Date</th>
-            <th class="px-2 py-1 font-medium">Hours</th>
-            <th class="px-2 py-1 font-medium">From → To</th>
-            <th class="px-2 py-1 font-medium">Notes</th>
-            <th class="px-2 py-1 font-medium">Created By</th>
+            <th class="px-2 py-1 font-medium whitespace-nowrap">Date</th>
+            <th class="px-2 py-1 font-medium whitespace-nowrap">Hours</th>
+            <th class="px-2 py-1 font-medium whitespace-nowrap">From → To</th>
+            <th class="px-2 py-1 font-medium w-full">Notes</th>
+            <th class="px-2 py-1 font-medium whitespace-nowrap">Created By</th>
             <th class="px-2 py-1 font-medium text-center"><span class="sr-only">Delete</span></th>
           </tr>
         </thead>
         <tbody>
           ${data.map(e => `
             <tr class="border-t">
-              <td class="px-2 py-2">${escapeHtml(formatDateOnly(e.date) || "")}</td>
-              <td class="px-2 py-2">${Number(e.hours).toFixed(2)}</td>
-              <td class="px-2 py-2">
+              <td class="px-2 py-2 whitespace-nowrap">${escapeHtml(formatDateOnly(e.date) || "")}</td>
+              <td class="px-2 py-2 whitespace-nowrap">${Number(e.hours).toFixed(2)}</td>
+              <td class="px-2 py-2 whitespace-nowrap">
                 <span class="${e.from_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.from_family_name || 'N/A')}</span>
                 <span class="px-1">→</span>
                 <span class="${e.to_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.to_family_name || 'N/A')}</span>
               </td>
-              <td class="px-2 py-2 md:w-1/2">${escapeHtml(e.notes || "")}</td>
-              <td class="px-2 py-2">${e.request_id
+              <td class="px-2 py-2 min-w-48">${escapeHtml(e.notes || "")}</td>
+              <td class="px-2 py-2 whitespace-nowrap">${e.request_id
                 ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
                 : `<span>${escapeHtml(e.email)} (${escapeHtml(formatLedgerTypeLabel(e.type))})</span>`}
                 </td>
@@ -289,18 +289,12 @@ async function mountLedgerPage() {
     ]
   });
 
-  const syncDirectionColor = () => {
-    directionSelect.classList.toggle("text-green-600", directionSelect.value === "credit");
-    directionSelect.classList.toggle("text-red-600", directionSelect.value === "debit");
-  };
   const syncDirectionState = () => {
     if (!directionSelect) return;
     directionSelect.disabled = !familySelect?.value;
     if (directionSelect.disabled) directionSelect.value = "";
-    syncDirectionColor();
   };
   familySelect?.addEventListener("change", syncDirectionState);
-  directionSelect?.addEventListener("change", syncDirectionColor);
   syncDirectionState();
 
   const getEntryFilters = () => ({
