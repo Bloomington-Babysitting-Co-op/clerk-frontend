@@ -9,7 +9,8 @@ import {
   downloadCsv,
   withButtonBusy,
   setFormError,
-  hasAdmin
+  hasAdmin,
+  mountMultiselect
 } from "./utils.js";
 // Client-side cache for ledger balances to enable fast filtering by family
 let ledgerBalancesCache = null;
@@ -171,13 +172,15 @@ async function filterLedgerBalancesByFamily(containerId, familyId) {
 async function listLedgerInto(containerId, options = {}) {
   await requireAuth();
 
-  const { startDate = null, endDate = null, familyId = null } = options;
+  const { startDate = null, endDate = null, familyId = null, direction = null, types = null } = options;
 
   const [{ data, error }, isAdmin, { data: myFamilyId }] = await Promise.all([
     supabase.rpc("rpc_list_ledger_entries_filtered", {
       p_start_date: startDate,
       p_end_date: endDate,
-      p_family_id: familyId
+      p_family_id: familyId,
+      p_direction: direction,
+      p_types: types
     }),
     hasAdmin(),
     supabase.rpc("rpc_my_family_id")
@@ -274,23 +277,52 @@ async function mountLedgerPage() {
 
   await loadLedgerBalancesInto("ledger-balances");
 
-  let appliedFamily = null;
+  const directionSelect = document.getElementById("ledger-direction-select");
+  const typeFilter = mountMultiselect(document.getElementById("ledger-type-filter"), {
+    label: "Types",
+    options: [
+      { value: "babysit", label: "Babysit", checked: true },
+      { value: "drive", label: "Drive", checked: true },
+      { value: "favor", label: "Favor", checked: true },
+      { value: "ad_hoc", label: "Ad Hoc", checked: true },
+      { value: "admin", label: "Admin", checked: false }
+    ]
+  });
 
-  let currentRows = await listLedgerInto("ledger-list", {
+  const syncDirectionColor = () => {
+    directionSelect.classList.toggle("text-green-600", directionSelect.value === "credit");
+    directionSelect.classList.toggle("text-red-600", directionSelect.value === "debit");
+  };
+  const syncDirectionState = () => {
+    if (!directionSelect) return;
+    directionSelect.disabled = !familySelect?.value;
+    if (directionSelect.disabled) directionSelect.value = "";
+    syncDirectionColor();
+  };
+  familySelect?.addEventListener("change", syncDirectionState);
+  directionSelect?.addEventListener("change", syncDirectionColor);
+  syncDirectionState();
+
+  const getEntryFilters = () => ({
     startDate: startInput?.value || null,
     endDate: endInput?.value || null,
-    familyId: familySelect?.value || null
+    familyId: familySelect?.value || null,
+    direction: directionSelect?.value || null,
+    types: typeFilter.getSelected()
   });
+
+  let appliedFamily = null;
+
+  let currentRows = await listLedgerInto("ledger-list", getEntryFilters());
 
   if (applyBtn) {
     applyBtn.onclick = async () => {
       try {
         setFormError(ledgerError, "");
-        const startDate = startInput?.value || null;
-        const endDate = endInput?.value || null;
-        appliedFamily = familySelect?.value || null;
+        const filters = getEntryFilters();
+        appliedFamily = filters.familyId;
         await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
-        currentRows = await listLedgerInto("ledger-list", { startDate, endDate, familyId: appliedFamily });
+        currentRows = await listLedgerInto("ledger-list", filters);
       } catch (error) {
         setFormError(ledgerError, error.message);
       }

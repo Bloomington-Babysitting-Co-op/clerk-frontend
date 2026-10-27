@@ -30,7 +30,7 @@
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <div class="grid md:grid-cols-5 gap-3 items-end">
+      <div class="grid md:grid-cols-4 gap-3 items-end">
         <div>
           <label class="block text-sm font-medium mb-1">Start Date</label>
           <input id="ledger-start-date" type="date" class="border p-2 w-full rounded">
@@ -44,6 +44,18 @@
           <select id="ledger-family-select" class="border p-2 w-full rounded">
             <option value="">All Families</option>
           </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Direction</label>
+          <select id="ledger-direction-select" class="border p-2 w-full rounded disabled:bg-gray-100 disabled:text-gray-400" disabled>
+            <option value="">All</option>
+            <option value="credit" class="text-green-600">Credits</option>
+            <option value="debit" class="text-red-600">Debits</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Type</label>
+          <div id="ledger-type-filter"></div>
         </div>
         <button id="ledger-apply-filter-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Apply Filter</button>
         <button id="ledger-export-csv-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Export CSV</button>

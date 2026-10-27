@@ -279,6 +279,48 @@ export function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+export function mountMultiselect(container, { label, options }) {
+  container.innerHTML = `
+    <details class="relative">
+      <summary class="border p-2 w-full rounded bg-white cursor-pointer select-none flex justify-between items-center">
+        <span data-ms-summary></span><span class="text-gray-400 text-xs">▼</span>
+      </summary>
+      <div class="absolute z-10 mt-1 w-full min-w-40 bg-white border rounded shadow p-2 flex flex-col gap-1">
+        <button type="button" data-ms-toggle-all class="text-xs text-blue-600 hover:underline text-left mb-1"></button>
+        ${options.map((o) => `
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" value="${escapeHtml(o.value)}" ${o.checked ? "checked" : ""}>
+            ${escapeHtml(o.label)}
+          </label>`).join("")}
+      </div>
+    </details>`;
+
+  const summaryEl = container.querySelector("[data-ms-summary]");
+  const toggleAllEl = container.querySelector("[data-ms-toggle-all]");
+  const boxes = [...container.querySelectorAll("input[type=checkbox]")];
+  const selected = () => boxes.filter((b) => b.checked).map((b) => b.value);
+  const allSelected = () => selected().length === boxes.length;
+  const refresh = () => {
+    const values = selected();
+    summaryEl.textContent = allSelected() ? `${label}: All`
+      : values.length === 0 ? `${label}: None`
+      : `${label} (${values.length})`;
+    toggleAllEl.textContent = allSelected() ? "Clear all" : "Select all";
+  };
+  boxes.forEach((b) => b.addEventListener("change", refresh));
+  toggleAllEl.addEventListener("click", () => {
+    const check = !allSelected();
+    boxes.forEach((b) => { b.checked = check; });
+    refresh();
+  });
+  document.addEventListener("click", (e) => {
+    if (!container.contains(e.target)) container.querySelector("details").open = false;
+  });
+  refresh();
+
+  return { getSelected: selected, allSelected };
+}
+
 export function formatValidationErrors(errors) {
   if (!Array.isArray(errors)) return "";
   const values = errors.filter(Boolean);
