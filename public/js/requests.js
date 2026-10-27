@@ -13,7 +13,8 @@ import {
   setFormError,
   escapeHtml,
   normalizeQuarterHoursInput,
-  getMapLink
+  getMapLink,
+  mountMultiselect
 } from "./utils.js";
 import { getRequestStatusTextClass, formatTitleCase, renderRequestListCard } from "./request-cards.js";
 
@@ -453,13 +454,17 @@ async function listRequestsInto(containerId, options = {}) {
   const {
     startDate = null,
     endDate = null,
-    familyId = null
+    familyId = null,
+    statuses = null,
+    types = null
   } = options;
 
   const { data, error } = await supabase.rpc("rpc_list_requests_filtered", {
     p_start_date: startDate,
     p_end_date: endDate,
-    p_family_id: familyId
+    p_family_id: familyId,
+    p_statuses: statuses,
+    p_types: types
   });
 
   const el = document.getElementById(containerId);
@@ -487,8 +492,36 @@ async function mountRequestsPage() {
   const exportBtn = document.getElementById("requests-export-csv-btn");
   const errorEl = document.getElementById("requests-error");
 
-  if (startInput) startInput.value = toDateInputValue();
+  const now = new Date();
+  if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   if (endInput) endInput.value = "";
+
+  const statusFilter = mountMultiselect(document.getElementById("requests-status-filter"), {
+    label: "Status",
+    options: [
+      { value: "open", label: "Open", checked: true },
+      { value: "offered", label: "Offered", checked: true },
+      { value: "assigned", label: "Assigned", checked: true },
+      { value: "completed", label: "Completed", checked: false },
+      { value: "cancelled", label: "Cancelled", checked: false },
+      { value: "expired", label: "Expired", checked: false }
+    ]
+  });
+  const typeFilter = mountMultiselect(document.getElementById("requests-type-filter"), {
+    label: "Type",
+    options: [
+      { value: "babysit", label: "Babysit", checked: true },
+      { value: "drive", label: "Drive", checked: true },
+      { value: "favor", label: "Favor", checked: true }
+    ]
+  });
+  const getFilters = () => ({
+    startDate: startInput?.value || null,
+    endDate: endInput?.value || null,
+    familyId: familySelect?.value || null,
+    statuses: statusFilter.getSelected(),
+    types: typeFilter.getSelected()
+  });
 
   // Populate family select
   if (familySelect) {
@@ -508,21 +541,13 @@ async function mountRequestsPage() {
     }
   }
 
-  let currentRows = await listRequestsInto("requests-list", {
-    startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    familyId: familySelect?.value || null
-  });
+  let currentRows = await listRequestsInto("requests-list", getFilters());
 
   if (applyBtn) {
     applyBtn.onclick = async () => {
       try {
         setFormError(errorEl, "");
-        currentRows = await listRequestsInto("requests-list", {
-          startDate: startInput?.value || null,
-          endDate: endInput?.value || null,
-          familyId: familySelect?.value || null
-        });
+        currentRows = await listRequestsInto("requests-list", getFilters());
       } catch (error) {
         setFormError(errorEl, error.message);
       }
@@ -537,13 +562,14 @@ async function mountRequestsPage() {
       }
       setFormError(errorEl, "");
       const rows = [
-        ["ID", "Date", "Type", "Status", "Family Name", "Hours", "Notes"],
+        ["ID", "Date", "Type", "Status", "Requester Family Name", "Assigned Family Name", "Hours", "Notes"],
         ...currentRows.map((row) => [
           row.id,
           row.date || "",
           row.type || "",
           row.status || "",
-          row.family_name || "",
+          row.requester_family_name || "",
+          row.assigned_family_name || "",
           row.hours ?? "",
           row.notes || ""
         ])

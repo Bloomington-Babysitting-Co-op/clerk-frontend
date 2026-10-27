@@ -42,7 +42,7 @@ function renderRequestListCard(request, options = {}) {
   return `
     <a href="/request-view.html?id=${request.id}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-x-10 ${bgColorClass}">
       <div class="min-w-70">
-        <p class="font-semibold">${escapeHtml(request.family_name)}</p>
+        <p class="font-semibold">${escapeHtml(request.requester_family_name)}${request.assigned_family_name ? ` <span class="px-1 text-gray-500">→</span> <span class="text-green-600">${escapeHtml(request.assigned_family_name)}</span>` : ""}</p>
         <p class="font-semibold flex items-center gap-2">
           <span class="${getRequestStatusTextClass(request.status)}">${formatTitleCase(request.status)}</span>
           <span class="text-gray-800">${formatTitleCase(request.type)}</span>
