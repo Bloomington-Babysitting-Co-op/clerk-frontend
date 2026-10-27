@@ -30,7 +30,7 @@
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <div class="grid md:grid-cols-4 gap-3 items-end">
+      <div class="grid md:grid-cols-[repeat(5,minmax(0,1fr))_auto_auto] gap-3 items-end">
         <div>
           <label class="block text-sm font-medium mb-1">Start Date</label>
           <input id="ledger-start-date" type="date" class="border p-2 w-full rounded">
@@ -49,8 +49,8 @@
           <label class="block text-sm font-medium mb-1">Direction</label>
           <select id="ledger-direction-select" class="border p-2 w-full rounded disabled:bg-gray-100 disabled:text-gray-400" disabled>
             <option value="">All</option>
-            <option value="credit" class="text-green-600">Credits</option>
-            <option value="debit" class="text-red-600">Debits</option>
+            <option value="credit">Credits</option>
+            <option value="debit">Debits</option>
           </select>
         </div>
         <div>
