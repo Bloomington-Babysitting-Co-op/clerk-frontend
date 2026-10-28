@@ -484,7 +484,6 @@ async function listRequestsInto(containerId, options = {}) {
 
 async function mountRequestsPage() {
   setupNavbar("navbar");
-  await requireAuth();
 
   const startInput = document.getElementById("requests-start-date");
   const endInput = document.getElementById("requests-end-date");
@@ -516,6 +515,9 @@ async function mountRequestsPage() {
       { value: "favor", label: "Favor", checked: true }
     ]
   });
+
+  await requireAuth();
+
   const getFilters = () => {
     normalizeDateRangeInputs(startInput, endInput);
     return {

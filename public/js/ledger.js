@@ -259,11 +259,11 @@ async function listLedgerInto(containerId, options = {}) {
 
 async function mountLedgerPage() {
   setupNavbar("navbar");
-  await requireAuth();
 
   const startInput = document.getElementById("ledger-start-date");
   const endInput = document.getElementById("ledger-end-date");
   const familySelect = document.getElementById("ledger-family-select");
+  const directionSelect = document.getElementById("ledger-direction-select");
   const applyBtn = document.getElementById("ledger-apply-filter-btn");
   const exportBtn = document.getElementById("ledger-export-csv-btn");
   const ledgerError = document.getElementById("ledger-error");
@@ -273,25 +273,6 @@ async function mountLedgerPage() {
   if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   if (endInput) endInput.value = "";
 
-  // Populate family select
-  if (familySelect) {
-    try {
-      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
-      if (!familiesError && Array.isArray(familiesData)) {
-        familiesData.sort((a, b) => (b.is_my_family ? 1 : 0) - (a.is_my_family ? 1 : 0));
-        familiesData.forEach((f) => {
-          const opt = document.createElement("option");
-          opt.value = f.id;
-          opt.textContent = f.name || f.id;
-          familySelect.appendChild(opt);
-        });
-      }
-    } catch (e) {
-      // ignore population errors — select stays as "All Families"
-    }
-  }
-
-  const directionSelect = document.getElementById("ledger-direction-select");
   const typeFilter = mountMultiselect(document.getElementById("ledger-type-filter"), {
     label: "Types",
     options: [
@@ -310,6 +291,26 @@ async function mountLedgerPage() {
   };
   familySelect?.addEventListener("change", syncDirectionState);
   syncDirectionState();
+
+  await requireAuth();
+
+  // Populate family select
+  if (familySelect) {
+    try {
+      const { data: familiesData, error: familiesError } = await supabase.rpc("rpc_list_families_all");
+      if (!familiesError && Array.isArray(familiesData)) {
+        familiesData.sort((a, b) => (b.is_my_family ? 1 : 0) - (a.is_my_family ? 1 : 0));
+        familiesData.forEach((f) => {
+          const opt = document.createElement("option");
+          opt.value = f.id;
+          opt.textContent = f.name || f.id;
+          familySelect.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      // ignore population errors — select stays as "All Families"
+    }
+  }
 
   const getEntryFilters = () => {
     normalizeDateRangeInputs(startInput, endInput);
