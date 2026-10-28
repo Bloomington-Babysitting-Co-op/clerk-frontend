@@ -496,25 +496,8 @@ async function mountRequestsPage() {
   if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   if (endInput) endInput.value = "";
 
-  const statusFilter = mountMultiselect(document.getElementById("requests-status-filter"), {
-    label: "Status",
-    options: [
-      { value: "open", label: "Open", checked: true },
-      { value: "offered", label: "Offered", checked: true },
-      { value: "assigned", label: "Assigned", checked: true },
-      { value: "completed", label: "Completed", checked: false },
-      { value: "cancelled", label: "Cancelled", checked: false },
-      { value: "expired", label: "Expired", checked: false }
-    ]
-  });
-  const typeFilter = mountMultiselect(document.getElementById("requests-type-filter"), {
-    label: "Type",
-    options: [
-      { value: "babysit", label: "Babysit", checked: true },
-      { value: "drive", label: "Drive", checked: true },
-      { value: "favor", label: "Favor", checked: true }
-    ]
-  });
+  const statusFilter = mountMultiselect(document.getElementById("requests-status-filter"), { label: "Status" });
+  const typeFilter = mountMultiselect(document.getElementById("requests-type-filter"), { label: "Type" });
 
   await requireAuth();
 

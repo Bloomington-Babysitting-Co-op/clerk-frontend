@@ -4,7 +4,8 @@ let adminStatusCache = null;
 const _initedTextareas = new WeakSet();
 
 // Inline arrow sized to the surrounding text; a "→" glyph sits low in many system fonts.
-export const ARROW_SVG = `<svg class="inline-block w-[1em] h-[1em] align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="sr-only">to</span>`;
+// -0.15em puts the arrow's center at the middle of capital letters (~0.35em above the baseline).
+export const ARROW_SVG = `<svg class="inline-block w-[1em] h-[1em] align-[-0.15em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="sr-only">to</span>`;
 
 export function monthValueFromDate(value) {
   if (!value) return "";
@@ -291,22 +292,8 @@ export function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-export function mountMultiselect(container, { label, options }) {
-  container.innerHTML = `
-    <details class="relative">
-      <summary class="border p-2 w-full rounded bg-white cursor-pointer select-none flex justify-between items-center">
-        <span data-ms-summary></span><span class="text-gray-400 text-xs">▼</span>
-      </summary>
-      <div class="absolute z-10 mt-1 w-full min-w-40 bg-white border rounded shadow p-2 flex flex-col gap-1">
-        <button type="button" data-ms-toggle-all class="text-xs text-blue-600 hover:underline text-left mb-1"></button>
-        ${options.map((o) => `
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" value="${escapeHtml(o.value)}" ${o.checked ? "checked" : ""}>
-            ${escapeHtml(o.label)}
-          </label>`).join("")}
-      </div>
-    </details>`;
-
+// Wires up multiselect markup that is already in the page HTML, so it renders before scripts load.
+export function mountMultiselect(container, { label }) {
   const summaryEl = container.querySelector("[data-ms-summary]");
   const toggleAllEl = container.querySelector("[data-ms-toggle-all]");
   const boxes = [...container.querySelectorAll("input[type=checkbox]")];

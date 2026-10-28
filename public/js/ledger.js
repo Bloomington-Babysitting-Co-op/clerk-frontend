@@ -274,16 +274,7 @@ async function mountLedgerPage() {
   if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   if (endInput) endInput.value = "";
 
-  const typeFilter = mountMultiselect(document.getElementById("ledger-type-filter"), {
-    label: "Types",
-    options: [
-      { value: "babysit", label: "Babysit", checked: true },
-      { value: "drive", label: "Drive", checked: true },
-      { value: "favor", label: "Favor", checked: true },
-      { value: "ad_hoc", label: "Ad Hoc", checked: true },
-      { value: "admin", label: "Admin", checked: false }
-    ]
-  });
+  const typeFilter = mountMultiselect(document.getElementById("ledger-type-filter"), { label: "Types" });
 
   const syncDirectionState = () => {
     if (!directionSelect) return;
