@@ -123,7 +123,7 @@ function renderLedgerBalances(containerId, data) {
   }).join('');
 
   el.innerHTML = `
-    <div class="overflow-x-auto">
+    <div class="relative overflow-x-auto">
       <table class="text-sm whitespace-nowrap">
         <thead>
           <tr class="text-left">
@@ -212,14 +212,14 @@ async function listLedgerInto(containerId, options = {}) {
 
   el.innerHTML = data.length
     ? `
-    <div class="overflow-x-auto">
+    <div class="relative overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left">
             <th class="px-2 py-1 font-medium whitespace-nowrap">Date</th>
             <th class="px-2 py-1 font-medium whitespace-nowrap">Hours</th>
             <th class="px-2 py-1 font-medium whitespace-nowrap">From ${ARROW_SVG} To</th>
-            <th class="px-2 py-1 font-medium w-full">Notes</th>
+            <th class="px-2 py-1 font-medium">Notes</th>
             <th class="px-2 py-1 font-medium whitespace-nowrap">Created By</th>
             <th class="px-2 py-1 font-medium text-center"><span class="sr-only">Delete</span></th>
           </tr>
@@ -234,7 +234,7 @@ async function listLedgerInto(containerId, options = {}) {
                 <span class="px-1">${ARROW_SVG}</span>
                 <span class="${e.to_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.to_family_name || 'N/A')}</span>
               </td>
-              <td class="px-2 py-2 min-w-48">${escapeHtml(e.notes || "")}</td>
+              <td class="px-2 py-2 min-w-48 wrap-anywhere">${escapeHtml(e.notes || "")}</td>
               <td class="px-2 py-2 whitespace-nowrap">${e.request_id
                 ? `<a href="/request-view.html?id=${encodeURIComponent(e.request_id)}" class="text-blue-600 hover:underline" rel="noopener" aria-label="View request">${escapeHtml(e.email)}</a>`
                 : `<span>${escapeHtml(e.email)} (${escapeHtml(formatLedgerTypeLabel(e.type))})</span>`}
