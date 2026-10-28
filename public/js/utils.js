@@ -3,6 +3,9 @@ import { supabase } from "/js/supabase.js";
 let adminStatusCache = null;
 const _initedTextareas = new WeakSet();
 
+// Inline arrow sized to the surrounding text; a "→" glyph sits low in many system fonts.
+export const ARROW_SVG = `<svg class="inline-block w-[1em] h-[1em] align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="sr-only">to</span>`;
+
 export function monthValueFromDate(value) {
   if (!value) return "";
   return String(value).slice(0, 7);

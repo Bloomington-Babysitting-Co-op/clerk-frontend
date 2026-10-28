@@ -11,7 +11,8 @@ import {
   setFormError,
   hasAdmin,
   mountMultiselect,
-  normalizeDateRangeInputs
+  normalizeDateRangeInputs,
+  ARROW_SVG
 } from "./utils.js";
 let stickyColumnObserver = null;
 
@@ -217,7 +218,7 @@ async function listLedgerInto(containerId, options = {}) {
           <tr class="text-left">
             <th class="px-2 py-1 font-medium whitespace-nowrap">Date</th>
             <th class="px-2 py-1 font-medium whitespace-nowrap">Hours</th>
-            <th class="px-2 py-1 font-medium whitespace-nowrap">From → To</th>
+            <th class="px-2 py-1 font-medium whitespace-nowrap">From ${ARROW_SVG} To</th>
             <th class="px-2 py-1 font-medium w-full">Notes</th>
             <th class="px-2 py-1 font-medium whitespace-nowrap">Created By</th>
             <th class="px-2 py-1 font-medium text-center"><span class="sr-only">Delete</span></th>
@@ -230,7 +231,7 @@ async function listLedgerInto(containerId, options = {}) {
               <td class="px-2 py-2 whitespace-nowrap">${Number(e.hours).toFixed(2)}</td>
               <td class="px-2 py-2 whitespace-nowrap">
                 <span class="${e.from_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.from_family_name || 'N/A')}</span>
-                <span class="px-1">→</span>
+                <span class="px-1">${ARROW_SVG}</span>
                 <span class="${e.to_family_name === null ? 'text-red-600' : ''}">${escapeHtml(e.to_family_name || 'N/A')}</span>
               </td>
               <td class="px-2 py-2 min-w-48">${escapeHtml(e.notes || "")}</td>

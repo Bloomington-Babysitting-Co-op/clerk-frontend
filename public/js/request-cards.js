@@ -1,4 +1,4 @@
-import { formatTimeOnly, escapeHtml } from "./utils.js";
+import { formatTimeOnly, escapeHtml, ARROW_SVG } from "./utils.js";
 
 function getRequestStatusTextClass(status) {
   const normalized = (status || "").toLowerCase();
@@ -42,7 +42,7 @@ function renderRequestListCard(request, options = {}) {
   return `
     <a href="/request-view.html?id=${request.id}" class="flex items-center border p-4 mb-2 rounded hover:shadow transition gap-x-10 ${bgColorClass}">
       <div class="min-w-70">
-        <p class="font-semibold">${escapeHtml(request.requester_family_name)}${request.assigned_family_name ? ` → ${escapeHtml(request.assigned_family_name)}` : ""}</p>
+        <p class="font-semibold">${escapeHtml(request.requester_family_name)}${request.assigned_family_name ? ` ${ARROW_SVG} ${escapeHtml(request.assigned_family_name)}` : ""}</p>
         <p class="font-semibold flex items-center gap-2">
           <span class="${getRequestStatusTextClass(request.status)}">${formatTitleCase(request.status)}</span>
           <span class="text-gray-800">${formatTitleCase(request.type)}</span>
