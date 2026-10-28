@@ -30,22 +30,22 @@
     </div>
 
     <div class="bg-white border p-4 rounded-lg shadow mb-6">
-      <div class="grid md:grid-cols-[repeat(5,minmax(0,1fr))_auto_auto] gap-3 items-end">
-        <div>
+      <div class="grid grid-cols-6 max-[400px]:grid-cols-2 md:grid-cols-[repeat(5,minmax(0,1fr))_auto_auto] gap-3 items-end">
+        <div class="col-span-3 max-[400px]:col-span-1 md:col-span-1">
           <label class="block text-sm font-medium mb-1">Start Date</label>
           <input id="requests-start-date" type="date" class="border p-2 w-full rounded">
         </div>
-        <div>
+        <div class="col-span-3 max-[400px]:col-span-1 md:col-span-1">
           <label class="block text-sm font-medium mb-1">End Date</label>
           <input id="requests-end-date" type="date" class="border p-2 w-full rounded">
         </div>
-        <div>
+        <div class="col-span-2 max-[400px]:col-span-2 md:col-span-1">
           <label class="block text-sm font-medium mb-1">Family</label>
           <select id="requests-family-select" class="border p-2 w-full rounded">
             <option value="">All Families</option>
           </select>
         </div>
-        <div>
+        <div class="col-span-2 max-[400px]:col-span-1 md:col-span-1">
           <label class="block text-sm font-medium mb-1">Status</label>
           <div id="requests-status-filter">
             <details class="relative">
@@ -64,7 +64,7 @@
             </details>
           </div>
         </div>
-        <div>
+        <div class="col-span-2 max-[400px]:col-span-1 md:col-span-1">
           <label class="block text-sm font-medium mb-1">Type</label>
           <div id="requests-type-filter">
             <details class="relative">
@@ -80,8 +80,8 @@
             </details>
           </div>
         </div>
-        <button id="requests-apply-filter-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Apply Filters</button>
-        <button id="requests-export-csv-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Export CSV</button>
+        <button id="requests-apply-filter-btn" class="col-span-3 max-[400px]:col-span-1 md:col-span-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Apply Filters</button>
+        <button id="requests-export-csv-btn" class="col-span-3 max-[400px]:col-span-1 md:col-span-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Export CSV</button>
       </div>
       <p id="requests-error" class="text-red-600 mt-2"></p>
     </div>
