@@ -14,7 +14,8 @@ import {
   escapeHtml,
   normalizeQuarterHoursInput,
   getMapLink,
-  mountMultiselect
+  mountMultiselect,
+  normalizeDateRangeInputs
 } from "./utils.js";
 import { getRequestStatusTextClass, formatTitleCase, renderRequestListCard } from "./request-cards.js";
 
@@ -483,7 +484,6 @@ async function listRequestsInto(containerId, options = {}) {
 
 async function mountRequestsPage() {
   setupNavbar("navbar");
-  await requireAuth();
 
   const startInput = document.getElementById("requests-start-date");
   const endInput = document.getElementById("requests-end-date");
@@ -496,32 +496,21 @@ async function mountRequestsPage() {
   if (startInput) startInput.value = toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
   if (endInput) endInput.value = "";
 
-  const statusFilter = mountMultiselect(document.getElementById("requests-status-filter"), {
-    label: "Status",
-    options: [
-      { value: "open", label: "Open", checked: true },
-      { value: "offered", label: "Offered", checked: true },
-      { value: "assigned", label: "Assigned", checked: true },
-      { value: "completed", label: "Completed", checked: false },
-      { value: "cancelled", label: "Cancelled", checked: false },
-      { value: "expired", label: "Expired", checked: false }
-    ]
-  });
-  const typeFilter = mountMultiselect(document.getElementById("requests-type-filter"), {
-    label: "Type",
-    options: [
-      { value: "babysit", label: "Babysit", checked: true },
-      { value: "drive", label: "Drive", checked: true },
-      { value: "favor", label: "Favor", checked: true }
-    ]
-  });
-  const getFilters = () => ({
-    startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    familyId: familySelect?.value || null,
-    statuses: statusFilter.getSelected(),
-    types: typeFilter.getSelected()
-  });
+  const statusFilter = mountMultiselect(document.getElementById("requests-status-filter"), { label: "Status" });
+  const typeFilter = mountMultiselect(document.getElementById("requests-type-filter"), { label: "Type" });
+
+  await requireAuth();
+
+  const getFilters = () => {
+    normalizeDateRangeInputs(startInput, endInput);
+    return {
+      startDate: startInput?.value || null,
+      endDate: endInput?.value || null,
+      familyId: familySelect?.value || null,
+      statuses: statusFilter.getSelected(),
+      types: typeFilter.getSelected()
+    };
+  };
 
   // Populate family select
   if (familySelect) {

@@ -843,6 +843,8 @@ function wireAdminBannerForm() {
 
 // Admin links management (grid + draft cache)
 let adminLinksCache = [];
+// Saving replaces the full link set, so it must be blocked unless the persisted links loaded.
+let adminLinksLoaded = false;
 let adminLinksDrafts = {}; // key -> {url,text,row,order} or null for cleared
 let selectedRow = null; // 1..3
 let selectedCol = null; // 0..4
@@ -904,9 +906,13 @@ async function loadAdminLinksSettings() {
     // normalize to {url,text,row,order}
     adminLinksCache = rows.map(r => ({ url: r.link_url || '', text: r.link_text || '', row: Number(r.link_row) || 1, order: Number(r.link_order) || 0 }));
     adminLinksDrafts = {};
+    adminLinksLoaded = true;
     renderAdminLinksGrid();
   } catch (err) {
+    adminLinksLoaded = false;
     console.error('Failed to load admin links', err);
+    const statusEl = document.getElementById('admin-links-status');
+    if (statusEl) statusEl.textContent = `Failed to load links: ${err?.message || 'unknown error'}. Reload the page before saving.`;
   }
 }
 
@@ -963,6 +969,10 @@ async function saveSelectedTile() {
 
 async function commitAllChanges() {
   const statusEl = document.getElementById('admin-links-status');
+  if (!adminLinksLoaded) {
+    if (statusEl) statusEl.textContent = 'Links failed to load. Reload the page before saving.';
+    return;
+  }
   if (statusEl) statusEl.textContent = '';
 
   // build map from persisted

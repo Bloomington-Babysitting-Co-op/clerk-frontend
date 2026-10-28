@@ -55,7 +55,21 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Type</label>
-          <div id="ledger-type-filter"></div>
+          <div id="ledger-type-filter">
+            <details class="relative">
+              <summary class="border p-2 w-full rounded bg-white cursor-pointer select-none flex justify-between items-center">
+                <span data-ms-summary>Types (4)</span><span class="text-gray-400 text-xs">▼</span>
+              </summary>
+              <div class="absolute z-10 mt-1 w-full min-w-40 bg-white border rounded shadow p-2 flex flex-col gap-1">
+                <button type="button" data-ms-toggle-all class="text-xs text-blue-600 hover:underline text-left mb-1">Select all</button>
+                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="babysit" checked> Babysit</label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="drive" checked> Drive</label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="favor" checked> Favor</label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="ad_hoc" checked> Ad Hoc</label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="admin"> Admin</label>
+              </div>
+            </details>
+          </div>
         </div>
         <button id="ledger-apply-filter-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Apply Filter</button>
         <button id="ledger-export-csv-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Export CSV</button>
