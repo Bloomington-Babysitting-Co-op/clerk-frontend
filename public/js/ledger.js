@@ -10,17 +10,38 @@ import {
   withButtonBusy,
   setFormError,
   hasAdmin,
-  mountMultiselect
+  mountMultiselect,
+  normalizeDateRangeInputs
 } from "./utils.js";
-// Client-side cache for ledger balances to enable fast filtering by family
-let ledgerBalancesCache = null;
+let stickyColumnObserver = null;
 
-function getMonthNames() {
-  const now = new Date();
-  const thisMonthName = now.toLocaleString('en-US', { month: 'long' });
-  const priorDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const priorMonthName = priorDate.toLocaleString('en-US', { month: 'long' });
-  return { thisMonthName, priorMonthName };
+function formatMonthLabel(monthStart) {
+  const [year, month] = String(monthStart).slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+}
+
+// Pivot long-form balance rows into month columns (newest first) and one entry per family.
+function pivotLedgerBalances(rows) {
+  const monthKeys = [];
+  const families = [];
+  const familyIndex = new Map();
+
+  (rows || []).forEach((row) => {
+    const monthKey = String(row.month_start).slice(0, 10);
+    if (!monthKeys.includes(monthKey)) monthKeys.push(monthKey);
+
+    let family = familyIndex.get(row.id);
+    if (!family) {
+      family = { id: row.id, name: row.name, hours_balance: row.hours_balance, byMonth: {} };
+      familyIndex.set(row.id, family);
+      families.push(family);
+    }
+    family.byMonth[monthKey] = row;
+  });
+
+  monthKeys.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  const months = monthKeys.map((key) => ({ key, label: formatMonthLabel(key) }));
+  return { months, families };
 }
 
 function formatLedgerTypeLabel(type) {
@@ -65,108 +86,103 @@ async function deleteLedgerEntry(entry) {
 }
 
 function renderLedgerBalances(containerId, data) {
-  const { thisMonthName, priorMonthName } = getMonthNames();
   const el = document.getElementById(containerId);
   if (!el) return;
+
+  if (stickyColumnObserver) {
+    stickyColumnObserver.disconnect();
+    stickyColumnObserver = null;
+  }
 
   if (!data || !data.length) {
     el.innerHTML = "<p class='text-gray-600'>No balances available.</p>";
     return;
   }
 
+  const { months, families } = pivotLedgerBalances(data);
+
   const fmt = (v, pair) => {
     const n = Number(v);
     const color = n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-gray-600';
     return pair !== undefined && n === 0 && Number(pair) === 0 ? color + ' bg-gray-100' : color;
   };
-  const nbr = (v) => Number(v).toFixed(2);
+  const nbr = (v) => Number(v || 0).toFixed(2);
+
+  // Sticky cells need an opaque background so scrolled month columns don't show through.
+  const sticky1 = "sticky left-0 z-10 bg-white";
+  const sticky2 = "sticky z-10 bg-white shadow-[inset_-1px_0_0_#e5e7eb]";
+
+  const monthCells = (row) => months.map(({ key }) => {
+    const m = row.byMonth[key] || {};
+    return `
+              <td class="px-2 py-2 border-l ${fmt(m.credits, m.debits)}">${nbr(m.credits)}</td>
+              <td class="px-2 py-2 ${fmt(m.debits, m.credits)}">${nbr(m.debits)}</td>
+              <td class="px-2 py-2 ${fmt(m.admin)}">${nbr(m.admin)}</td>
+              <td class="px-2 py-2 ${fmt(m.start_balance)}">${nbr(m.start_balance)}</td>`;
+  }).join('');
 
   el.innerHTML = `
     <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
+      <table class="min-w-full text-sm whitespace-nowrap">
         <thead>
           <tr class="text-left">
-            <th class="px-2 py-1 font-medium align-bottom" rowspan="2">Family Name</th>
-            <th class="px-2 py-1 font-medium align-bottom" rowspan="2">Hours Balance</th>
-            <th class="px-2 py-1 font-medium text-center border-l" colspan="4"><span class="block w-full bg-blue-50 rounded-full px-4 py-0.5" style="letter-spacing: 0.3em">${escapeHtml(thisMonthName)}</span></th>
-            <th class="px-2 py-1 font-medium text-center border-l" colspan="4"><span class="block w-full bg-blue-50 rounded-full px-4 py-0.5" style="letter-spacing: 0.3em">${escapeHtml(priorMonthName)}</span></th>
+            <th class="${sticky1} px-2 py-1 font-medium align-bottom" rowspan="2" data-sticky-col="1">Family Name</th>
+            <th class="${sticky2} px-2 py-1 font-medium align-bottom" rowspan="2" data-sticky-col="2">Hours Balance</th>
+            ${months.map(({ label }) => `<th class="px-2 py-1 font-medium text-center border-l" colspan="4"><span class="block w-full bg-blue-50 rounded-full px-4 py-0.5" style="letter-spacing: 0.3em">${escapeHtml(label)}</span></th>`).join('')}
           </tr>
           <tr class="text-left">
+            ${months.map(() => `
             <th class="px-2 py-1 font-medium border-l">Credits</th>
             <th class="px-2 py-1 font-medium">Debits</th>
             <th class="px-2 py-1 font-medium">Admin</th>
-            <th class="px-2 py-1 font-medium">Start Balance</th>
-            <th class="px-2 py-1 font-medium border-l">Credits</th>
-            <th class="px-2 py-1 font-medium">Debits</th>
-            <th class="px-2 py-1 font-medium">Admin</th>
-            <th class="px-2 py-1 font-medium">Start Balance</th>
+            <th class="px-2 py-1 font-medium">Start Balance</th>`).join('')}
           </tr>
         </thead>
         <tbody>
-          ${data.map(row => `
+          ${families.map(row => `
             <tr class="border-t">
-              <td class="px-2 py-2">${escapeHtml(row.name)}</td>
-              <td class="px-2 py-2 font-semibold ${fmt(row.hours_balance)}">${nbr(row.hours_balance)}</td>
-              <td class="px-2 py-2 ${fmt(row.this_month_credits, row.this_month_debits)}">${nbr(row.this_month_credits)}</td>
-              <td class="px-2 py-2 ${fmt(row.this_month_debits, row.this_month_credits)}">${nbr(row.this_month_debits)}</td>
-              <td class="px-2 py-2 ${fmt(row.this_month_admin)}">${nbr(row.this_month_admin)}</td>
-              <td class="px-2 py-2 ${fmt(row.month_start_balance)}">${nbr(row.month_start_balance)}</td>
-              <td class="px-2 py-2 ${fmt(row.prior_month_credits, row.prior_month_debits)}">${nbr(row.prior_month_credits)}</td>
-              <td class="px-2 py-2 ${fmt(row.prior_month_debits, row.prior_month_credits)}">${nbr(row.prior_month_debits)}</td>
-              <td class="px-2 py-2 ${fmt(row.prior_month_admin)}">${nbr(row.prior_month_admin)}</td>
-              <td class="px-2 py-2 ${fmt(row.prior_month_start_balance)}">${nbr(row.prior_month_start_balance)}</td>
+              <td class="${sticky1} px-2 py-2" data-sticky-col="1">${escapeHtml(row.name)}</td>
+              <td class="${sticky2} px-2 py-2 font-semibold ${fmt(row.hours_balance)}" data-sticky-col="2">${nbr(row.hours_balance)}</td>
+              ${monthCells(row)}
             </tr>
           `).join('')}
         </tbody>
       </table>
     </div>
   `;
+
+  // The second locked column sits immediately right of the first, whose width depends on the family names.
+  const firstCol = el.querySelector('th[data-sticky-col="1"]');
+  const secondColCells = el.querySelectorAll('[data-sticky-col="2"]');
+  const positionSecondCol = () => {
+    const left = `${firstCol.getBoundingClientRect().width}px`;
+    secondColCells.forEach((cell) => { cell.style.left = left; });
+  };
+  positionSecondCol();
+  if (firstCol && typeof ResizeObserver !== "undefined") {
+    stickyColumnObserver = new ResizeObserver(positionSecondCol);
+    stickyColumnObserver.observe(firstCol);
+  }
 }
 
-async function loadLedgerBalancesInto(containerId) {
-  const { data, error } = await supabase.rpc("rpc_list_ledger_balances");
+async function loadLedgerBalancesInto(containerId, startDate = null, endDate = null, familyId = null) {
+  const { data, error } = await supabase.rpc("rpc_list_ledger_balances_filtered", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_family_id: familyId
+  });
   const el = document.getElementById(containerId);
 
-  if (!el) return;
+  if (!el) return [];
 
   if (error) {
-    el.innerHTML = `<p class='text-red-600'>${error.message}</p>`;
-    ledgerBalancesCache = [];
-    return;
-  }
-
-  ledgerBalancesCache = Array.isArray(data) ? data : [];
-  renderLedgerBalances(containerId, ledgerBalancesCache);
-  return ledgerBalancesCache;
-}
-
-async function filterLedgerBalancesByFamily(containerId, familyId) {
-  if (ledgerBalancesCache === null) {
-    await loadLedgerBalancesInto(containerId);
-  }
-
-  if (!Array.isArray(ledgerBalancesCache)) {
-    renderLedgerBalances(containerId, []);
+    el.innerHTML = `<p class='text-red-600'>${escapeHtml(error.message)}</p>`;
     return [];
   }
 
-  if (!familyId) {
-    renderLedgerBalances(containerId, ledgerBalancesCache);
-    return ledgerBalancesCache;
-  }
-
-  const sel = document.getElementById('ledger-family-select');
-  const selectedText = sel ? sel.options[sel.selectedIndex]?.textContent : null;
-
-  const filtered = ledgerBalancesCache.filter(row => {
-    if (row.id !== undefined && row.id !== null) return String(row.id) === String(familyId);
-    if (row.family_id !== undefined && row.family_id !== null) return String(row.family_id) === String(familyId);
-    if (selectedText) return String(row.name) === String(selectedText);
-    return false;
-  });
-
-  renderLedgerBalances(containerId, filtered);
-  return filtered;
+  const rows = Array.isArray(data) ? data : [];
+  renderLedgerBalances(containerId, rows);
+  return rows;
 }
 
 async function listLedgerInto(containerId, options = {}) {
@@ -275,8 +291,6 @@ async function mountLedgerPage() {
     }
   }
 
-  await loadLedgerBalancesInto("ledger-balances");
-
   const directionSelect = document.getElementById("ledger-direction-select");
   const typeFilter = mountMultiselect(document.getElementById("ledger-type-filter"), {
     label: "Types",
@@ -297,25 +311,27 @@ async function mountLedgerPage() {
   familySelect?.addEventListener("change", syncDirectionState);
   syncDirectionState();
 
-  const getEntryFilters = () => ({
-    startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    familyId: familySelect?.value || null,
-    direction: directionSelect?.value || null,
-    types: typeFilter.getSelected()
-  });
+  const getEntryFilters = () => {
+    normalizeDateRangeInputs(startInput, endInput);
+    return {
+      startDate: startInput?.value || null,
+      endDate: endInput?.value || null,
+      familyId: familySelect?.value || null,
+      direction: directionSelect?.value || null,
+      types: typeFilter.getSelected()
+    };
+  };
 
-  let appliedFamily = null;
-
-  let currentRows = await listLedgerInto("ledger-list", getEntryFilters());
+  const initialFilters = getEntryFilters();
+  let currentBalances = await loadLedgerBalancesInto("ledger-balances", initialFilters.startDate, initialFilters.endDate, initialFilters.familyId);
+  let currentRows = await listLedgerInto("ledger-list", initialFilters);
 
   if (applyBtn) {
     applyBtn.onclick = async () => {
       try {
         setFormError(ledgerError, "");
         const filters = getEntryFilters();
-        appliedFamily = filters.familyId;
-        await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
+        currentBalances = await loadLedgerBalancesInto('ledger-balances', filters.startDate, filters.endDate, filters.familyId);
         currentRows = await listLedgerInto("ledger-list", filters);
       } catch (error) {
         setFormError(ledgerError, error.message);
@@ -330,32 +346,22 @@ async function mountLedgerPage() {
         return;
       }
       setFormError(ledgerError, "");
-      // Build balances header & rows (filtered by currently-selected family)
-      const { thisMonthName: csvThisMonth, priorMonthName: csvPriorMonth } = getMonthNames();
+      // Build balances header & rows from the currently-applied filters
+      const { months, families } = pivotLedgerBalances(currentBalances);
+      const n2 = (v) => Number(v || 0).toFixed(2);
       const balancesHeader = [
         "Family Name",
         "Hours Balance",
-        `${csvThisMonth} Credits`, `${csvThisMonth} Debits`, `${csvThisMonth} Admin`, `${csvThisMonth} Start Balance`,
-        `${csvPriorMonth} Credits`, `${csvPriorMonth} Debits`, `${csvPriorMonth} Admin`, `${csvPriorMonth} Start Balance`
+        ...months.flatMap(({ label }) => [`${label} Credits`, `${label} Debits`, `${label} Admin`, `${label} Start Balance`])
       ];
-      let balancesRows = [];
-      try {
-        const filteredBalances = await filterLedgerBalancesByFamily('ledger-balances', appliedFamily);
-        balancesRows = Array.isArray(filteredBalances) ? filteredBalances.map(b => [
-          b.name || "",
-          Number(b.hours_balance || 0).toFixed(2),
-          Number(b.this_month_credits || 0).toFixed(2),
-          Number(b.this_month_debits || 0).toFixed(2),
-          Number(b.this_month_admin || 0).toFixed(2),
-          Number(b.month_start_balance || 0).toFixed(2),
-          Number(b.prior_month_credits || 0).toFixed(2),
-          Number(b.prior_month_debits || 0).toFixed(2),
-          Number(b.prior_month_admin || 0).toFixed(2),
-          Number(b.prior_month_start_balance || 0).toFixed(2)
-        ]) : [];
-      } catch (e) {
-        balancesRows = [];
-      }
+      const balancesRows = families.map(f => [
+        f.name || "",
+        n2(f.hours_balance),
+        ...months.flatMap(({ key }) => {
+          const m = f.byMonth[key] || {};
+          return [n2(m.credits), n2(m.debits), n2(m.admin), n2(m.start_balance)];
+        })
+      ]);
 
       // Build entries header & rows
       const entriesHeader = ["ID", "Date", "Hours", "From Family Name", "To Family Name", "Notes", "Created By", "Request ID"];

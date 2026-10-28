@@ -49,6 +49,15 @@ export function toDateInputValue(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+export function normalizeDateRangeInputs(startInput, endInput) {
+  const start = startInput?.value;
+  const end = endInput?.value;
+  if (start && end && start > end) {
+    startInput.value = end;
+    endInput.value = start;
+  }
+}
+
 export function toTimeInputValue(value) {
   if (!value) return "";
   const match = String(value).match(/^(\d{1,2}):(\d{2})/);

@@ -14,7 +14,8 @@ import {
   escapeHtml,
   normalizeQuarterHoursInput,
   getMapLink,
-  mountMultiselect
+  mountMultiselect,
+  normalizeDateRangeInputs
 } from "./utils.js";
 import { getRequestStatusTextClass, formatTitleCase, renderRequestListCard } from "./request-cards.js";
 
@@ -515,13 +516,16 @@ async function mountRequestsPage() {
       { value: "favor", label: "Favor", checked: true }
     ]
   });
-  const getFilters = () => ({
-    startDate: startInput?.value || null,
-    endDate: endInput?.value || null,
-    familyId: familySelect?.value || null,
-    statuses: statusFilter.getSelected(),
-    types: typeFilter.getSelected()
-  });
+  const getFilters = () => {
+    normalizeDateRangeInputs(startInput, endInput);
+    return {
+      startDate: startInput?.value || null,
+      endDate: endInput?.value || null,
+      familyId: familySelect?.value || null,
+      statuses: statusFilter.getSelected(),
+      types: typeFilter.getSelected()
+    };
+  };
 
   // Populate family select
   if (familySelect) {
