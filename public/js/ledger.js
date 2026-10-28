@@ -123,7 +123,7 @@ function renderLedgerBalances(containerId, data) {
 
   el.innerHTML = `
     <div class="overflow-x-auto">
-      <table class="min-w-full text-sm whitespace-nowrap">
+      <table class="text-sm whitespace-nowrap">
         <thead>
           <tr class="text-left">
             <th class="${sticky1} px-2 py-1 font-medium align-bottom" rowspan="2" data-sticky-col="1">Family Name</th>
